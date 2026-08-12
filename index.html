@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>웹 바둑 & 오목 & 체스 & 지렁이 & 무한의계단 & 스페이스워</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            color: #f8fafc;
+        }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: #cbd5e1;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.4);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button.btn-secondary {
+            background: linear-gradient(145deg, #64748b, #475569);
+        }
+
+        .game-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 25px;
+            min-width: 160px;
+            gap: 12px;
+        }
+
+        .game-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .game-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.2);
+        }
+
+        #game-ui {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .timer-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .status-box {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .turn-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            border: 1px solid #ccc;
+        }
+
+        canvas {
+            background-color: #deb887;
+            box-shadow: 
+                inset 0 0 50px rgba(101, 67, 33, 0.5),
+                0 20px 50px rgba(0,0,0,0.7);
+            border: 2px solid #5c4033;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            transition: background 0.3s ease;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid #334155;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .modal-content h2 {
+            font-size: 2.5rem;
+            color: #fbbf24;
+            margin-bottom: 10px;
+        }
+
+        .modal-content p {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="screen-main" class="screen active">
+        <h1>game word</h1>
+        <div class="btn-group">
+            <button class="game-card" onclick="selectGame('go')">
+                <span class="game-title">바둑 (Go)</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <rect x="5" y="5" width="50" height="50" fill="#deb887" rx="5" stroke="#5c4033" stroke-width="2"/>
+                        <line x1="15" y1="15" x2="45" y2="15" stroke="#5c4033" stroke-width="1.5"/>
+                        <line x1="15" y1="30" x2="45" y2="30" stroke="#5c4033" stroke-width="1.5"/>
+                        <line x1="15" y1="45" x2="45" y2="45" stroke="#5c4033" stroke-width="1.5"/>
+                        <line x1="15" y1="15" x2="15" y2="45" stroke="#5c4033" stroke-width="1.5"/>
+                        <line x1="30" y1="15" x2="30" y2="45" stroke="#5c4033" stroke-width="1.5"/>
+                        <line x1="45" y1="15" x2="45" y2="45" stroke="#5c4033" stroke-width="1.5"/>
+                        <circle cx="30" cy="30" r="5" fill="#000"/>
+                        <circle cx="45" cy="30" r="5" fill="#fff" stroke="#ccc" stroke-width="0.5"/>
+                        <circle cx="30" cy="45" r="5" fill="#fff" stroke="#ccc" stroke-width="0.5"/>
+                        <circle cx="15" cy="30" r="5" fill="#000"/>
+                    </svg>
+                </div>
+            </button>
+            <button class="game-card" onclick="selectGame('gomoku')">
+                <span class="game-title">오목 (Gomoku)</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <rect x="5" y="5" width="50" height="50" fill="#deb887" rx="5" stroke="#5c4033" stroke-width="2"/>
+                        <line x1="8" y1="30" x2="52" y2="30" stroke="#ef4444" stroke-width="2"/>
+                        <circle cx="12" cy="30" r="4" fill="#000"/>
+                        <circle cx="21" cy="30" r="4" fill="#000"/>
+                        <circle cx="30" cy="30" r="4" fill="#000"/>
+                        <circle cx="39" cy="30" r="4" fill="#000"/>
+                        <circle cx="48" cy="30" r="4" fill="#000"/>
+                    </svg>
+                </div>
+            </button>
+            <button class="game-card" onclick="selectGame('chess')">
+                <span class="game-title">체스 (Chess)</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <rect x="5" y="5" width="50" height="50" fill="#f0d9b5" rx="5" stroke="#8b5a2b" stroke-width="2"/>
+                        <rect x="5" y="5" width="25" height="25" fill="#8b5a2b"/>
+                        <rect x="30" y="30" width="25" height="25" fill="#8b5a2b"/>
+                        <text x="18" y="27" font-size="22" text-anchor="middle" fill="#ffffff">♚</text>
+                        <text x="42" y="52" font-size="22" text-anchor="middle" fill="#000000">♚</text>
+                    </svg>
+                </div>
+            </button>
+            <button class="game-card" onclick="selectGame('snake')" style="background: linear-gradient(145deg, #10b981, #059669);">
+                <span class="game-title">지렁이게임</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <path d="M 10 42 Q 25 15 35 35 T 50 18" fill="none" stroke="#6ee7b7" stroke-width="9" stroke-linecap="round"/>
+                        <circle cx="50" cy="18" r="7" fill="#047857"/>
+                        <circle cx="48" cy="16" r="2" fill="#fff"/>
+                        <circle cx="52" cy="16" r="2" fill="#fff"/>
+                        <circle cx="48" cy="16" r="1" fill="#000"/>
+                        <circle cx="52" cy="16" r="1" fill="#000"/>
+                    </svg>
+                </div>
+            </button>
+            <button class="game-card" onclick="selectGame('stairs')" style="background: linear-gradient(145deg, #f59e0b, #d97706);">
+                <span class="game-title">무한의 계단</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <path d="M 10 50 L 22 50 L 22 38 L 34 38 L 34 26 L 46 26 L 46 14 L 55 14" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="square"/>
+                        <circle cx="34" cy="18" r="4" fill="#ef4444"/>
+                        <rect x="31" y="22" width="6" height="8" fill="#ef4444"/>
+                    </svg>
+                </div>
+            </button>
+            <button class="game-card" onclick="selectGame('spacewar')" style="background: linear-gradient(145deg, #6366f1, #4338ca);">
+                <span class="game-title">Space War</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <path d="M 30 10 L 45 45 L 30 38 L 15 45 Z" fill="#60a5fa" stroke="#fff" stroke-width="2"/>
+                        <circle cx="30" cy="25" r="5" fill="#fef08a"/>
+                        <path d="M 20 40 L 15 50 L 25 43" fill="#ef4444"/>
+                        <path d="M 40 40 L 45 50 L 35 43" fill="#ef4444"/>
+                    </svg>
+                </div>
+            </button>
+        </div>
+    </div>
+
+    <div id="screen-spacewar-mode" class="screen">
+        <h2>Space War 모드 선택</h2>
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 20px 30px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.2); max-width: 500px;">
+            <p style="font-size: 1.2rem; color: #fbbf24; font-weight: bold; margin-bottom: 12px;">🎮 조작법 안내</p>
+            <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">1인용 : 우주선 1개를 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span> 키로 조종</p>
+            <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">2인용 : 1P 우주선 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span> / 2P 우주선 <span style="background: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">화살표 키 (↑, ↓, ←, →)</span>로 조종</p>
+            <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 10px;">* 공격은 자동으로 발사됩니다.</p>
+        </div>
+        <div class="btn-group">
+            <button onclick="startSpaceWar(1)">1인용</button>
+            <button onclick="startSpaceWar(2)">2인용</button>
+        </div>
+        <br>
+        <button class="btn-secondary" onclick="showScreen('screen-main')">메인으로</button>
+    </div>
+
+    <div id="screen-spacewar-game" class="screen">
+        <div style="width: 500px; max-width: 95vw; display: flex; justify-content: flex-end; margin-bottom: 10px;">
+            <button class="btn-secondary" onclick="closeUploadedSpaceWar()">메인으로</button>
+        </div>
+        <iframe id="spacewar-uploaded-frame" style="width: 500px; max-width: 95vw; height: 720px; max-height: 90vh; border: none; border-radius: 8px; background: #05050d;"></iframe>
+    </div>
+
+    <div id="screen-mode" class="screen">
+        <h2 id="mode-title">게임 모드 선택</h2>
+        <div class="btn-group">
+            <button onclick="selectMode('ai')">AI와 대결 (1인용)</button>
+            <button onclick="selectMode('pvp')">1대1 대결 (2인용)</button>
+        </div>
+        <br>
+        <button class="btn-secondary" onclick="showScreen('screen-main')">뒤로 가기</button>
+    </div>
+
+    <div id="screen-diff" class="screen">
+        <h2>AI 난이도 선택</h2>
+        <div class="btn-group">
+            <button onclick="selectDiff('low')">하</button>
+            <button onclick="selectDiff('mid')">중</button>
+            <button onclick="selectDiff('high')">상</button>
+            <button onclick="selectDiff('pro')">프로</button>
+        </div>
+        <br>
+        <button class="btn-secondary" onclick="showScreen('screen-mode')">뒤로 가기</button>
+    </div>
+
+    <div id="screen-time" class="screen">
+        <h2>제한 시간 선택</h2>
+        <div class="btn-group">
+            <button onclick="startGame(3)">3분</button>
+            <button onclick="startGame(5)">5분</button>
+            <button onclick="startGame(10)">10분</button>
+            <button onclick="startGame(15)">15분</button>
+        </div>
+        <br>
+        <button class="btn-secondary" onclick="showScreen('screen-main')">메인으로</button>
+    </div>
+
+    <div id="screen-game" class="screen" style="position: relative;">
+        <div class="top-bar">
+            <button class="btn-secondary" style="padding: 10px 20px; font-size: 1rem;" onclick="quitGame()">포기/나가기</button>
+            <div class="status-box">
+                <span class="turn-indicator" id="turn-color" style="background: black;"></span>
+                <span id="turn-text">흑의 차례</span>
+            </div>
+            <div class="timer-box" id="timer">05:00</div>
+        </div>
+        <canvas id="boardCanvas"></canvas>
+
+        <div id="stairs-rank-badge" style="display: none; position: absolute; top: 15px; right: 15px; z-index: 40; background: rgba(0,0,0,0.6); border: 1px solid rgba(245,158,11,0.6); border-radius: 10px; padding: 10px 16px; text-align: right;">
+            <div style="font-size: 0.8rem; color: #94a3b8;">최근 랭킹 등록</div>
+            <div id="stairs-rank-badge-text" style="font-size: 1.1rem; font-weight: bold; color: #fbbf24;"></div>
+        </div>
+
+        <div id="stairs-menu-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.85); backdrop-filter: blur(5px); flex-direction: column; justify-content: center; align-items: center; z-index: 50; border-radius: 12px;">
+            <h2 style="font-size: 2.5rem; margin-bottom: 25px; color: #f59e0b;">무한의 계단</h2>
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <button id="stairs-char-btn" onclick="changeStairsCharacter()" style="background: linear-gradient(145deg, #f59e0b, #d97706);">캐릭터: 주황 (기본)</button>
+                <button id="stairs-start-btn" onclick="startStairsPlay()" style="background: linear-gradient(145deg, #10b981, #059669);">게임 시작</button>
+                <button id="stairs-rank-view-btn" onclick="openStairsRankList()" style="background: linear-gradient(145deg, #6366f1, #4338ca);">랭킹 보기</button>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 20px 35px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
+                <p style="font-size: 1.2rem; color: #f8fafc; margin-bottom: 10px;"><span style="background: #3b82f6; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: white;">M</span> : 한 칸 올라가기</p>
+                <p style="font-size: 1.2rem; color: #f8fafc;"><span style="background: #ef4444; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: white;">X</span> : 방향 전환</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="result-title">결과</h2>
+            <p id="result-desc">설명</p>
+            <div id="modal-buttons" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="quitGame()">메인으로 돌아가기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stairs-rank-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <h2 style="font-size: 1.8rem;">닉네임을 입력하세요</h2>
+            <p style="margin-bottom: 15px;">이번 판 점수: <span id="stairs-rank-score-preview" style="color:#fbbf24; font-weight:bold;">0</span>점</p>
+            <input id="stairs-rank-name-input" type="text" maxlength="10" placeholder="닉네임 (최대 10자)"
+                style="width: 100%; padding: 12px 14px; font-size: 1.1rem; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: white; text-align: center; font-family: inherit;"
+                oninput="handleStairsNicknameInput()">
+            <p id="stairs-rank-warning" style="min-height: 22px; color: #ef4444; font-size: 0.9rem; margin-top: 8px;"></p>
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+                <button id="stairs-rank-submit-btn" onclick="submitStairsRanking()" disabled style="opacity: 0.5; cursor: not-allowed;">완료</button>
+                <button class="btn-secondary" onclick="closeStairsRankModal()">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="stairs-rank-list-modal" class="modal">
+        <div class="modal-content" style="max-width: 480px;">
+            <h2 style="font-size: 1.8rem; color: #fbbf24;">🏆 무한의 계단 랭킹 TOP 10</h2>
+            <div id="stairs-rank-list-body" style="text-align: left; margin: 15px 0; max-height: 50vh; overflow-y: auto;"></div>
+            <button class="btn-secondary" onclick="closeStairsRankList()">닫기</button>
+        </div>
+    </div>
+
+    <!-- 무한의 계단 온라인 랭킹 공유를 위한 Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <script>
+        let config = { game: '', mode: '', difficulty: 'mid', time: 0 };
+        let boardSize = 15; 
+        let board = [];
+        let canvas, ctx;
+        let cellSize = 0;
+        let currentPlayer = 1; 
+        let gameActive = false;
+        let timerInterval;
+        
+        let player1Time = 0; 
+        let player2Time = 0; 
+        
+        let blackCaptures = 0; 
+        let whiteCaptures = 0; 
+        let chessSelected = null;
+
+        let gomokuWinLine = null;
+
+        let isCheck = false;
+        let checkKingPos = null;
+
+        let snakeAnimId = null;
+        let snakeWorld = { width: 3000, height: 3000 };
+        let snakes = [];
+        let snakeFoods = [];
+        let snakeFireworks = [];
+        let snakeMouse = { x: 0, y: 0 };
+        let snakeCam = { x: 0, y: 0 };
+        let snakeBoostEndTime = 0;
+        let snakeCooldownEndTime = 0;
+
+        let stairsAnimId = null;
+        let stairsScore = 0;
+        let stairsLastFinalScore = 0;
+        let stairsRankingKey = 'infiniteStairsRankingList';
+        let stairsLastRankedKey = 'infiniteStairsLastRanked';
+        let stairsGauge = 100;
+        let stairsPath = [];
+        let stairPositions = [];
+        let playerDir = 1;
+        let playerStairIndex = 0;
+        let stairsPlaying = false;
+        let stairsCharIndex = 0;
+        let stairParticles = [];
+        let stairFloatingTexts = [];
+        let stairStepScale = 1;
+
+        let stairsFalling = false;
+        let playerFallY = 0;
+        let playerFallSpeed = 0;
+        let playerFallRot = 0;
+
+        const stairsSkins = [
+            { name: "주황 (기본)", body: '#ea580c', head: '#ffedd5', band: '#b91c1c' },
+            { name: "파랑", body: '#0284c7', head: '#e0f2fe', band: '#0369a1' },
+            { name: "초록", body: '#10b981', head: '#d1fae5', band: '#047857' },
+            { name: "보라", body: '#a855f7', head: '#f3e8ff', band: '#6b21a8' },
+            { name: "노랑", body: '#eab308', head: '#fef9c3', band: '#854d0e' }
+        ];
+
+        const stairConcepts = [
+            {
+                name: "도시",
+                topColor: '#94a3b8',
+                sideColor: '#475569',
+                strokeColor: '#1e293b',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#0f172a');
+                    bg.addColorStop(1, '#334155');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = '#1e293b';
+                        const bWidths = [70, 100, 80, 110, 90];
+                        let bx = 0;
+                        for(let i=0; bx < w; i++) {
+                            let bw = bWidths[i % bWidths.length];
+                            let bh = 180 + (i * 47) % 220;
+                            ctx.fillRect(bx, h - bh, bw, bh);
+                            ctx.fillStyle = '#fef08a';
+                            for(let wy = h - bh + 15; wy < h - 20; wy += 30) {
+                                for(let wx = bx + 10; wx < bx + bw - 15; wx += 22) {
+                                    if((wx + wy) % 3 !== 0) ctx.fillRect(wx, wy, 10, 15);
+                                }
+                            }
+                            ctx.fillStyle = '#1e293b';
+                            bx += bw + 8;
+                        }
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "정글",
+                topColor: '#22c55e',
+                sideColor: '#78350f',
+                strokeColor: '#14532d',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#022c22');
+                    bg.addColorStop(1, '#064e3b');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = '#065f46';
+                        for(let i=-20; i<w+50; i+=80) {
+                            ctx.beginPath();
+                            ctx.arc(i, h, 90, 0, Math.PI, true);
+                            ctx.fill();
+                        }
+                        ctx.fillStyle = '#047857';
+                        for(let i=30; i<w+50; i+=100) {
+                            ctx.beginPath();
+                            ctx.arc(i, h, 120, 0, Math.PI, true);
+                            ctx.fill();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🦜', w * 0.15, 120);
+                        ctx.fillText('🐒', w * 0.8, 180);
+                        ctx.fillText('🦋', w * 0.5, 140);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "바다",
+                topColor: '#38bdf8',
+                sideColor: '#0284c7',
+                strokeColor: '#075985',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#0369a1');
+                    bg.addColorStop(1, '#0c4a6e');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        for(let i=0; i<20; i++) {
+                            let bx = (i * 73) % w;
+                            let by = (i * 97) % h;
+                            ctx.beginPath();
+                            ctx.arc(bx, by, (i%4)+3, 0, Math.PI*2);
+                            ctx.fill();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🐠', w * 0.2, 160);
+                        ctx.fillText('🐟', w * 0.75, 240);
+                        ctx.fillText('🪼', w * 0.45, 110);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "화산",
+                topColor: '#f97316',
+                sideColor: '#991b1b',
+                strokeColor: '#450a0a',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#450a0a');
+                    bg.addColorStop(1, '#7f1d1d');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = '#dc2626';
+                        ctx.beginPath();
+                        ctx.moveTo(0, h);
+                        ctx.lineTo(w * 0.35, h - 140);
+                        ctx.lineTo(w * 0.7, h);
+                        ctx.lineTo(w * 0.85, h - 100);
+                        ctx.lineTo(w, h);
+                        ctx.fill();
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🔥', w * 0.25, h - 150);
+                        ctx.fillText('🌋', w * 0.75, 140);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "우주",
+                topColor: '#a855f7',
+                sideColor: '#581c87',
+                strokeColor: '#3b0764',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#09090b');
+                    bg.addColorStop(1, '#2e1065');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 1.2) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = '#ffffff';
+                        for(let i=0; i<35; i++) {
+                            let sx = (i * 137) % w;
+                            let sy = (i * 211) % h;
+                            ctx.fillRect(sx, sy, (i%3)+1, (i%3)+1);
+                        }
+                        ctx.font = '30px sans-serif';
+                        ctx.fillText('🪐', w * 0.8, 120);
+                        ctx.fillText('🚀', w * 0.15, 180);
+                        ctx.fillText('🌟', w * 0.5, 90);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "디저트",
+                topColor: '#f472b6',
+                sideColor: '#db2777',
+                strokeColor: '#831843',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#fce7f3');
+                    bg.addColorStop(1, '#fbcfe8');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.font = '30px sans-serif';
+                        ctx.fillText('🍩', w * 0.15, 140);
+                        ctx.fillText('🍦', w * 0.8, 170);
+                        ctx.fillText('🍬', w * 0.5, 100);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "설원",
+                topColor: '#e0f2fe',
+                sideColor: '#0284c7',
+                strokeColor: '#0369a1',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#e0f2fe');
+                    bg.addColorStop(1, '#bae6fd');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('❄️', w * 0.15, 110);
+                        ctx.fillText('☃️', w * 0.75, h - 80);
+                        ctx.fillText('🏔️', w * 0.45, 140);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            }
+        ];
+
+        const UPLOADED_SPACEWAR_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImtvIj4KPGhlYWQ+CiAgICA8bWV0YSBjaGFyc2V0PSJVVEYtOCI+CiAgICA8bWV0YSBuYW1lPSJ2aWV3cG9ydCIgY29udGVudD0id2lkdGg9ZGV2aWNlLXdpZHRoLCBpbml0aWFsLXNjYWxlPTEuMCI+CiAgICA8dGl0bGU+7JWh7IWYIOqyjOyehCAtIDE166CI67KoIOy1nOuMgCDqsJXtmZQg7JeQ65SU7IWYPC90aXRsZT4KICAgIDxzdHlsZT4KICAgICAgICAqIHsKICAgICAgICAgICAgYm94LXNpemluZzogYm9yZGVyLWJveDsKICAgICAgICAgICAgbWFyZ2luOiAwOwogICAgICAgICAgICBwYWRkaW5nOiAwOwogICAgICAgICAgICB1c2VyLXNlbGVjdDogbm9uZTsKICAgICAgICB9CiAgICAgICAgYm9keSB7CiAgICAgICAgICAgIGJhY2tncm91bmQtY29sb3I6ICMwNTA1MGQ7CiAgICAgICAgICAgIGNvbG9yOiAjZmZmOwogICAgICAgICAgICBmb250LWZhbWlseTogJ1NlZ29lIFVJJywgVGFob21hLCBHZW5ldmEsIFZlcmRhbmEsIHNhbnMtc2VyaWY7CiAgICAgICAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgICAgICBtaW4taGVpZ2h0OiAxMDB2aDsKICAgICAgICAgICAgb3ZlcmZsb3c6IGhpZGRlbjsKICAgICAgICB9CiAgICAgICAgI2dhbWUtY29udGFpbmVyIHsKICAgICAgICAgICAgcG9zaXRpb246IHJlbGF0aXZlOwogICAgICAgICAgICB3aWR0aDogNDgwcHg7CiAgICAgICAgICAgIGhlaWdodDogNzAwcHg7CiAgICAgICAgICAgIGJvcmRlcjogMnB4IHNvbGlkICMwMGYzZmY7CiAgICAgICAgICAgIGJveC1zaGFkb3c6IDAgMCAyNXB4IHJnYmEoMCwgMjQzLCAyNTUsIDAuMyksIGluc2V0IDAgMCAxNXB4IHJnYmEoMCwgMCwgMCwgMC44KTsKICAgICAgICAgICAgYm9yZGVyLXJhZGl1czogOHB4OwogICAgICAgICAgICBvdmVyZmxvdzogaGlkZGVuOwogICAgICAgICAgICBiYWNrZ3JvdW5kOiAjMDgwODE4OwogICAgICAgIH0KICAgICAgICBjYW52YXMgewogICAgICAgICAgICBkaXNwbGF5OiBibG9jazsKICAgICAgICAgICAgd2lkdGg6IDEwMCU7CiAgICAgICAgICAgIGhlaWdodDogMTAwJTsKICAgICAgICB9CgogICAgICAgIC8qIEhVRCBQQU5FTCAqLwogICAgICAgICNodWQgewogICAgICAgICAgICBwb3NpdGlvbjogYWJzb2x1dGU7CiAgICAgICAgICAgIHRvcDogMDsKICAgICAgICAgICAgbGVmdDogMDsKICAgICAgICAgICAgd2lkdGg6IDEwMCU7CiAgICAgICAgICAgIHBhZGRpbmc6IDEycHggMTVweDsKICAgICAgICAgICAgZGlzcGxheTogZmxleDsKICAgICAgICAgICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgICAgICAgICAgZ2FwOiA4cHg7CiAgICAgICAgICAgIGFsaWduLWl0ZW1zOiBmbGV4LXN0YXJ0OwogICAgICAgICAgICBwb2ludGVyLWV2ZW50czogbm9uZTsKICAgICAgICAgICAgei1pbmRleDogMTA7CiAgICAgICAgfQoKICAgICAgICAuc3RhdHVzLWJveCB7CiAgICAgICAgICAgIGJhY2tncm91bmQ6IHJnYmEoMTAsIDE1LCAzMCwgMC44NSk7CiAgICAgICAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMCwgMjQzLCAyNTUsIDAuNCk7CiAgICAgICAgICAgIHBhZGRpbmc6IDEwcHggMTVweDsKICAgICAgICAgICAgYm9yZGVyLXJhZGl1czogNnB4OwogICAgICAgICAgICBiYWNrZHJvcC1maWx0ZXI6IGJsdXIoNHB4KTsKICAgICAgICAgICAgYm94LXNoYWRvdzogMCA0cHggMTBweCByZ2JhKDAsIDAsIDAsIDAuNSk7CiAgICAgICAgfQoKICAgICAgICAuaHAtY29udGFpbmVyIHsKICAgICAgICAgICAgd2lkdGg6IDI2MHB4OwogICAgICAgIH0KICAgICAgICAuaHAtbGFiZWwgewogICAgICAgICAgICBmb250LXNpemU6IDEycHg7CiAgICAgICAgICAgIGZvbnQtd2VpZ2h0OiBib2xkOwogICAgICAgICAgICBjb2xvcjogIzAwZjNmZjsKICAgICAgICAgICAgbWFyZ2luLWJvdHRvbTogNHB4OwogICAgICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgICAgICBqdXN0aWZ5LWNvbnRlbnQ6IHNwYWNlLWJldHdlZW47CiAgICAgICAgfQogICAgICAgIC5ocC1iYXItb3V0ZXIgewogICAgICAgICAgICB3aWR0aDogMTAwJTsKICAgICAgICAgICAgaGVpZ2h0OiAxNHB4OwogICAgICAgICAgICBiYWNrZ3JvdW5kOiAjMWExYTJlOwogICAgICAgICAgICBib3JkZXI6IDFweCBzb2xpZCAjMDBmM2ZmOwogICAgICAgICAgICBib3JkZXItcmFkaXVzOiAzcHg7CiAgICAgICAgICAgIG92ZXJmbG93OiBoaWRkZW47CiAgICAgICAgfQogICAgICAgIC5ocC1iYXItaW5uZXIgewogICAgICAgICAgICB3aWR0aDogMTAwJTsKICAgICAgICAgICAgaGVpZ2h0OiAxMDAlOwogICAgICAgICAgICBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoOTBkZWcsICNmZjAwNTUsICNmZjU1MDAsICMwMGZmNjYpOwogICAgICAgICAgICB0cmFuc2l0aW9uOiB3aWR0aCAwLjE1cyBlYXNlLW91dDsKICAgICAgICAgICAgYm94LXNoYWRvdzogMCAwIDhweCByZ2JhKDAsIDI1NSwgMTAyLCAwLjgpOwogICAgICAgIH0KCiAgICAgICAgLndlYXBvbi1pbmZvIHsKICAgICAgICAgICAgZm9udC1zaXplOiAxMXB4OwogICAgICAgICAgICBjb2xvcjogI2ZmZGQwMDsKICAgICAgICAgICAgbWFyZ2luLXRvcDogNnB4OwogICAgICAgICAgICBkaXNwbGF5OiBmbGV4OwogICAgICAgICAgICBmbGV4LWRpcmVjdGlvbjogY29sdW1uOwogICAgICAgICAgICBnYXA6IDJweDsKICAgICAgICAgICAgZm9udC13ZWlnaHQ6IGJvbGQ7CiAgICAgICAgfQoKICAgICAgICAuc2NvcmUtYm94IHsKICAgICAgICAgICAgdGV4dC1hbGlnbjogbGVmdDsKICAgICAgICB9CiAgICAgICAgLnNjb3JlLXRpdGxlIHsKICAgICAgICAgICAgZm9udC1zaXplOiAxMXB4OwogICAgICAgICAgICBjb2xvcjogI2FhYTsKICAgICAgICAgICAgbGV0dGVyLXNwYWNpbmc6IDFweDsKICAgICAgICB9CiAgICAgICAgLnNjb3JlLXZhbCB7CiAgICAgICAgICAgIGZvbnQtc2l6ZTogMjRweDsKICAgICAgICAgICAgZm9udC13ZWlnaHQ6IDgwMDsKICAgICAgICAgICAgY29sb3I6ICNmZjAwNzc7CiAgICAgICAgICAgIHRleHQtc2hhZG93OiAwIDAgMTBweCByZ2JhKDI1NSwgMCwgMTE5LCAwLjYpOwogICAgICAgIH0KICAgICAgICAubGV2ZWwtdmFsIHsKICAgICAgICAgICAgZm9udC1zaXplOiAxMnB4OwogICAgICAgICAgICBjb2xvcjogIzAwZjNmZjsKICAgICAgICAgICAgZm9udC13ZWlnaHQ6IGJvbGQ7CiAgICAgICAgfQoKICAgICAgICAvKiBPVkVSTEFZICovCiAgICAgICAgLm92ZXJsYXkgewogICAgICAgICAgICBwb3NpdGlvbjogYWJzb2x1dGU7CiAgICAgICAgICAgIHRvcDogMDsgbGVmdDogMDsgd2lkdGg6IDEwMCU7IGhlaWdodDogMTAwJTsKICAgICAgICAgICAgYmFja2dyb3VuZDogcmdiYSg1LCA1LCAxNSwgMC44NSk7CiAgICAgICAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgICAgICAgIGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47CiAgICAgICAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICAgICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICAgICAgICB6LWluZGV4OiAyMDsKICAgICAgICB9CiAgICAgICAgLm92ZXJsYXkgaDEgewogICAgICAgICAgICBmb250LXNpemU6IDM2cHg7CiAgICAgICAgICAgIGNvbG9yOiAjMDBmM2ZmOwogICAgICAgICAgICB0ZXh0LXNoYWRvdzogMCAwIDE1cHggIzAwZjNmZjsKICAgICAgICAgICAgbWFyZ2luLWJvdHRvbTogMTBweDsKICAgICAgICB9CiAgICAgICAgLm92ZXJsYXkgcCB7CiAgICAgICAgICAgIGZvbnQtc2l6ZTogMTNweDsKICAgICAgICAgICAgY29sb3I6ICNjY2M7CiAgICAgICAgICAgIG1hcmdpbi1ib3R0b206IDI1cHg7CiAgICAgICAgICAgIHRleHQtYWxpZ246IGNlbnRlcjsKICAgICAgICAgICAgbGluZS1oZWlnaHQ6IDEuNjsKICAgICAgICB9CiAgICAgICAgLmJ0biB7CiAgICAgICAgICAgIHBhZGRpbmc6IDEycHggMzBweDsKICAgICAgICAgICAgZm9udC1zaXplOiAxOHB4OwogICAgICAgICAgICBmb250LXdlaWdodDogYm9sZDsKICAgICAgICAgICAgY29sb3I6ICMwODA4MTg7CiAgICAgICAgICAgIGJhY2tncm91bmQ6ICMwMGYzZmY7CiAgICAgICAgICAgIGJvcmRlcjogbm9uZTsKICAgICAgICAgICAgYm9yZGVyLXJhZGl1czogNHB4OwogICAgICAgICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgICAgICAgIGJveC1zaGFkb3c6IDAgMCAxNXB4IHJnYmEoMCwgMjQzLCAyNTUsIDAuNik7CiAgICAgICAgICAgIHRyYW5zaXRpb246IGFsbCAwLjJzOwogICAgICAgIH0KICAgICAgICAuYnRuOmhvdmVyIHsKICAgICAgICAgICAgdHJhbnNmb3JtOiBzY2FsZSgxLjA1KTsKICAgICAgICAgICAgYmFja2dyb3VuZDogI2ZmZmZmZjsKICAgICAgICAgICAgYm94LXNoYWRvdzogMCAwIDI1cHggcmdiYSgyNTUsIDI1NSwgMjU1LCAwLjgpOwogICAgICAgIH0KICAgIDwvc3R5bGU+CjwvaGVhZD4KPGJvZHk+Cgo8ZGl2IGlkPSJnYW1lLWNvbnRhaW5lciI+CiAgICA8ZGl2IGlkPSJodWQiPgogICAgICAgIDxkaXYgY2xhc3M9InN0YXR1cy1ib3ggaHAtY29udGFpbmVyIj4KICAgICAgICAgICAgPGRpdiBjbGFzcz0iaHAtbGFiZWwiPgogICAgICAgICAgICAgICAgPHNwYW4+7ZSM66CI7J207Ja0IEhQPC9zcGFuPgogICAgICAgICAgICAgICAgPHNwYW4gaWQ9ImhwLXRleHQiPjEwMCAvIDEwMDwvc3Bhbj4KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9ImhwLWJhci1vdXRlciI+CiAgICAgICAgICAgICAgICA8ZGl2IGlkPSJocC1iYXIiIGNsYXNzPSJocC1iYXItaW5uZXIiPjwvZGl2PgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgPGRpdiBjbGFzcz0id2VhcG9uLWluZm8iPgogICAgICAgICAgICAgICAgPHNwYW4+7ZWo7ISgOiA8c3BhbiBpZD0ic2hpcC1uYW1lIiBzdHlsZT0iY29sb3I6ICMwMGYzZmY7Ij7snbjthLDshYnthLA8L3NwYW4+PC9zcGFuPgogICAgICAgICAgICAgICAgPHNwYW4+6rCV7ZmUOiA8c3BhbiBpZD0id2VhcG9uLWx2IiBzdHlsZT0iY29sb3I6I2ZmZGQwMDsiPkx2LjEgLyAxNTwvc3Bhbj4gKDxzcGFuIGlkPSJhdGstcG93ZXIiPuqzteqyqeugpSAxNTwvc3Bhbj4pPC9zcGFuPgogICAgICAgICAgICAgICAgPHNwYW4+6rO16rKp7IaN64+EOiA8c3BhbiBpZD0iYXRrLXNwZCIgc3R5bGU9ImNvbG9yOiNmZjAwZmY7Ij4xMDAlPC9zcGFuPiB8IDxzcGFuIGlkPSJzaGllbGQtc3RhdHVzIiBzdHlsZT0iY29sb3I6ICM1NTU7Ij7sibTrk5w6IOq6vOynkDwvc3Bhbj48L3NwYW4+CiAgICAgICAgICAgIDwvZGl2PgogICAgICAgIDwvZGl2PgoKICAgICAgICA8ZGl2IGNsYXNzPSJzdGF0dXMtYm94IHNjb3JlLWJveCI+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InNjb3JlLXRpdGxlIj7soJDsiJg8L2Rpdj4KICAgICAgICAgICAgPGRpdiBpZD0ic2NvcmUtdGV4dCIgY2xhc3M9InNjb3JlLXZhbCI+MDAwMDA8L2Rpdj4KICAgICAgICAgICAgPGRpdiBpZD0ibGV2ZWwtdGV4dCIgY2xhc3M9ImxldmVsLXZhbCI+7Iqk7YWM7J207KeAIDE8L2Rpdj4KICAgICAgICA8L2Rpdj4KICAgIDwvZGl2PgoKICAgIDxjYW52YXMgaWQ9ImdhbWVDYW52YXMiIHdpZHRoPSI0ODAiIGhlaWdodD0iNzAwIj48L2NhbnZhcz4KCiAgICA8ZGl2IGlkPSJzdGFydC1vdmVybGF5IiBjbGFzcz0ib3ZlcmxheSI+CiAgICAgICAgPGgxPuuEpOyYqCDrlJTtjpzrjZQgOiAxNeugiOuyqCDstZzrjIAg7KeE7ZmUPC9oMT4KICAgICAgICA8cD5XQVNEIOydtOuPmSB8IOyekOuPmSDqs7Xqsqk8YnI+CiAgICAgICAgICAgPGI+7Jik67iMIOuTnOuejeuloDogMjAlPC9iPiAoPGI+W1BdIO2MjOybjDwvYj4gLyA8Yj5bQV0g6rO16rKp7IaN64+EPC9iPiAvIDxiPltIXSDtmozrs7U8L2I+IC8gPGI+W1NdIOyJtOuTnDwvYj4pPGJyPjxicj4KICAgICAgICAgICDwn5qAIDxiPkx2LjV+OTwvYj46IO2Pre2MjO2YlSDspJHsoITtiKzquLAgKOuhnOy8kyDrspTsnIQg6rO16rKpKTxicj4KICAgICAgICAgICDwn5GRIDxiPkx2LjEwfjE0PC9iPjog7ZWY7J207Y28IO2PrO2GpCDqtbDso7wgKDEw67CcIO2PrO2GpCDroIjsnbTsoIApPGJyPgogICAgICAgICAgIPCfjJ8gPGI+THYuMTUgKOy1nOyiheqwle2ZlCk8L2I+OiDslYTsiqTtirjrnbwg7KCc64Sk7Iuc7IqkICjslpHsmIYg7JyE7ISxIO2UjOudvOymiOuniCDtj6ztg5Eg7LaU6rCAKTwvcD4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4iIG9uY2xpY2s9InN0YXJ0R2FtZSgpIj7qsozsnoQg7Iuc7J6RPC9idXR0b24+CiAgICA8L2Rpdj4KCiAgICA8ZGl2IGlkPSJnYW1lb3Zlci1vdmVybGF5IiBjbGFzcz0ib3ZlcmxheSIgc3R5bGU9ImRpc3BsYXk6IG5vbmU7Ij4KICAgICAgICA8aDEgc3R5bGU9ImNvbG9yOiAjZmYwMDU1OyB0ZXh0LXNoYWRvdzogMCAwIDE1cHggI2ZmMDA1NTsiPuqyjOyehCDsmKTrsoQ8L2gxPgogICAgICAgIDxwIGlkPSJmaW5hbC1zY29yZSI+7LWc7KKFIOygkOyImDogMDwvcD4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4iIG9uY2xpY2s9InN0YXJ0R2FtZSgpIj7ri6Tsi5wg7Iuc64+EPC9idXR0b24+CiAgICA8L2Rpdj4KPC9kaXY+Cgo8c2NyaXB0Pgpjb25zdCBjYW52YXMgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZ2FtZUNhbnZhcycpOwpjb25zdCBjdHggPSBjYW52YXMuZ2V0Q29udGV4dCgnMmQnKTsKCmNvbnN0IGhwQmFyID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2hwLWJhcicpOwpjb25zdCBocFRleHQgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnaHAtdGV4dCcpOwpjb25zdCBzY29yZVRleHQgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc2NvcmUtdGV4dCcpOwpjb25zdCBsZXZlbFRleHQgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbGV2ZWwtdGV4dCcpOwpjb25zdCB3ZWFwb25MdlRleHQgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnd2VhcG9uLWx2Jyk7CmNvbnN0IGF0a1Bvd2VyVGV4dCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhdGstcG93ZXInKTsKY29uc3QgYXRrU3BkVGV4dCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhdGstc3BkJyk7CmNvbnN0IHNoaXBOYW1lVGV4dCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzaGlwLW5hbWUnKTsKY29uc3Qgc2hpZWxkU3RhdHVzVGV4dCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzaGllbGQtc3RhdHVzJyk7CmNvbnN0IHN0YXJ0T3ZlcmxheSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzdGFydC1vdmVybGF5Jyk7CmNvbnN0IGdhbWVvdmVyT3ZlcmxheSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdnYW1lb3Zlci1vdmVybGF5Jyk7CmNvbnN0IGZpbmFsU2NvcmUgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZmluYWwtc2NvcmUnKTsKCmxldCBpc0dhbWVSdW5uaW5nID0gZmFsc2U7CmxldCBzY29yZSA9IDA7CmxldCBzdGFnZSA9IDE7CmxldCBhbmltYXRpb25GcmFtZUlkOwpsZXQga2V5c1ByZXNzZWQgPSB7IHc6IGZhbHNlLCBhOiBmYWxzZSwgczogZmFsc2UsIGQ6IGZhbHNlIH07CgpsZXQgcGxheWVyOwpsZXQgYnVsbGV0cyA9IFtdOwpsZXQgZW5lbWllcyA9IFtdOwpsZXQgcGFydGljbGVzID0gW107CmxldCBkYW1hZ2VUZXh0cyA9IFtdOwpsZXQgaXRlbXMgPSBbXTsKbGV0IHN0YXJzID0gW107CmxldCBleHBsb3Npb25zID0gW107CgpmdW5jdGlvbiBpbml0QmFja2dyb3VuZCgpIHsKICAgIHN0YXJzID0gW107CiAgICBmb3IgKGxldCBpID0gMDsgaSA8IDcwOyBpKyspIHsKICAgICAgICBzdGFycy5wdXNoKHsKICAgICAgICAgICAgeDogTWF0aC5yYW5kb20oKSAqIGNhbnZhcy53aWR0aCwKICAgICAgICAgICAgeTogTWF0aC5yYW5kb20oKSAqIGNhbnZhcy5oZWlnaHQsCiAgICAgICAgICAgIHNpemU6IE1hdGgucmFuZG9tKCkgKiAyICsgMC41LAogICAgICAgICAgICBzcGVlZDogTWF0aC5yYW5kb20oKSAqIDEuMiArIDAuMiwKICAgICAgICAgICAgYWxwaGE6IE1hdGgucmFuZG9tKCkgKiAwLjggKyAwLjIKICAgICAgICB9KTsKICAgIH0KfQoKY2xhc3MgUGxheWVyIHsKICAgIGNvbnN0cnVjdG9yKCkgewogICAgICAgIHRoaXMueCA9IGNhbnZhcy53aWR0aCAvIDI7CiAgICAgICAgdGhpcy55ID0gY2FudmFzLmhlaWdodCAtIDEwMDsKICAgICAgICB0aGlzLnJhZGl1cyA9IDIyOwogICAgICAgIHRoaXMubWF4SHAgPSAxMDA7CiAgICAgICAgdGhpcy5ocCA9IDEwMDsKICAgICAgICB0aGlzLndlYXBvbkxldmVsID0gMTsKICAgICAgICB0aGlzLm1heFdlYXBvbkxldmVsID0gMTU7CiAgICAgICAgdGhpcy5iYXNlRGFtYWdlID0gMTU7CiAgICAgICAgdGhpcy5zaGllbGRUaW1lciA9IDA7CiAgICAgICAgdGhpcy5zaG9vdFRpbWVyID0gMDsKICAgICAgICB0aGlzLmJhc2VTaG9vdEludGVydmFsID0gMTI7CiAgICAgICAgdGhpcy5zcGVlZExldmVsID0gMDsKICAgICAgICB0aGlzLnNhdGVsbGl0ZUFuZ2xlID0gMDsKICAgIH0KCiAgICBnZXRTaG9vdEludGVydmFsKCkgewogICAgICAgIHJldHVybiBNYXRoLm1heCgzLCB0aGlzLmJhc2VTaG9vdEludGVydmFsIC0gdGhpcy5zcGVlZExldmVsICogMS41KTsKICAgIH0KCiAgICB1cGRhdGUoKSB7CiAgICAgICAgY29uc3QgbW92ZVNwZWVkID0gNjsKICAgICAgICBpZiAoa2V5c1ByZXNzZWQudykgdGhpcy55IC09IG1vdmVTcGVlZDsKICAgICAgICBpZiAoa2V5c1ByZXNzZWQucykgdGhpcy55ICs9IG1vdmVTcGVlZDsKICAgICAgICBpZiAoa2V5c1ByZXNzZWQuYSkgdGhpcy54IC09IG1vdmVTcGVlZDsKICAgICAgICBpZiAoa2V5c1ByZXNzZWQuZCkgdGhpcy54ICs9IG1vdmVTcGVlZDsKCiAgICAgICAgdGhpcy54ID0gTWF0aC5tYXgodGhpcy5yYWRpdXMsIE1hdGgubWluKGNhbnZhcy53aWR0aCAtIHRoaXMucmFkaXVzLCB0aGlzLngpKTsKICAgICAgICB0aGlzLnkgPSBNYXRoLm1heCh0aGlzLnJhZGl1cywgTWF0aC5taW4oY2FudmFzLmhlaWdodCAtIHRoaXMucmFkaXVzLCB0aGlzLnkpKTsKCiAgICAgICAgaWYgKHRoaXMuc2hpZWxkVGltZXIgPiAwKSB0aGlzLnNoaWVsZFRpbWVyLS07CgogICAgICAgIHRoaXMuc2F0ZWxsaXRlQW5nbGUgKz0gMC4wNTsKCiAgICAgICAgdGhpcy5zaG9vdFRpbWVyKys7CiAgICAgICAgaWYgKHRoaXMuc2hvb3RUaW1lciA+PSB0aGlzLmdldFNob290SW50ZXJ2YWwoKSkgewogICAgICAgICAgICB0aGlzLnNob290KCk7CiAgICAgICAgICAgIHRoaXMuc2hvb3RUaW1lciA9IDA7CiAgICAgICAgfQogICAgfQoKICAgIHNob290KCkgewogICAgICAgIGNvbnN0IGRtZyA9IHRoaXMuYmFzZURhbWFnZTsKCiAgICAgICAgaWYgKHRoaXMud2VhcG9uTGV2ZWwgPD0gNCkgewogICAgICAgICAgICBjb25zdCBjb3VudCA9IHRoaXMud2VhcG9uTGV2ZWw7CiAgICAgICAgICAgIGNvbnN0IHN0YXJ0QW5nbGUgPSAtKChjb3VudCAtIDEpICogMykgKiAoTWF0aC5QSSAvIDE4MCk7CiAgICAgICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgY291bnQ7IGkrKykgewogICAgICAgICAgICAgICAgY29uc3QgYW5nbGUgPSBzdGFydEFuZ2xlICsgKGkgKiA2KSAqIChNYXRoLlBJIC8gMTgwKTsKICAgICAgICAgICAgICAgIGNvbnN0IHZ4ID0gTWF0aC5zaW4oYW5nbGUpICogMTI7CiAgICAgICAgICAgICAgICBjb25zdCB2eSA9IC1NYXRoLmNvcyhhbmdsZSkgKiAxMjsKICAgICAgICAgICAgICAgIGJ1bGxldHMucHVzaChuZXcgQnVsbGV0KHRoaXMueCwgdGhpcy55IC0gMTUsIHZ4LCB2eSwgZG1nLCBmYWxzZSkpOwogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIGVsc2UgaWYgKHRoaXMud2VhcG9uTGV2ZWwgPj0gNSAmJiB0aGlzLndlYXBvbkxldmVsIDw9IDkpIHsKICAgICAgICAgICAgY29uc3QgY291bnQgPSA1OwogICAgICAgICAgICBjb25zdCBzcHJlYWQgPSA4OwogICAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGNvdW50OyBpKyspIHsKICAgICAgICAgICAgICAgIGNvbnN0IG9mZnNldCA9IChpIC0gMikgKiBzcHJlYWQ7CiAgICAgICAgICAgICAgICBjb25zdCB2eCA9IChpIC0gMikgKiAxLjI7CiAgICAgICAgICAgICAgICBidWxsZXRzLnB1c2gobmV3IEJ1bGxldCh0aGlzLnggKyBvZmZzZXQsIHRoaXMueSAtIDEyLCB2eCwgLTEwLCBkbWcgKyAodGhpcy53ZWFwb25MZXZlbCAtIDUpICogMiwgdHJ1ZSkpOwogICAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIGVsc2UgaWYgKHRoaXMud2VhcG9uTGV2ZWwgPj0gMTAgJiYgdGhpcy53ZWFwb25MZXZlbCA8PSAxNCkgewogICAgICAgICAgICBjb25zdCBjb3VudCA9IDEwOwogICAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGNvdW50OyBpKyspIHsKICAgICAgICAgICAgICAgIGNvbnN0IGFuZ2xlID0gKC0yMi41ICsgaSAqIDUpICogKE1hdGguUEkgLyAxODApOwogICAgICAgICAgICAgICAgY29uc3QgdnggPSBNYXRoLnNpbihhbmdsZSkgKiAxNDsKICAgICAgICAgICAgICAgIGNvbnN0IHZ5ID0gLU1hdGguY29zKGFuZ2xlKSAqIDE0OwogICAgICAgICAgICAgICAgYnVsbGV0cy5wdXNoKG5ldyBCdWxsZXQodGhpcy54LCB0aGlzLnkgLSAyMCwgdngsIHZ5LCBkbWcsIGZhbHNlLCB0cnVlKSk7CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgZWxzZSB7CiAgICAgICAgICAgIGNvbnN0IGNvdW50ID0gMTA7CiAgICAgICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgY291bnQ7IGkrKykgewogICAgICAgICAgICAgICAgY29uc3QgYW5nbGUgPSAoLTIyLjUgKyBpICogNSkgKiAoTWF0aC5QSSAvIDE4MCk7CiAgICAgICAgICAgICAgICBjb25zdCB2eCA9IE1hdGguc2luKGFuZ2xlKSAqIDE1OwogICAgICAgICAgICAgICAgY29uc3QgdnkgPSAtTWF0aC5jb3MoYW5nbGUpICogMTU7CiAgICAgICAgICAgICAgICBidWxsZXRzLnB1c2gobmV3IEJ1bGxldCh0aGlzLngsIHRoaXMueSAtIDIwLCB2eCwgdnksIGRtZyArIDUsIGZhbHNlLCB0cnVlKSk7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgYnVsbGV0cy5wdXNoKG5ldyBCdWxsZXQodGhpcy54IC0gMzUsIHRoaXMueSwgMCwgLTE2LCBkbWcsIGZhbHNlLCB0cnVlKSk7CiAgICAgICAgICAgIGJ1bGxldHMucHVzaChuZXcgQnVsbGV0KHRoaXMueCArIDM1LCB0aGlzLnksIDAsIC0xNiwgZG1nLCBmYWxzZSwgdHJ1ZSkpOwogICAgICAgIH0KICAgIH0KCiAgICBkcmF3KCkgewogICAgICAgIGN0eC5zYXZlKCk7CiAgICAgICAgY3R4LnRyYW5zbGF0ZSh0aGlzLngsIHRoaXMueSk7CgogICAgICAgIGlmICh0aGlzLnNoaWVsZFRpbWVyID4gMCkgewogICAgICAgICAgICBjdHguc2hhZG93Qmx1ciA9IDE1OwogICAgICAgICAgICBjdHguc2hhZG93Q29sb3IgPSAnIzAwZmZmZic7CiAgICAgICAgICAgIGN0eC5zdHJva2VTdHlsZSA9IGByZ2JhKDAsIDI1NSwgMjU1LCAke01hdGgubWluKDEsIHRoaXMuc2hpZWxkVGltZXIgLyAzMCl9KWA7CiAgICAgICAgICAgIGN0eC5saW5lV2lkdGggPSAzOwogICAgICAgICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgICAgICAgIGN0eC5hcmMoMCwgMCwgdGhpcy5yYWRpdXMgKyAxNiwgMCwgTWF0aC5QSSAqIDIpOwogICAgICAgICAgICBjdHguc3Ryb2tlKCk7CiAgICAgICAgfQoKICAgICAgICBpZiAodGhpcy53ZWFwb25MZXZlbCA8PSA0KSB7CiAgICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSAnIzAwZjNmZic7CiAgICAgICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICAgICAgY3R4Lm1vdmVUbygwLCAtMjIpOyBjdHgubGluZVRvKC0xOCwgMTQpOyBjdHgubGluZVRvKDAsIDYpOyBjdHgubGluZVRvKDE4LCAxNCk7CiAgICAgICAgICAgIGN0eC5jbG9zZVBhdGgoKTsgY3R4LmZpbGwoKTsKCiAgICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSAnI2ZmZmZmZic7CiAgICAgICAgICAgIGN0eC5iZWdpblBhdGgoKTsgY3R4LmVsbGlwc2UoMCwgLTQsIDMsIDgsIDAsIDAsIE1hdGguUEkgKiAyKTsgY3R4LmZpbGwoKTsKICAgICAgICB9IAogICAgICAgIGVsc2UgaWYgKHRoaXMud2VhcG9uTGV2ZWwgPD0gOSkgewogICAgICAgICAgICBjdHguZmlsbFN0eWxlID0gJyNmZjMzMDAnOwogICAgICAgICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgICAgICAgIGN0eC5tb3ZlVG8oMCwgLTI0KTsgY3R4LmxpbmVUbygtMjgsIDgpOyBjdHgubGluZVRvKC0yNCwgMjApOyBjdHgubGluZVRvKC04LCAxMik7CiAgICAgICAgICAgIGN0eC5saW5lVG8oMCwgMTYpOyBjdHgubGluZVRvKDgsIDEyKTsgY3R4LmxpbmVUbygyNCwgMjApOyBjdHgubGluZVRvKDI4LCA4KTsKICAgICAgICAgICAgY3R4LmNsb3NlUGF0aCgpOyBjdHguZmlsbCgpOwoKICAgICAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICcjZmZhYTAwJzsKICAgICAgICAgICAgY3R4LmZpbGxSZWN0KC0xMiwgLTYsIDI0LCAxMik7CiAgICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSAnIzAwZmZmZic7CiAgICAgICAgICAgIGN0eC5iZWdpblBhdGgoKTsgY3R4LmVsbGlwc2UoMCwgLTgsIDUsIDEwLCAwLCAwLCBNYXRoLlBJICogMik7IGN0eC5maWxsKCk7CiAgICAgICAgfSAKICAgICAgICBlbHNlIGlmICh0aGlzLndlYXBvbkxldmVsIDw9IDE0KSB7CiAgICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSAnIzg4MDBmZic7CiAgICAgICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICAgICAgY3R4Lm1vdmVUbygwLCAtMzApOyBjdHgubGluZVRvKC0zMiwgMik7IGN0eC5saW5lVG8oLTM2LCAxOCk7IGN0eC5saW5lVG8oLTE2LCAyMik7CiAgICAgICAgICAgIGN0eC5saW5lVG8oMCwgMTIpOyBjdHgubGluZVRvKDE2LCAyMik7IGN0eC5saW5lVG8oMzYsIDE4KTsgY3R4LmxpbmVUbygzMiwgMik7CiAgICAgICAgICAgIGN0eC5jbG9zZVBhdGgoKTsgY3R4LmZpbGwoKTsKCiAgICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSAnI2ZmZGQwMCc7CiAgICAgICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICAgICAgY3R4Lm1vdmVUbygwLCAtMjQpOyBjdHgubGluZVRvKC0xNiwgNCk7IGN0eC5saW5lVG8oMCwgMTgpOyBjdHgubGluZVRvKDE2LCA0KTsKICAgICAgICAgICAgY3R4LmNsb3NlUGF0aCgpOyBjdHguZmlsbCgpOwogICAgICAgIH0KICAgICAgICBlbHNlIHsKICAgICAgICAgICAgY3R4LnNoYWRvd0JsdXIgPSAxNTsKICAgICAgICAgICAgY3R4LnNoYWRvd0NvbG9yID0gJyMwMGZmY2MnOwoKICAgICAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICcjMDBmZmNjJzsKICAgICAgICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICAgICAgICBjdHgubW92ZVRvKDAsIC0zNCk7IGN0eC5saW5lVG8oLTM4LCAxMCk7IGN0eC5saW5lVG8oLTIwLCAyNCk7IGN0eC5saW5lVG8oMCwgMTYpOwogICAgICAgICAgICBjdHgubGluZVRvKDIwLCAyNCk7IGN0eC5saW5lVG8oMzgsIDEwKTsKICAgICAgICAgICAgY3R4LmNsb3NlUGF0aCgpOyBjdHguZmlsbCgpOwoKICAgICAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICcjZmZmZmZmJzsKICAgICAgICAgICAgY3R4LmJlZ2luUGF0aCgpOyBjdHguZWxsaXBzZSgwLCAtNiwgNiwgMTQsIDAsIDAsIE1hdGguUEkgKiAyKTsgY3R4LmZpbGwoKTsKCiAgICAgICAgICAgIGNvbnN0IHNhdFggPSBNYXRoLmNvcyh0aGlzLnNhdGVsbGl0ZUFuZ2xlKSAqIDQyOwogICAgICAgICAgICBjb25zdCBzYXRZID0gTWF0aC5zaW4odGhpcy5zYXRlbGxpdGVBbmdsZSkgKiA4OwogICAgICAgICAgICBjdHguZmlsbFN0eWxlID0gJyNmZjAwZmYnOwogICAgICAgICAgICBjdHguYmVnaW5QYXRoKCk7IGN0eC5hcmMoLXNhdFgsIHNhdFksIDYsIDAsIE1hdGguUEkgKiAyKTsgY3R4LmZpbGwoKTsKICAgICAgICAgICAgY3R4LmJlZ2luUGF0aCgpOyBjdHguYXJjKHNhdFgsIC1zYXRZLCA2LCAwLCBNYXRoLlBJICogMik7IGN0eC5maWxsKCk7CiAgICAgICAgfQoKICAgICAgICBjdHgucmVzdG9yZSgpOwogICAgfQp9CgpjbGFzcyBCdWxsZXQgewogICAgY29uc3RydWN0b3IoeCwgeSwgdngsIHZ5LCBkYW1hZ2UsIGlzUm9ja2V0ID0gZmFsc2UsIGlzUGhvdG9uID0gZmFsc2UpIHsKICAgICAgICB0aGlzLnggPSB4OwogICAgICAgIHRoaXMueSA9IHk7CiAgICAgICAgdGhpcy52eCA9IHZ4OwogICAgICAgIHRoaXMudnkgPSB2eTsKICAgICAgICB0aGlzLmRhbWFnZSA9IGRhbWFnZTsKICAgICAgICB0aGlzLmlzUm9ja2V0ID0gaXNSb2NrZXQ7CiAgICAgICAgdGhpcy5pc1Bob3RvbiA9IGlzUGhvdG9uOwogICAgICAgIHRoaXMucmFkaXVzID0gaXNSb2NrZXQgPyA1IDogKGlzUGhvdG9uID8gNCA6IDMpOwogICAgfQoKICAgIHVwZGF0ZSgpIHsKICAgICAgICB0aGlzLnggKz0gdGhpcy52eDsKICAgICAgICB0aGlzLnkgKz0gdGhpcy52eTsKICAgIH0KCiAgICBkcmF3KCkgewogICAgICAgIGN0eC5zYXZlKCk7CiAgICAgICAgY3R4LnRyYW5zbGF0ZSh0aGlzLngsIHRoaXMueSk7CgogICAgICAgIGlmICh0aGlzLmlzUm9ja2V0KSB7CiAgICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSAnI2ZmYWEwMCc7CiAgICAgICAgICAgIGN0eC5iZWdpblBhdGgoKTsgY3R4LmFyYygwLCAwLCB0aGlzLnJhZGl1cywgMCwgTWF0aC5QSSAqIDIpOyBjdHguZmlsbCgpOwogICAgICAgIH0gZWxzZSBpZiAodGhpcy5pc1Bob3RvbikgewogICAgICAgICAgICBjdHguZmlsbFN0eWxlID0gJyMwMGZmY2MnOwogICAgICAgICAgICBjdHguYmVnaW5QYXRoKCk7IGN0eC5hcmMoMCwgMCwgdGhpcy5yYWRpdXMsIDAsIE1hdGguUEkgKiAyKTsgY3R4LmZpbGwoKTsKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBjdHguZmlsbFN0eWxlID0gJyNmZmZmZmYnOwogICAgICAgICAgICBjdHguYmVnaW5QYXRoKCk7IGN0eC5hcmMoMCwgMCwgdGhpcy5yYWRpdXMsIDAsIE1hdGguUEkgKiAyKTsgY3R4LmZpbGwoKTsKICAgICAgICB9CgogICAgICAgIGN0eC5yZXN0b3JlKCk7CiAgICB9Cn0KCmNsYXNzIEFyZWFFeHBsb3Npb24gewogICAgY29uc3RydWN0b3IoeCwgeSwgcmFkaXVzLCBkYW1hZ2UpIHsKICAgICAgICB0aGlzLnggPSB4OwogICAgICAgIHRoaXMueSA9IHk7CiAgICAgICAgdGhpcy5tYXhSYWRpdXMgPSByYWRpdXM7CiAgICAgICAgdGhpcy5jdXJyZW50UmFkaXVzID0gNTsKICAgICAgICB0aGlzLmRhbWFnZSA9IGRhbWFnZTsKICAgICAgICB0aGlzLmFscGhhID0gMTsKICAgICAgICB0aGlzLmhhc0hpdCA9IGZhbHNlOwogICAgfQoKICAgIHVwZGF0ZSgpIHsKICAgICAgICB0aGlzLmN1cnJlbnRSYWRpdXMgKz0gKHRoaXMubWF4UmFkaXVzIC0gdGhpcy5jdXJyZW50UmFkaXVzKSAqIDAuMzsKICAgICAgICB0aGlzLmFscGhhIC09IDAuMDg7CiAgICB9CgogICAgZHJhdygpIHsKICAgICAgICBjdHguc2F2ZSgpOwogICAgICAgIGN0eC5nbG9iYWxBbHBoYSA9IE1hdGgubWF4KDAsIHRoaXMuYWxwaGEpOwogICAgICAgIGN0eC5maWxsU3R5bGUgPSAncmdiYSgyNTUsIDEwMCwgMCwgMC4zKSc7CiAgICAgICAgY3R4LnN0cm9rZVN0eWxlID0gJyNmZmFhMDAnOwogICAgICAgIGN0eC5saW5lV2lkdGggPSAyOwoKICAgICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgICAgY3R4LmFyYyh0aGlzLngsIHRoaXMueSwgdGhpcy5jdXJyZW50UmFkaXVzLCAwLCBNYXRoLlBJICogMik7CiAgICAgICAgY3R4LmZpbGwoKTsgY3R4LnN0cm9rZSgpOwogICAgICAgIGN0eC5yZXN0b3JlKCk7CiAgICB9Cn0KCmNsYXNzIEVuZW15IHsKICAgIGNvbnN0cnVjdG9yKCkgewogICAgICAgIHRoaXMucmFkaXVzID0gTWF0aC5yYW5kb20oKSAqIDggKyAxNDsKICAgICAgICB0aGlzLnggPSBNYXRoLnJhbmRvbSgpICogKGNhbnZhcy53aWR0aCAtIHRoaXMucmFkaXVzICogMikgKyB0aGlzLnJhZGl1czsKICAgICAgICB0aGlzLnkgPSAtdGhpcy5yYWRpdXM7CiAgICAgICAgdGhpcy5zcGVlZCA9IE1hdGgucmFuZG9tKCkgKiAwLjYgKyAxLjE7CgogICAgICAgIHRoaXMubWF4SHAgPSBNYXRoLmZsb29yKHRoaXMucmFkaXVzICogMS4yICsgKHN0YWdlIC0gMSkgKiAyKTsKICAgICAgICB0aGlzLmhwID0gdGhpcy5tYXhIcDsKCiAgICAgICAgdGhpcy5hdHRhY2tEYW1hZ2UgPSBNYXRoLmZsb29yKDggKyAoc3RhZ2UgLSAxKSAqIDAuNSk7CiAgICAgICAgdGhpcy5jb2xvciA9IGBoc2woJHtNYXRoLnJhbmRvbSgpICogNjAgKyAzMzB9LCAxMDAlLCA2MCUpYDsKICAgICAgICB0aGlzLmhpdEZsYXNoVGltZXIgPSAwOwogICAgfQoKICAgIHVwZGF0ZSgpIHsKICAgICAgICB0aGlzLnkgKz0gdGhpcy5zcGVlZDsKICAgICAgICBpZiAodGhpcy5oaXRGbGFzaFRpbWVyID4gMCkgdGhpcy5oaXRGbGFzaFRpbWVyLS07CiAgICB9CgogICAgZHJhdygpIHsKICAgICAgICBjdHguc2F2ZSgpOwogICAgICAgIGN0eC50cmFuc2xhdGUodGhpcy54LCB0aGlzLnkpOwoKICAgICAgICBjb25zdCByID0gdGhpcy5yYWRpdXM7CiAgICAgICAgY29uc3QgYm9keUNvbG9yID0gdGhpcy5oaXRGbGFzaFRpbWVyID4gMCA/ICcjZmZmZmZmJyA6IHRoaXMuY29sb3I7CgogICAgICAgIC8vIO2VmOuLqCDstpTsp4Qg67aI67mbCiAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICdyZ2JhKDAsIDI1NSwgMjAwLCAwLjI1KSc7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICAgIGN0eC5tb3ZlVG8oLXIgKiAwLjQ1LCByICogMC4zNSk7CiAgICAgICAgY3R4LmxpbmVUbyhyICogMC40NSwgciAqIDAuMzUpOwogICAgICAgIGN0eC5saW5lVG8ociAqIDAuMiwgciAqIDEuMTUpOwogICAgICAgIGN0eC5saW5lVG8oLXIgKiAwLjIsIHIgKiAxLjE1KTsKICAgICAgICBjdHguY2xvc2VQYXRoKCk7CiAgICAgICAgY3R4LmZpbGwoKTsKCiAgICAgICAgLy8g7Jm46rOEIOu5hO2WieyEoCDrqrjssrQgKOybkOuwmCkKICAgICAgICBjdHguZmlsbFN0eWxlID0gYm9keUNvbG9yOwogICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICBjdHguZWxsaXBzZSgwLCByICogMC4xNSwgciAqIDEuMTUsIHIgKiAwLjUsIDAsIDAsIE1hdGguUEkgKiAyKTsKICAgICAgICBjdHguZmlsbCgpOwogICAgICAgIGN0eC5zdHJva2VTdHlsZSA9ICdyZ2JhKDI1NSwyNTUsMjU1LDAuNiknOwogICAgICAgIGN0eC5saW5lV2lkdGggPSAxLjI7CiAgICAgICAgY3R4LnN0cm9rZSgpOwoKICAgICAgICAvLyDsobDsooXshJ0g64+UCiAgICAgICAgY3R4LmZpbGxTdHlsZSA9IHRoaXMuaGl0Rmxhc2hUaW1lciA+IDAgPyAnI2RkZGRkZCcgOiAncmdiYSgxNjAsIDI1NSwgMjM1LCAwLjg1KSc7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICAgIGN0eC5lbGxpcHNlKDAsIC1yICogMC4yNSwgciAqIDAuNTUsIHIgKiAwLjU1LCAwLCBNYXRoLlBJLCAwKTsKICAgICAgICBjdHguZmlsbCgpOwogICAgICAgIGN0eC5zdHJva2VTdHlsZSA9IGJvZHlDb2xvcjsKICAgICAgICBjdHgubGluZVdpZHRoID0gMTsKICAgICAgICBjdHguc3Ryb2tlKCk7CgogICAgICAgIC8vIOyZuOqzhOyduCDsi6Tro6jsl6MKICAgICAgICBjdHguZmlsbFN0eWxlID0gJ3JnYmEoMjAsIDQwLCAyMCwgMC43KSc7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICAgIGN0eC5lbGxpcHNlKDAsIC1yICogMC4zLCByICogMC4xNiwgciAqIDAuMjIsIDAsIDAsIE1hdGguUEkgKiAyKTsKICAgICAgICBjdHguZmlsbCgpOwoKICAgICAgICAvLyDsm5DrsJgg7YWM65GQ66asIOu2iOu5mwogICAgICAgIGNvbnN0IGxpZ2h0Q291bnQgPSA0OwogICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgbGlnaHRDb3VudDsgaSsrKSB7CiAgICAgICAgICAgIGNvbnN0IGFuZ2xlID0gKGkgLyBsaWdodENvdW50KSAqIE1hdGguUEkgKiAyOwogICAgICAgICAgICBjb25zdCBseCA9IE1hdGguY29zKGFuZ2xlKSAqIHIgKiAwLjk7CiAgICAgICAgICAgIGNvbnN0IGx5ID0gciAqIDAuMTUgKyBNYXRoLnNpbihhbmdsZSkgKiByICogMC4yMjsKICAgICAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICcjZmZlZTAwJzsKICAgICAgICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICAgICAgICBjdHguYXJjKGx4LCBseSwgTWF0aC5tYXgoMS41LCByICogMC4xKSwgMCwgTWF0aC5QSSAqIDIpOwogICAgICAgICAgICBjdHguZmlsbCgpOwogICAgICAgIH0KCiAgICAgICAgaWYgKHRoaXMuaHAgPCB0aGlzLm1heEhwKSB7CiAgICAgICAgICAgIGNvbnN0IGJhclcgPSB0aGlzLnJhZGl1cyAqIDI7CiAgICAgICAgICAgIGNvbnN0IGhwUmF0aW8gPSBNYXRoLm1heCgwLCB0aGlzLmhwIC8gdGhpcy5tYXhIcCk7CiAgICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSAncmdiYSgwLDAsMCwwLjYpJzsKICAgICAgICAgICAgY3R4LmZpbGxSZWN0KC10aGlzLnJhZGl1cywgLXRoaXMucmFkaXVzIC0gMTIsIGJhclcsIDMpOwogICAgICAgICAgICBjdHguZmlsbFN0eWxlID0gJyMwMGZmNjYnOwogICAgICAgICAgICBjdHguZmlsbFJlY3QoLXRoaXMucmFkaXVzLCAtdGhpcy5yYWRpdXMgLSAxMiwgYmFyVyAqIGhwUmF0aW8sIDMpOwogICAgICAgIH0KCiAgICAgICAgY3R4LnJlc3RvcmUoKTsKICAgIH0KfQoKY2xhc3MgSXRlbU9yYiB7CiAgICBjb25zdHJ1Y3Rvcih4LCB5KSB7CiAgICAgICAgdGhpcy54ID0geDsKICAgICAgICB0aGlzLnkgPSB5OwogICAgICAgIHRoaXMucmFkaXVzID0gMTE7CiAgICAgICAgdGhpcy5zcGVlZFkgPSAxLjQ7CgogICAgICAgIGNvbnN0IHJhbmQgPSBNYXRoLnJhbmRvbSgpOwogICAgICAgIGlmIChyYW5kIDwgMC40NSkgewogICAgICAgICAgICB0aGlzLnR5cGUgPSAnUE9XRVInOyB0aGlzLmNvbG9yID0gJyMwMGZmZmYnOyB0aGlzLmxhYmVsID0gJ1AnOwogICAgICAgIH0gZWxzZSBpZiAocmFuZCA8IDAuNzApIHsKICAgICAgICAgICAgdGhpcy50eXBlID0gJ1NQRUVEJzsgdGhpcy5jb2xvciA9ICcjZmYwMGZmJzsgdGhpcy5sYWJlbCA9ICdBJzsKICAgICAgICB9IGVsc2UgaWYgKHJhbmQgPCAwLjkwKSB7CiAgICAgICAgICAgIHRoaXMudHlwZSA9ICdIRUFMJzsgdGhpcy5jb2xvciA9ICcjMDBmZjY2JzsgdGhpcy5sYWJlbCA9ICdIJzsKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICB0aGlzLnR5cGUgPSAnU0hJRUxEJzsgdGhpcy5jb2xvciA9ICcjZmZkZDAwJzsgdGhpcy5sYWJlbCA9ICdTJzsKICAgICAgICB9CiAgICB9CgogICAgdXBkYXRlKCkgeyB0aGlzLnkgKz0gdGhpcy5zcGVlZFk7IH0KCiAgICBkcmF3KCkgewogICAgICAgIGN0eC5zYXZlKCk7CiAgICAgICAgY3R4LnRyYW5zbGF0ZSh0aGlzLngsIHRoaXMueSk7CiAgICAgICAgY3R4LmZpbGxTdHlsZSA9IHRoaXMuY29sb3I7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOyBjdHguYXJjKDAsIDAsIHRoaXMucmFkaXVzLCAwLCBNYXRoLlBJICogMik7IGN0eC5maWxsKCk7CgogICAgICAgIGN0eC5maWxsU3R5bGUgPSAnIzAwMCc7CiAgICAgICAgY3R4LmZvbnQgPSAnYm9sZCAxMnB4IFNlZ29lIFVJJzsKICAgICAgICBjdHgudGV4dEFsaWduID0gJ2NlbnRlcic7IGN0eC50ZXh0QmFzZWxpbmUgPSAnbWlkZGxlJzsKICAgICAgICBjdHguZmlsbFRleHQodGhpcy5sYWJlbCwgMCwgMSk7CiAgICAgICAgY3R4LnJlc3RvcmUoKTsKICAgIH0KfQoKY2xhc3MgUGFydGljbGUgewogICAgY29uc3RydWN0b3IoeCwgeSwgY29sb3IpIHsKICAgICAgICB0aGlzLnggPSB4OyB0aGlzLnkgPSB5OyB0aGlzLmNvbG9yID0gY29sb3I7CiAgICAgICAgY29uc3QgYW5nbGUgPSBNYXRoLnJhbmRvbSgpICogTWF0aC5QSSAqIDI7CiAgICAgICAgY29uc3Qgc3BlZWQgPSBNYXRoLnJhbmRvbSgpICogMyArIDE7CiAgICAgICAgdGhpcy52eCA9IE1hdGguY29zKGFuZ2xlKSAqIHNwZWVkOwogICAgICAgIHRoaXMudnkgPSBNYXRoLnNpbihhbmdsZSkgKiBzcGVlZDsKICAgICAgICB0aGlzLmFscGhhID0gMTsKICAgICAgICB0aGlzLmRlY2F5ID0gTWF0aC5yYW5kb20oKSAqIDAuMDUgKyAwLjAzOwogICAgICAgIHRoaXMuc2l6ZSA9IE1hdGgucmFuZG9tKCkgKiAyLjUgKyAxOwogICAgfQoKICAgIHVwZGF0ZSgpIHsKICAgICAgICB0aGlzLnggKz0gdGhpcy52eDsgdGhpcy55ICs9IHRoaXMudnk7CiAgICAgICAgdGhpcy5hbHBoYSAtPSB0aGlzLmRlY2F5OwogICAgfQoKICAgIGRyYXcoKSB7CiAgICAgICAgY3R4LnNhdmUoKTsKICAgICAgICBjdHguZ2xvYmFsQWxwaGEgPSBNYXRoLm1heCgwLCB0aGlzLmFscGhhKTsKICAgICAgICBjdHguZmlsbFN0eWxlID0gdGhpcy5jb2xvcjsKICAgICAgICBjdHguYmVnaW5QYXRoKCk7IGN0eC5hcmModGhpcy54LCB0aGlzLnksIHRoaXMuc2l6ZSwgMCwgTWF0aC5QSSAqIDIpOyBjdHguZmlsbCgpOwogICAgICAgIGN0eC5yZXN0b3JlKCk7CiAgICB9Cn0KCmNsYXNzIERhbWFnZVRleHQgewogICAgY29uc3RydWN0b3IoeCwgeSwgdGV4dCwgY29sb3IgPSAnI2ZmZicpIHsKICAgICAgICB0aGlzLnggPSB4OyB0aGlzLnkgPSB5OyB0aGlzLnRleHQgPSB0ZXh0OyB0aGlzLmNvbG9yID0gY29sb3I7CiAgICAgICAgdGhpcy5hbHBoYSA9IDE7IHRoaXMudnkgPSAtMS4yOwogICAgfQogICAgdXBkYXRlKCkgeyB0aGlzLnkgKz0gdGhpcy52eTsgdGhpcy5hbHBoYSAtPSAwLjAzOyB9CiAgICBkcmF3KCkgewogICAgICAgIGN0eC5zYXZlKCk7CiAgICAgICAgY3R4Lmdsb2JhbEFscGhhID0gTWF0aC5tYXgoMCwgdGhpcy5hbHBoYSk7CiAgICAgICAgY3R4LmZvbnQgPSAnYm9sZCAxM3B4IFNlZ29lIFVJJzsKICAgICAgICBjdHguZmlsbFN0eWxlID0gdGhpcy5jb2xvcjsKICAgICAgICBjdHguZmlsbFRleHQodGhpcy50ZXh0LCB0aGlzLngsIHRoaXMueSk7CiAgICAgICAgY3R4LnJlc3RvcmUoKTsKICAgIH0KfQoKd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ2tleWRvd24nLCAoZSkgPT4gewogICAgY29uc3QgayA9IGUua2V5LnRvTG93ZXJDYXNlKCk7CiAgICBpZiAoayA9PT0gJ3cnIHx8IGsgPT09ICdhJyB8fCBrID09PSAncycgfHwgayA9PT0gJ2QnKSB7CiAgICAgICAga2V5c1ByZXNzZWRba10gPSB0cnVlOwogICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgIH0KfSk7CndpbmRvdy5hZGRFdmVudExpc3RlbmVyKCdrZXl1cCcsIChlKSA9PiB7CiAgICBjb25zdCBrID0gZS5rZXkudG9Mb3dlckNhc2UoKTsKICAgIGlmIChrID09PSAndycgfHwgayA9PT0gJ2EnIHx8IGsgPT09ICdzJyB8fCBrID09PSAnZCcpIHsKICAgICAgICBrZXlzUHJlc3NlZFtrXSA9IGZhbHNlOwogICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgIH0KfSk7CgpmdW5jdGlvbiBjcmVhdGVFeHBsb3Npb24oeCwgeSwgY29sb3IsIGNvdW50ID0gNSkgewogICAgZm9yIChsZXQgaSA9IDA7IGkgPCBjb3VudDsgaSsrKSB7CiAgICAgICAgcGFydGljbGVzLnB1c2gobmV3IFBhcnRpY2xlKHgsIHksIGNvbG9yKSk7CiAgICB9Cn0KCmZ1bmN0aW9uIHVwZGF0ZUJhY2tncm91bmQoKSB7CiAgICBjdHguZmlsbFN0eWxlID0gJyNmZmYnOwogICAgc3RhcnMuZm9yRWFjaChzdGFyID0+IHsKICAgICAgICBzdGFyLnkgKz0gc3Rhci5zcGVlZDsKICAgICAgICBpZiAoc3Rhci55ID4gY2FudmFzLmhlaWdodCkgewogICAgICAgICAgICBzdGFyLnkgPSAwOyBzdGFyLnggPSBNYXRoLnJhbmRvbSgpICogY2FudmFzLndpZHRoOwogICAgICAgIH0KICAgICAgICBjdHguc2F2ZSgpOwogICAgICAgIGN0eC5nbG9iYWxBbHBoYSA9IHN0YXIuYWxwaGE7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOyBjdHguYXJjKHN0YXIueCwgc3Rhci55LCBzdGFyLnNpemUsIDAsIE1hdGguUEkgKiAyKTsgY3R4LmZpbGwoKTsKICAgICAgICBjdHgucmVzdG9yZSgpOwogICAgfSk7Cn0KCmZ1bmN0aW9uIHVwZGF0ZVVJKCkgewogICAgY29uc3QgaHBQZXJjZW50ID0gTWF0aC5tYXgoMCwgKHBsYXllci5ocCAvIHBsYXllci5tYXhIcCkgKiAxMDApOwogICAgaHBCYXIuc3R5bGUud2lkdGggPSBgJHtocFBlcmNlbnR9JWA7CiAgICBocFRleHQuaW5uZXJUZXh0ID0gYCR7TWF0aC5jZWlsKHBsYXllci5ocCl9IC8gJHtwbGF5ZXIubWF4SHB9YDsKICAgIAogICAgaWYgKHBsYXllci53ZWFwb25MZXZlbCA8PSA0KSB7CiAgICAgICAgc2hpcE5hbWVUZXh0LmlubmVyVGV4dCA9ICLsnbjthLDshYnthLAiOyBzaGlwTmFtZVRleHQuc3R5bGUuY29sb3IgPSAiIzAwZjNmZiI7CiAgICB9IGVsc2UgaWYgKHBsYXllci53ZWFwb25MZXZlbCA8PSA5KSB7CiAgICAgICAgc2hpcE5hbWVUZXh0LmlubmVyVGV4dCA9ICLroZzsvJMg67SE67KEIjsgc2hpcE5hbWVUZXh0LnN0eWxlLmNvbG9yID0gIiNmZjU1MDAiOwogICAgfSBlbHNlIGlmIChwbGF5ZXIud2VhcG9uTGV2ZWwgPD0gMTQpIHsKICAgICAgICBzaGlwTmFtZVRleHQuaW5uZXJUZXh0ID0gIu2PrO2GpCDshozrsoTrprAiOyBzaGlwTmFtZVRleHQuc3R5bGUuY29sb3IgPSAiI2FhMDBmZiI7CiAgICB9IGVsc2UgewogICAgICAgIHNoaXBOYW1lVGV4dC5pbm5lclRleHQgPSAi7JWE7Iqk7Yq46528IOygnOuEpOyLnOyKpCAoMTXqsJUgTUFYKSI7IHNoaXBOYW1lVGV4dC5zdHlsZS5jb2xvciA9ICIjMDBmZmNjIjsKICAgIH0KCiAgICB3ZWFwb25MdlRleHQuaW5uZXJUZXh0ID0gcGxheWVyLndlYXBvbkxldmVsID49IHBsYXllci5tYXhXZWFwb25MZXZlbCA/IGBMdi4xNSAoTUFYKWAgOiBgTHYuJHtwbGF5ZXIud2VhcG9uTGV2ZWx9IC8gMTVgOwogICAgYXRrUG93ZXJUZXh0LmlubmVyVGV4dCA9IGDqs7XqsqnroKUgJHtwbGF5ZXIuYmFzZURhbWFnZX1gOwogICAgCiAgICBjb25zdCBzcGRQZXJjZW50ID0gTWF0aC5mbG9vcigocGxheWVyLmJhc2VTaG9vdEludGVydmFsIC8gcGxheWVyLmdldFNob290SW50ZXJ2YWwoKSkgKiAxMDApOwogICAgYXRrU3BkVGV4dC5pbm5lclRleHQgPSBgJHtzcGRQZXJjZW50fSVgOwoKICAgIGlmIChwbGF5ZXIuc2hpZWxkVGltZXIgPiAwKSB7CiAgICAgICAgc2hpZWxkU3RhdHVzVGV4dC5pbm5lclRleHQgPSBg7Im065OcOiAke01hdGguY2VpbChwbGF5ZXIuc2hpZWxkVGltZXIgLyA2MCl97LSIYDsKICAgICAgICBzaGllbGRTdGF0dXNUZXh0LnN0eWxlLmNvbG9yID0gJyNmZmRkMDAnOwogICAgfSBlbHNlIHsKICAgICAgICBzaGllbGRTdGF0dXNUZXh0LmlubmVyVGV4dCA9IGDsibTrk5w6IOq6vOynkGA7IHNoaWVsZFN0YXR1c1RleHQuc3R5bGUuY29sb3IgPSAnIzU1NSc7CiAgICB9CgogICAgc2NvcmVUZXh0LmlubmVyVGV4dCA9IFN0cmluZyhzY29yZSkucGFkU3RhcnQoNSwgJzAnKTsKICAgIGxldmVsVGV4dC5pbm5lclRleHQgPSBg7Iqk7YWM7J207KeAICR7c3RhZ2V9YDsKfQoKZnVuY3Rpb24gZ2FtZUxvb3AoKSB7CiAgICBpZiAoIWlzR2FtZVJ1bm5pbmcpIHJldHVybjsKCiAgICBjdHguY2xlYXJSZWN0KDAsIDAsIGNhbnZhcy53aWR0aCwgY2FudmFzLmhlaWdodCk7CiAgICB1cGRhdGVCYWNrZ3JvdW5kKCk7CgogICAgcGxheWVyLnVwZGF0ZSgpOwogICAgcGxheWVyLmRyYXcoKTsKCiAgICBmb3IgKGxldCBiSW5kZXggPSBidWxsZXRzLmxlbmd0aCAtIDE7IGJJbmRleCA+PSAwOyBiSW5kZXgtLSkgewogICAgICAgIGNvbnN0IGJ1bGxldCA9IGJ1bGxldHNbYkluZGV4XTsKICAgICAgICBidWxsZXQudXBkYXRlKCk7IGJ1bGxldC5kcmF3KCk7CiAgICAgICAgaWYgKGJ1bGxldC55IDwgLTEwIHx8IGJ1bGxldC54IDwgLTEwIHx8IGJ1bGxldC54ID4gY2FudmFzLndpZHRoICsgMTApIHsKICAgICAgICAgICAgYnVsbGV0cy5zcGxpY2UoYkluZGV4LCAxKTsKICAgICAgICB9CiAgICB9CgogICAgZm9yIChsZXQgZXhJbmRleCA9IGV4cGxvc2lvbnMubGVuZ3RoIC0gMTsgZXhJbmRleCA+PSAwOyBleEluZGV4LS0pIHsKICAgICAgICBjb25zdCBleHAgPSBleHBsb3Npb25zW2V4SW5kZXhdOwogICAgICAgIGV4cC51cGRhdGUoKTsgZXhwLmRyYXcoKTsKICAgICAgICBpZiAoIWV4cC5oYXNIaXQpIHsKICAgICAgICAgICAgZW5lbWllcy5mb3JFYWNoKGVuZW15ID0+IHsKICAgICAgICAgICAgICAgIGNvbnN0IGRpc3QgPSBNYXRoLmh5cG90KGVuZW15LnggLSBleHAueCwgZW5lbXkueSAtIGV4cC55KTsKICAgICAgICAgICAgICAgIGlmIChkaXN0IDwgZXhwLm1heFJhZGl1cyArIGVuZW15LnJhZGl1cykgewogICAgICAgICAgICAgICAgICAgIGVuZW15LmhwIC09IGV4cC5kYW1hZ2U7CiAgICAgICAgICAgICAgICAgICAgZW5lbXkuaGl0Rmxhc2hUaW1lciA9IDM7CiAgICAgICAgICAgICAgICAgICAgZGFtYWdlVGV4dHMucHVzaChuZXcgRGFtYWdlVGV4dChlbmVteS54LCBlbmVteS55LCBgLSR7ZXhwLmRhbWFnZX1gLCAnI2ZmZGQwMCcpKTsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfSk7CiAgICAgICAgICAgIGV4cC5oYXNIaXQgPSB0cnVlOwogICAgICAgIH0KICAgICAgICBpZiAoZXhwLmFscGhhIDw9IDApIGV4cGxvc2lvbnMuc3BsaWNlKGV4SW5kZXgsIDEpOwogICAgfQoKICAgIC8vICoq66qs7Iqk7YSwIOq4sOuzuCDsiqTtj7DrpaA6IDAuMDEgKDElKSAvIOyKpO2FjOydtOyngOuLuSDspp3qsIDtj606IDAuMDAwOCAoMC4wOCUpKioKICAgIGlmIChNYXRoLnJhbmRvbSgpIDwgMC4wMSArIChzdGFnZSAqIDAuMDAwOCkpIHsKICAgICAgICBlbmVtaWVzLnB1c2gobmV3IEVuZW15KCkpOwogICAgfQoKICAgIGZvciAobGV0IGVJbmRleCA9IGVuZW1pZXMubGVuZ3RoIC0gMTsgZUluZGV4ID49IDA7IGVJbmRleC0tKSB7CiAgICAgICAgY29uc3QgZW5lbXkgPSBlbmVtaWVzW2VJbmRleF07CiAgICAgICAgZW5lbXkudXBkYXRlKCk7IGVuZW15LmRyYXcoKTsKCiAgICAgICAgZm9yIChsZXQgYkluZGV4ID0gYnVsbGV0cy5sZW5ndGggLSAxOyBiSW5kZXggPj0gMDsgYkluZGV4LS0pIHsKICAgICAgICAgICAgY29uc3QgYnVsbGV0ID0gYnVsbGV0c1tiSW5kZXhdOwogICAgICAgICAgICBjb25zdCBkaXN0ID0gTWF0aC5oeXBvdChidWxsZXQueCAtIGVuZW15LngsIGJ1bGxldC55IC0gZW5lbXkueSk7CgogICAgICAgICAgICBpZiAoZGlzdCA8IGVuZW15LnJhZGl1cyArIGJ1bGxldC5yYWRpdXMpIHsKICAgICAgICAgICAgICAgIGVuZW15LmhwIC09IGJ1bGxldC5kYW1hZ2U7CiAgICAgICAgICAgICAgICBlbmVteS5oaXRGbGFzaFRpbWVyID0gMzsKICAgICAgICAgICAgICAgIAogICAgICAgICAgICAgICAgaWYgKGJ1bGxldC5pc1JvY2tldCkgewogICAgICAgICAgICAgICAgICAgIGV4cGxvc2lvbnMucHVzaChuZXcgQXJlYUV4cGxvc2lvbihidWxsZXQueCwgYnVsbGV0LnksIDU1LCBNYXRoLmZsb29yKGJ1bGxldC5kYW1hZ2UgKiAwLjcpKSk7CiAgICAgICAgICAgICAgICAgICAgY3JlYXRlRXhwbG9zaW9uKGJ1bGxldC54LCBidWxsZXQueSwgJyNmZmFhMDAnLCA0KTsKICAgICAgICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgICAgICAgICAgY3JlYXRlRXhwbG9zaW9uKGJ1bGxldC54LCBidWxsZXQueSwgJyMwMGYzZmYnLCAyKTsKICAgICAgICAgICAgICAgIH0KCiAgICAgICAgICAgICAgICBkYW1hZ2VUZXh0cy5wdXNoKG5ldyBEYW1hZ2VUZXh0KGVuZW15LngsIGVuZW15LnksIGAtJHtidWxsZXQuZGFtYWdlfWApKTsKICAgICAgICAgICAgICAgIGJ1bGxldHMuc3BsaWNlKGJJbmRleCwgMSk7CgogICAgICAgICAgICAgICAgaWYgKGVuZW15LmhwIDw9IDApIHsKICAgICAgICAgICAgICAgICAgICBjcmVhdGVFeHBsb3Npb24oZW5lbXkueCwgZW5lbXkueSwgZW5lbXkuY29sb3IsIDgpOwogICAgICAgICAgICAgICAgICAgIHNjb3JlICs9IE1hdGguZmxvb3IoZW5lbXkubWF4SHAgKiAxMCk7CgogICAgICAgICAgICAgICAgICAgIGNvbnN0IHJlcXVpcmVkU2NvcmVGb3JOZXh0U3RhZ2UgPSBzdGFnZSAqIHN0YWdlICogMTUwMDsKICAgICAgICAgICAgICAgICAgICBpZiAoc2NvcmUgPiByZXF1aXJlZFNjb3JlRm9yTmV4dFN0YWdlKSBzdGFnZSsrOwoKICAgICAgICAgICAgICAgICAgICAvLyAqKuyYpOu4jCDrk5zrno0g7ZmV66WgOiAyMCUgKDAuMikg6rOg7KCVKioKICAgICAgICAgICAgICAgICAgICBpZiAoTWF0aC5yYW5kb20oKSA8IDAuMikgewogICAgICAgICAgICAgICAgICAgICAgICBpdGVtcy5wdXNoKG5ldyBJdGVtT3JiKGVuZW15LngsIGVuZW15LnkpKTsKICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAgICAgZW5lbWllcy5zcGxpY2UoZUluZGV4LCAxKTsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIGJyZWFrOwogICAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICBpZiAoZW5lbXkpIHsKICAgICAgICAgICAgY29uc3QgcGxheWVyRGlzdCA9IE1hdGguaHlwb3QocGxheWVyLnggLSBlbmVteS54LCBwbGF5ZXIueSAtIGVuZW15LnkpOwogICAgICAgICAgICBpZiAocGxheWVyRGlzdCA8IGVuZW15LnJhZGl1cyArIHBsYXllci5yYWRpdXMpIHsKICAgICAgICAgICAgICAgIGlmIChwbGF5ZXIuc2hpZWxkVGltZXIgPiAwKSB7CiAgICAgICAgICAgICAgICAgICAgY3JlYXRlRXhwbG9zaW9uKGVuZW15LngsIGVuZW15LnksICcjMDBmZmZmJywgNik7CiAgICAgICAgICAgICAgICAgICAgZGFtYWdlVGV4dHMucHVzaChuZXcgRGFtYWdlVGV4dChwbGF5ZXIueCwgcGxheWVyLnkgLSAyMCwgJ+uwqeyWtCEnLCAnIzAwZmZmZicpKTsKICAgICAgICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgICAgICAgICAgcGxheWVyLmhwIC09IGVuZW15LmF0dGFja0RhbWFnZTsKICAgICAgICAgICAgICAgICAgICBjcmVhdGVFeHBsb3Npb24oZW5lbXkueCwgZW5lbXkueSwgJyNmZjAwNTUnLCA2KTsKICAgICAgICAgICAgICAgICAgICBkYW1hZ2VUZXh0cy5wdXNoKG5ldyBEYW1hZ2VUZXh0KHBsYXllci54LCBwbGF5ZXIueSAtIDIwLCBgLSR7ZW5lbXkuYXR0YWNrRGFtYWdlfSBIUGAsICcjZmYwMDU1JykpOwogICAgICAgICAgICAgICAgICAgIGlmIChwbGF5ZXIuaHAgPD0gMCkgZW5kR2FtZSgpOwogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgZW5lbWllcy5zcGxpY2UoZUluZGV4LCAxKTsKICAgICAgICAgICAgfSBlbHNlIGlmIChlbmVteS55ID4gY2FudmFzLmhlaWdodCArIGVuZW15LnJhZGl1cykgewogICAgICAgICAgICAgICAgZW5lbWllcy5zcGxpY2UoZUluZGV4LCAxKTsKICAgICAgICAgICAgfQogICAgICAgIH0KICAgIH0KCiAgICBmb3IgKGxldCBpSW5kZXggPSBpdGVtcy5sZW5ndGggLSAxOyBpSW5kZXggPj0gMDsgaUluZGV4LS0pIHsKICAgICAgICBjb25zdCBpdGVtID0gaXRlbXNbaUluZGV4XTsKICAgICAgICBpdGVtLnVwZGF0ZSgpOyBpdGVtLmRyYXcoKTsKCiAgICAgICAgY29uc3QgZGlzdCA9IE1hdGguaHlwb3QocGxheWVyLnggLSBpdGVtLngsIHBsYXllci55IC0gaXRlbS55KTsKICAgICAgICBpZiAoZGlzdCA8IHBsYXllci5yYWRpdXMgKyBpdGVtLnJhZGl1cykgewogICAgICAgICAgICBpZiAoaXRlbS50eXBlID09PSAnUE9XRVInKSB7CiAgICAgICAgICAgICAgICBpZiAocGxheWVyLndlYXBvbkxldmVsIDwgcGxheWVyLm1heFdlYXBvbkxldmVsKSB7CiAgICAgICAgICAgICAgICAgICAgcGxheWVyLndlYXBvbkxldmVsKys7CiAgICAgICAgICAgICAgICAgICAgZGFtYWdlVGV4dHMucHVzaChuZXcgRGFtYWdlVGV4dChwbGF5ZXIueCwgcGxheWVyLnkgLSAyMCwgYOqwle2ZlCBMdi4ke3BsYXllci53ZWFwb25MZXZlbH0hYCwgJyMwMGZmZmYnKSk7CiAgICAgICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgICAgIHBsYXllci5iYXNlRGFtYWdlICs9IDEwOwogICAgICAgICAgICAgICAgICAgIGRhbWFnZVRleHRzLnB1c2gobmV3IERhbWFnZVRleHQocGxheWVyLngsIHBsYXllci55IC0gMjAsICfqs7XqsqnroKUgKzEwIOyDgeyKuSEnLCAnI2ZmZGQwMCcpKTsKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfSBlbHNlIGlmIChpdGVtLnR5cGUgPT09ICdTUEVFRCcpIHsKICAgICAgICAgICAgICAgIHBsYXllci5zcGVlZExldmVsKys7CiAgICAgICAgICAgICAgICBkYW1hZ2VUZXh0cy5wdXNoKG5ldyBEYW1hZ2VUZXh0KHBsYXllci54LCBwbGF5ZXIueSAtIDIwLCAn6rO16rKp7IaN64+EIOyDgeyKuSEnLCAnI2ZmMDBmZicpKTsKICAgICAgICAgICAgfSBlbHNlIGlmIChpdGVtLnR5cGUgPT09ICdIRUFMJykgewogICAgICAgICAgICAgICAgcGxheWVyLmhwID0gTWF0aC5taW4ocGxheWVyLm1heEhwLCBwbGF5ZXIuaHAgKyAzMCk7CiAgICAgICAgICAgICAgICBkYW1hZ2VUZXh0cy5wdXNoKG5ldyBEYW1hZ2VUZXh0KHBsYXllci54LCBwbGF5ZXIueSAtIDIwLCAnKzMwIEhQJywgJyMwMGZmNjYnKSk7CiAgICAgICAgICAgIH0gZWxzZSBpZiAoaXRlbS50eXBlID09PSAnU0hJRUxEJykgewogICAgICAgICAgICAgICAgcGxheWVyLnNoaWVsZFRpbWVyID0gMzYwOwogICAgICAgICAgICAgICAgZGFtYWdlVGV4dHMucHVzaChuZXcgRGFtYWdlVGV4dChwbGF5ZXIueCwgcGxheWVyLnkgLSAyMCwgJ+yJtOuTnCDrsJzrj5khJywgJyNmZmRkMDAnKSk7CiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIGNyZWF0ZUV4cGxvc2lvbihpdGVtLngsIGl0ZW0ueSwgaXRlbS5jb2xvciwgNik7CiAgICAgICAgICAgIGl0ZW1zLnNwbGljZShpSW5kZXgsIDEpOwogICAgICAgIH0gZWxzZSBpZiAoaXRlbS55ID4gY2FudmFzLmhlaWdodCArIDIwKSB7CiAgICAgICAgICAgIGl0ZW1zLnNwbGljZShpSW5kZXgsIDEpOwogICAgICAgIH0KICAgIH0KCiAgICBmb3IgKGxldCBwSW5kZXggPSBwYXJ0aWNsZXMubGVuZ3RoIC0gMTsgcEluZGV4ID49IDA7IHBJbmRleC0tKSB7CiAgICAgICAgY29uc3QgcCA9IHBhcnRpY2xlc1twSW5kZXhdOwogICAgICAgIHAudXBkYXRlKCk7IHAuZHJhdygpOwogICAgICAgIGlmIChwLmFscGhhIDw9IDApIHBhcnRpY2xlcy5zcGxpY2UocEluZGV4LCAxKTsKICAgIH0KCiAgICBmb3IgKGxldCBkdEluZGV4ID0gZGFtYWdlVGV4dHMubGVuZ3RoIC0gMTsgZHRJbmRleCA+PSAwOyBkdEluZGV4LS0pIHsKICAgICAgICBjb25zdCBkdCA9IGRhbWFnZVRleHRzW2R0SW5kZXhdOwogICAgICAgIGR0LnVwZGF0ZSgpOyBkdC5kcmF3KCk7CiAgICAgICAgaWYgKGR0LmFscGhhIDw9IDApIGRhbWFnZVRleHRzLnNwbGljZShkdEluZGV4LCAxKTsKICAgIH0KCiAgICB1cGRhdGVVSSgpOwogICAgYW5pbWF0aW9uRnJhbWVJZCA9IHJlcXVlc3RBbmltYXRpb25GcmFtZShnYW1lTG9vcCk7Cn0KCmZ1bmN0aW9uIHN0YXJ0R2FtZSgpIHsKICAgIHNjb3JlID0gMDsgc3RhZ2UgPSAxOwogICAgYnVsbGV0cyA9IFtdOyBlbmVtaWVzID0gW107IHBhcnRpY2xlcyA9IFtdOyBkYW1hZ2VUZXh0cyA9IFtdOyBpdGVtcyA9IFtdOyBleHBsb3Npb25zID0gW107CiAgICBwbGF5ZXIgPSBuZXcgUGxheWVyKCk7CiAgICBpbml0QmFja2dyb3VuZCgpOwoKICAgIHN0YXJ0T3ZlcmxheS5zdHlsZS5kaXNwbGF5ID0gJ25vbmUnOwogICAgZ2FtZW92ZXJPdmVybGF5LnN0eWxlLmRpc3BsYXkgPSAnbm9uZSc7CgogICAgaXNHYW1lUnVubmluZyA9IHRydWU7CiAgICBjYW5jZWxBbmltYXRpb25GcmFtZShhbmltYXRpb25GcmFtZUlkKTsKICAgIGdhbWVMb29wKCk7Cn0KCmZ1bmN0aW9uIGVuZEdhbWUoKSB7CiAgICBpc0dhbWVSdW5uaW5nID0gZmFsc2U7CiAgICBmaW5hbFNjb3JlLmlubmVyVGV4dCA9IGDstZzsooUg7KCQ7IiYOiAke3Njb3JlfWA7CiAgICBnYW1lb3Zlck92ZXJsYXkuc3R5bGUuZGlzcGxheSA9ICdmbGV4JzsKfQo8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+";
+        let spaceWarAnimId = null;
+        let spaceWarMode = 1;
+        let spacePlayers = [];
+        let spaceBullets = [];
+        let spaceEnemies = [];
+        let spaceStars = [];
+        let spaceKeys = {};
+
+        const chessChars = {
+            1: '♙', 2: '♖', 3: '♘', 4: '♗', 5: '♕', 6: '♔',
+            11: '♟', 12: '♜', 13: '♞', 14: '♝', 15: '♛', 16: '♚'
+        };
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function selectGame(game) {
+            config.game = game;
+            if (game === 'spacewar') {
+                showScreen('screen-spacewar-mode');
+                return;
+            }
+            if (game === 'snake' || game === 'stairs') {
+                startGame(0); 
+                return;
+            }
+            let title = game === 'go' ? "바둑" : (game === 'gomoku' ? "오목" : "체스");
+            document.getElementById('mode-title').innerText = `${title} - 모드 선택`;
+            showScreen('screen-mode');
+        }
+
+        function startSpaceWar(mode) {
+            spaceWarMode = mode || 1;
+            config.game = 'spacewar';
+            if (spaceWarMode === 2) {
+                // 2인용: 화면이 더 넓고 1P(WASD) / 2P(화살표)가 함께 조종하는 캔버스 기반 스페이스워
+                startGame(0);
+            } else {
+                // 1인용: 기존 업로드된 스페이스워 게임 그대로 실행
+                openUploadedSpaceWar();
+            }
+        }
+
+        // ▼▼▼ 업로드된 "space war 게임 수정 필요.html" 게임을 iframe으로 재생하기 위한 코드 ▼▼▼
+        function openUploadedSpaceWar() {
+            showScreen('screen-spacewar-game');
+            const frame = document.getElementById('spacewar-uploaded-frame');
+            if (!frame.getAttribute('data-loaded')) {
+                const binary = atob(UPLOADED_SPACEWAR_B64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                const html = new TextDecoder('utf-8').decode(bytes);
+                frame.srcdoc = html;
+                frame.setAttribute('data-loaded', '1');
+            }
+        }
+
+        function closeUploadedSpaceWar() {
+            showScreen('screen-main');
+        }
+        // ▲▲▲ 업로드된 space war 게임 재생 코드 끝 ▲▲▲
+
+        function selectMode(mode) {
+            config.mode = mode;
+            if (mode === 'ai') {
+                showScreen('screen-diff');
+            } else {
+                checkTimeSelect();
+            }
+        }
+
+        function selectDiff(diff) {
+            config.difficulty = diff;
+            checkTimeSelect();
+        }
+
+        function checkTimeSelect() {
+            if (config.game === 'go' || config.game === 'chess') {
+                showScreen('screen-time');
+            } else {
+                startGame(0); 
+            }
+        }
+
+        function startGame(minutes) {
+            config.time = minutes;
+            player1Time = minutes * 60;
+            player2Time = minutes * 60;
+            
+            currentPlayer = 1;
+            gameActive = true;
+            blackCaptures = 0;
+            whiteCaptures = 0;
+            chessSelected = null;
+            gomokuWinLine = null;
+            isCheck = false;
+            checkKingPos = null;
+
+            if (snakeAnimId) { cancelAnimationFrame(snakeAnimId); snakeAnimId = null; }
+            if (stairsAnimId) { cancelAnimationFrame(stairsAnimId); stairsAnimId = null; }
+            if (spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
+            
+            window.removeEventListener('keydown', snakeKeyHandler);
+            window.removeEventListener('keydown', stairsKeyHandler);
+            window.removeEventListener('keydown', spaceWarKeyHandler);
+            window.removeEventListener('keyup', spaceWarKeyUpHandler);
+            document.getElementById('stairs-menu-overlay').style.display = 'none';
+            document.getElementById('stairs-rank-badge').style.display = 'none';
+
+            if (config.game === 'snake') {
+                document.getElementById('timer').style.display = 'none';
+                document.querySelector('.status-box').style.display = 'none';
+                showScreen('screen-game');
+                initSnakeGame();
+                return;
+            } else if (config.game === 'stairs') {
+                document.getElementById('timer').style.display = 'none';
+                document.querySelector('.status-box').style.display = 'none';
+                showScreen('screen-game');
+                initStairsGame();
+                return;
+            } else if (config.game === 'spacewar') {
+                document.getElementById('timer').style.display = 'none';
+                document.querySelector('.status-box').style.display = 'none';
+                showScreen('screen-game');
+                initSpaceWarGame();
+                return;
+            } else {
+                document.getElementById('timer').style.display = minutes > 0 ? 'block' : 'none';
+                document.querySelector('.status-box').style.display = 'flex';
+            }
+
+            if (config.game === 'go') boardSize = 21;
+            else if (config.game === 'gomoku') boardSize = 17;
+            else if (config.game === 'chess') boardSize = 8;
+
+            if (config.game === 'chess') {
+                board = [
+                    [12,13,14,15,16,14,13,12],
+                    [11,11,11,11,11,11,11,11],
+                    [0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0],
+                    [0,0,0,0,0,0,0,0],
+                    [1,1,1,1,1,1,1,1],
+                    [2,3,4,5,6,4,3,2]
+                ];
+            } else {
+                board = Array.from({ length: boardSize }, () => Array(boardSize).fill(0));
+            }
+
+            showScreen('screen-game');
+            updateStatus();
+            if (minutes > 0) startTimer();
+            else clearInterval(timerInterval);
+            
+            initCanvas();
+            drawBoard();
+        }
+
+        function quitGame() {
+            gameActive = false;
+            stairsPlaying = false;
+            stairsFalling = false;
+            clearInterval(timerInterval);
+            if (snakeAnimId) { cancelAnimationFrame(snakeAnimId); snakeAnimId = null; }
+            if (stairsAnimId) { cancelAnimationFrame(stairsAnimId); stairsAnimId = null; }
+            if (spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
+            
+            window.removeEventListener('keydown', snakeKeyHandler);
+            window.removeEventListener('keydown', stairsKeyHandler);
+            window.removeEventListener('keydown', spaceWarKeyHandler);
+            window.removeEventListener('keyup', spaceWarKeyUpHandler);
+            
+            document.getElementById('stairs-menu-overlay').style.display = 'none';
+            document.getElementById('result-modal').style.display = 'none';
+            document.getElementById('result-modal').style.background = "rgba(0,0,0,0.8)";
+            document.querySelector('.modal-content').style.boxShadow = "0 25px 50px rgba(0,0,0,0.5)";
+            
+            showScreen('screen-main');
+        }
+
+        function initCanvas() {
+            canvas = document.getElementById('boardCanvas');
+            ctx = canvas.getContext('2d');
+            
+            let screenWidth = window.innerWidth;
+            let screenHeight = window.innerHeight;
+            let size = Math.min(screenWidth * 0.95, screenHeight * 0.85, 900);
+            
+            canvas.width = size;
+            canvas.height = size;
+            cellSize = size / boardSize;
+            canvas.onclick = handleBoardClick;
+        }
+
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (config.game === 'chess') {
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        ctx.fillStyle = (x + y) % 2 === 0 ? '#f0d9b5' : '#8b5a2b';
+                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                        
+                        if (chessSelected && chessSelected.x === x && chessSelected.y === y) {
+                            ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
+                            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                        }
+
+                        if (chessSelected) {
+                            let p = board[chessSelected.y][chessSelected.x] < 10 ? 1 : 2;
+                            if (isValidChessMove(chessSelected.x, chessSelected.y, x, y, p, board) && isSafeMove(chessSelected.x, chessSelected.y, x, y, p, board)) {
+                                ctx.beginPath();
+                                ctx.arc(x * cellSize + cellSize / 2, y * cellSize + cellSize / 2, cellSize * 0.15, 0, Math.PI * 2);
+                                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
+                                ctx.fill();
+                            }
+                        }
+                    }
+                }
+
+                if (isCheck && checkKingPos) {
+                    let kx = checkKingPos.x * cellSize + cellSize / 2;
+                    let ky = checkKingPos.y * cellSize + cellSize / 2;
+                    let rg = ctx.createRadialGradient(kx, ky, 0, kx, ky, cellSize * 0.8);
+                    rg.addColorStop(0, 'rgba(255, 0, 0, 0.9)');
+                    rg.addColorStop(0.5, 'rgba(255, 0, 0, 0.5)');
+                    rg.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                    ctx.fillStyle = rg;
+                    ctx.fillRect(checkKingPos.x * cellSize, checkKingPos.y * cellSize, cellSize, cellSize);
+                    
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(checkKingPos.x * cellSize, checkKingPos.y * cellSize, cellSize, cellSize);
+                }
+
+                for (let y = 0; y < 8; y++) {
+                    for (let x = 0; x < 8; x++) {
+                        let piece = board[y][x];
+                        if (piece !== 0) {
+                            let isWhite = piece < 10;
+                            let cx = x * cellSize + cellSize / 2;
+                            let cy = y * cellSize + cellSize / 2;
+
+                            ctx.font = `bold ${cellSize * 0.75}px Arial`;
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.shadowColor = "transparent";
+
+                            if (isWhite) {
+                                ctx.fillStyle = '#ffffff';
+                                ctx.strokeStyle = '#000000';
+                                ctx.lineWidth = 2;
+                                ctx.strokeText(chessChars[piece], cx, cy + 2);
+                                ctx.fillText(chessChars[piece], cx, cy + 2);
+                            } else {
+                                ctx.fillStyle = '#000000';
+                                ctx.strokeStyle = '#ffffff';
+                                ctx.lineWidth = 1;
+                                ctx.strokeText(chessChars[piece], cx, cy + 2);
+                                ctx.fillText(chessChars[piece], cx, cy + 2);
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#3e2723';
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i < boardSize; i++) {
+                ctx.moveTo(cellSize / 2, cellSize / 2 + i * cellSize);
+                ctx.lineTo(canvas.width - cellSize / 2, cellSize / 2 + i * cellSize);
+                ctx.moveTo(cellSize / 2 + i * cellSize, cellSize / 2);
+                ctx.lineTo(cellSize / 2 + i * cellSize, canvas.height - cellSize / 2);
+            }
+            ctx.stroke();
+
+            ctx.fillStyle = '#3e2723';
+            let stars = [];
+            if (boardSize === 21) stars = [4, 10, 16];
+            else if (boardSize === 17) stars = [4, 8, 12];
+
+            for (let i of stars) {
+                for (let j of stars) {
+                    ctx.beginPath();
+                    ctx.arc(cellSize / 2 + i * cellSize, cellSize / 2 + j * cellSize, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (board[y][x] !== 0) {
+                        drawStone(x, y, board[y][x]);
+                    }
+                }
+            }
+
+            if (config.game === 'gomoku' && gomokuWinLine) {
+                ctx.save();
+                ctx.beginPath();
+                let x1 = cellSize / 2 + gomokuWinLine.x1 * cellSize;
+                let y1 = cellSize / 2 + gomokuWinLine.y1 * cellSize;
+                let x2 = cellSize / 2 + gomokuWinLine.x2 * cellSize;
+                let y2 = cellSize / 2 + gomokuWinLine.y2 * cellSize;
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 6;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function drawStone(x, y, player) {
+            let cx = cellSize / 2 + x * cellSize;
+            let cy = cellSize / 2 + y * cellSize;
+            let radius = cellSize * 0.45;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            
+            let gradient = ctx.createRadialGradient(cx - radius * 0.3, cy - radius * 0.3, radius * 0.1, cx, cy, radius);
+            if (player === 1) { 
+                gradient.addColorStop(0, '#666');
+                gradient.addColorStop(1, '#000');
+            } else { 
+                gradient.addColorStop(0, '#fff');
+                gradient.addColorStop(1, '#ccc');
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            ctx.fill();
+            ctx.shadowColor = "transparent";
+        }
+
+        function handleBoardClick(e) {
+            if (!gameActive || config.game === 'snake' || config.game === 'stairs' || config.game === 'spacewar') return;
+            if (config.mode === 'ai' && currentPlayer === 2) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / cellSize);
+            const y = Math.floor((e.clientY - rect.top) / cellSize);
+
+            if (x < 0 || x >= boardSize || y < 0 || y >= boardSize) return;
+
+            if (config.game === 'chess') {
+                let piece = board[y][x];
+                let p = piece === 0 ? 0 : (piece < 10 ? 1 : 2);
+                
+                if (chessSelected) {
+                    if (isValidChessMove(chessSelected.x, chessSelected.y, x, y, currentPlayer, board) && isSafeMove(chessSelected.x, chessSelected.y, x, y, currentPlayer, board)) {
+                        executeChessMove(chessSelected.x, chessSelected.y, x, y);
+                    } else if (p === currentPlayer) {
+                        chessSelected = {x, y};
+                        drawBoard();
+                    } else {
+                        chessSelected = null;
+                        drawBoard();
+                    }
+                } else {
+                    if (p === currentPlayer) {
+                        chessSelected = {x, y};
+                        drawBoard();
+                    }
+                }
+            } else {
+                if (board[y][x] === 0) placeStone(x, y);
+            }
+        }
+
+        function checkLineClear(sx, sy, dx, dy, b) {
+            let stepX = dx > sx ? 1 : (dx < sx ? -1 : 0);
+            let stepY = dy > sy ? 1 : (dy < sy ? -1 : 0);
+            let cx = sx + stepX, cy = sy + stepY;
+            while(cx !== dx || cy !== dy) {
+                if (b[cy][cx] !== 0) return false;
+                cx += stepX; cy += stepY;
+            }
+            return true;
+        }
+
+        function isValidChessMove(sx, sy, dx, dy, player, b) {
+            let piece = b[sy][sx];
+            let target = b[dy][dx];
+            let p = piece < 10 ? 1 : 2;
+            let tp = target === 0 ? 0 : (target < 10 ? 1 : 2);
+            if (p !== player || tp === player) return false;
+
+            let type = piece % 10;
+            let dx_diff = Math.abs(dx - sx);
+            let dy_diff = Math.abs(dy - sy);
+
+            if (type === 1) { 
+                let dir = p === 1 ? -1 : 1;
+                if (dx_diff === 0 && dy - sy === dir && target === 0) return true;
+                if (dx_diff === 0 && dy - sy === dir * 2 && sy === (p === 1 ? 6 : 1) && target === 0 && b[sy+dir][sx] === 0) return true;
+                if (dx_diff === 1 && dy - sy === dir && target !== 0) return true;
+                return false;
+            }
+            if (type === 2) { 
+                if (dx_diff !== 0 && dy_diff !== 0) return false;
+                return checkLineClear(sx, sy, dx, dy, b);
+            }
+            if (type === 3) { 
+                return (dx_diff === 1 && dy_diff === 2) || (dx_diff === 2 && dy_diff === 1);
+            }
+            if (type === 4) { 
+                if (dx_diff !== dy_diff) return false;
+                return checkLineClear(sx, sy, dx, dy, b);
+            }
+            if (type === 5) { 
+                if (dx_diff !== 0 && dy_diff !== 0 && dx_diff !== dy_diff) return false;
+                return checkLineClear(sx, sy, dx, dy, b);
+            }
+            if (type === 6) { 
+                return dx_diff <= 1 && dy_diff <= 1;
+            }
+            return false;
+        }
+
+        function findKing(player, b) {
+            let kingCode = player === 1 ? 6 : 16;
+            for(let y=0; y<8; y++) {
+                for(let x=0; x<8; x++) {
+                    if(b[y][x] === kingCode) return {x, y};
+                }
+            }
+            return null;
+        }
+
+        function isAttacked(tx, ty, byPlayer, b) {
+            for(let y=0; y<8; y++) {
+                for(let x=0; x<8; x++) {
+                    let piece = b[y][x];
+                    if (piece !== 0 && (piece < 10 ? 1 : 2) === byPlayer) {
+                        if (isValidChessMove(x, y, tx, ty, byPlayer, b)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function isKingInCheck(player, b) {
+            let kingPos = findKing(player, b);
+            if(!kingPos) return false;
+            return isAttacked(kingPos.x, kingPos.y, player === 1 ? 2 : 1, b);
+        }
+
+        function isSafeMove(sx, sy, dx, dy, player, b) {
+            let target = b[dy][dx];
+            let piece = b[sy][sx];
+            b[dy][dx] = piece;
+            b[sy][sx] = 0;
+            let inCheck = isKingInCheck(player, b);
+            b[sy][sx] = piece;
+            b[dy][dx] = target;
+            return !inCheck;
+        }
+
+        function isCheckmate(player, b) {
+            if(!isKingInCheck(player, b)) return false;
+            for(let sy=0; sy<8; sy++) {
+                for(let sx=0; sx<8; sx++) {
+                    let piece = b[sy][sx];
+                    if (piece !== 0 && (piece < 10 ? 1 : 2) === player) {
+                        for(let dy=0; dy<8; dy++) {
+                            for(let dx=0; dx<8; dx++) {
+                                if (isValidChessMove(sx, sy, dx, dy, player, b)) {
+                                    let target = b[dy][dx];
+                                    b[dy][dx] = piece;
+                                    b[sy][sx] = 0;
+                                    let stillInCheck = isKingInCheck(player, b);
+                                    b[sy][sx] = piece;
+                                    b[dy][dx] = target;
+                                    if(!stillInCheck) return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        function executeChessMove(sx, sy, dx, dy) {
+            let target = board[dy][dx];
+            board[dy][dx] = board[sy][sx];
+            board[sy][sx] = 0;
+            
+            let type = board[dy][dx] % 10;
+            let p = board[dy][dx] < 10 ? 1 : 2;
+            
+            if (type === 1 && (dy === 0 || dy === 7)) {
+                board[dy][dx] = p === 1 ? 5 : 15; 
+            }
+
+            chessSelected = null;
+            let nextPlayer = p === 1 ? 2 : 1;
+            let checked = isKingInCheck(nextPlayer, board);
+            let checkmated = false;
+
+            if (checked) {
+                checkmated = isCheckmate(nextPlayer, board);
+                isCheck = true;
+                checkKingPos = findKing(nextPlayer, board);
+            } else {
+                isCheck = false;
+                checkKingPos = null;
+            }
+
+            if (target === 6 || target === 16 || checkmated) {
+                isCheck = true;
+                checkKingPos = findKing(nextPlayer, board);
+                drawBoard();
+                
+                setTimeout(() => {
+                    document.getElementById('result-modal').style.background = "rgba(150, 0, 0, 0.85)";
+                    document.querySelector('.modal-content').style.boxShadow = "0 0 50px rgba(255,0,0,0.8)";
+                    endGame(p === 1 ? "백(White) 승리!" : "흑(Black) 승리!", checkmated ? "체크메이트! 상대의 킹이 도망칠 곳이 없습니다." : "상대의 킹을 잡았습니다.");
+                }, 300);
+                return;
+            }
+
+            currentPlayer = nextPlayer;
+            updateStatus();
+            drawBoard();
+
+            if (gameActive && config.mode === 'ai' && currentPlayer === 2) {
+                setTimeout(makeAIMove, 500);
+            }
+        }
+
+        function placeStone(x, y) {
+            if (config.game === 'gomoku') {
+                board[y][x] = currentPlayer;
+                if (checkGomokuWin(x, y, currentPlayer)) {
+                    drawBoard();
+                    let winPlayer = currentPlayer;
+                    gameActive = false;
+                    setTimeout(() => {
+                        endGame(winPlayer === 1 ? "흑 승리!" : "백 승리!", "5목을 완성했습니다.");
+                    }, 2000);
+                    return;
+                }
+                drawBoard();
+            } else if (config.game === 'go') {
+                board[y][x] = currentPlayer;
+                let captured = captureStones(x, y, currentPlayer, true);
+                
+                if (captured === 0 && getLiberties(x, y).liberties.length === 0) {
+                    board[y][x] = 0; 
+                    alert("착수 금지 구역입니다.");
+                    return;
+                }
+                
+                if (currentPlayer === 1) blackCaptures += captured;
+                else whiteCaptures += captured;
+
+                drawBoard();
+            }
+
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updateStatus();
+
+            if (gameActive && config.mode === 'ai' && currentPlayer === 2) {
+                setTimeout(makeAIMove, 500);
+            }
+        }
+
+        function checkGomokuWin(x, y, player) {
+            const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
+            for (let [dx, dy] of directions) {
+                let count = 1;
+                let startX = x, startY = y;
+                let endX = x, endY = y;
+
+                let nx = x + dx, ny = y + dy;
+                while (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize && board[ny][nx] === player) {
+                    count++; endX = nx; endY = ny; nx += dx; ny += dy;
+                }
+                nx = x - dx; ny = y - dy;
+                while (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize && board[ny][nx] === player) {
+                    count++; startX = nx; startY = ny; nx -= dx; ny -= dy;
+                }
+                if (count >= 5) {
+                    gomokuWinLine = { x1: startX, y1: startY, x2: endX, y2: endY };
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function getLiberties(startX, startY) {
+            let color = board[startY][startX];
+            let visited = Array.from({ length: boardSize }, () => Array(boardSize).fill(false));
+            let group = [];
+            let liberties = new Set();
+            let queue = [{x: startX, y: startY}];
+            visited[startY][startX] = true;
+
+            const dirs = [[0,1], [1,0], [0,-1], [-1,0]];
+            while (queue.length > 0) {
+                let curr = queue.shift();
+                group.push(curr);
+                for (let [dx, dy] of dirs) {
+                    let nx = curr.x + dx, ny = curr.y + dy;
+                    if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
+                        if (board[ny][nx] === 0) liberties.add(`${nx},${ny}`);
+                        else if (board[ny][nx] === color && !visited[ny][nx]) {
+                            visited[ny][nx] = true;
+                            queue.push({x: nx, y: ny});
+                        }
+                    }
+                }
+            }
+            return { group: group, liberties: Array.from(liberties) };
+        }
+
+        function captureStones(x, y, player, execute) {
+            let opponent = player === 1 ? 2 : 1;
+            let capturedCount = 0;
+            const dirs = [[0,1], [1,0], [0,-1], [-1,0]];
+            
+            for (let [dx, dy] of dirs) {
+                let nx = x + dx, ny = y + dy;
+                if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize && board[ny][nx] === opponent) {
+                    let info = getLiberties(nx, ny);
+                    if (info.liberties.length === 0) {
+                        capturedCount += info.group.length;
+                        if(execute) info.group.forEach(stone => board[stone.y][stone.x] = 0);
+                    }
+                }
+            }
+            return capturedCount;
+        }
+
+        function makeAIMove() {
+            if (!gameActive) return;
+            let diff = config.difficulty;
+
+            if (config.game === 'gomoku') {
+                makeGomokuAI(diff);
+            } else if (config.game === 'go') {
+                makeGoAI(diff);
+            } else if (config.game === 'chess') {
+                makeChessAI(diff);
+            }
+        }
+
+        function getGomokuScore(x, y, p) {
+            board[y][x] = p;
+            let totalScore = 0;
+            const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+            for(let [dx,dy] of dirs) {
+                let count = 1, open = 0;
+                let nx = x+dx, ny = y+dy;
+                while(nx>=0 && nx<boardSize && ny>=0 && ny<boardSize && board[ny][nx]===p){ count++; nx+=dx; ny+=dy; }
+                if(nx>=0 && nx<boardSize && ny>=0 && ny<boardSize && board[ny][nx]===0) open++;
+                
+                nx = x-dx; ny = y-dy;
+                while(nx>=0 && nx<boardSize && ny>=0 && ny<boardSize && board[ny][nx]===p){ count++; nx-=dx; ny-=dy; }
+                if(nx>=0 && nx<boardSize && ny>=0 && ny<boardSize && board[ny][nx]===0) open++;
+                
+                if(count >= 5) totalScore += 1000000;
+                else if(count === 4) totalScore += (open > 0 ? 100000 : 5000);
+                else if(count === 3) totalScore += (open === 2 ? 10000 : (open === 1 ? 100 : 0));
+                else if(count === 2) totalScore += (open === 2 ? 100 : 5);
+            }
+            board[y][x] = 0;
+            let centerBias = (boardSize/2 - Math.abs(x-boardSize/2)) + (boardSize/2 - Math.abs(y-boardSize/2));
+            return totalScore + centerBias;
+        }
+
+        function makeGomokuAI(diff) {
+            let bestScore = -1, moves = [];
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (board[y][x] === 0) {
+                        let score = 0;
+                        if (diff === 'low') score = Math.random();
+                        else if (diff === 'mid') score = getGomokuScore(x, y, 2) + getGomokuScore(x, y, 1)*0.5;
+                        else if (diff === 'high') score = getGomokuScore(x, y, 2) + getGomokuScore(x, y, 1)*0.8;
+                        else score = getGomokuScore(x, y, 2)*1.2 + getGomokuScore(x, y, 1);
+                        
+                        if (score > bestScore) { bestScore = score; moves = [{x, y}]; } 
+                        else if (score === bestScore) { moves.push({x, y}); }
+                    }
+                }
+            }
+            if (moves.length > 0) {
+                let m = moves[Math.floor(Math.random() * moves.length)];
+                placeStone(m.x, m.y);
+            } else endGame("무승부", "AI가 착수할 곳이 없습니다.");
+        }
+
+        function makeGoAI(diff) {
+            if (!gameActive) return;
+
+            let validMoves = [];
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (board[y][x] === 0) {
+                        board[y][x] = 2;
+                        let cap = captureStones(x, y, 2, false);
+                        let libs = getLiberties(x, y).liberties.length;
+                        board[y][x] = 0;
+
+                        if (cap > 0 || libs > 0) {
+                            validMoves.push({ x, y, cap, libs });
+                        }
+                    }
+                }
+            }
+
+            if (validMoves.length === 0) {
+                endGame("게임 종료", "AI가 착수할 곳이 없어 패스했습니다.");
+                return;
+            }
+
+            if (diff === 'low') {
+                let m = validMoves[Math.floor(Math.random() * validMoves.length)];
+                placeStone(m.x, m.y);
+                return;
+            }
+
+            let bestScore = -Infinity;
+            let bestMoves = [];
+
+            for (let m of validMoves) {
+                let score = 0;
+
+                score += m.cap * 2000;
+
+                if (m.cap === 0 && m.libs === 1) {
+                    score -= 800;
+                } else {
+                    score += m.libs * 15;
+                }
+
+                const dirs = [[0,1], [1,0], [0,-1], [-1,0]];
+                for (let [dx, dy] of dirs) {
+                    let nx = m.x + dx, ny = m.y + dy;
+                    if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize) {
+                        let neighbor = board[ny][nx];
+                        if (neighbor === 1) { 
+                            let oppLibs = getLiberties(nx, ny).liberties.length;
+                            if (oppLibs === 2) score += 600; 
+                            else if (oppLibs === 1) score += 1200; 
+                            score += 30;
+                        } else if (neighbor === 2) { 
+                            let myLibs = getLiberties(nx, ny).liberties.length;
+                            if (myLibs === 1) score += 1500; 
+                            score += 50; 
+                        }
+                    }
+                }
+
+                let distFromEdge = Math.min(m.x, boardSize - 1 - m.x, m.y, boardSize - 1 - m.y);
+                if (distFromEdge === 0) score -= 120;
+                else if (distFromEdge === 2 || distFromEdge === 3) score += 180;
+
+                if (diff === 'mid') score += Math.random() * 100;
+                if (diff === 'high' || diff === 'pro') score += Math.random() * 20;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMoves = [m];
+                } else if (score === bestScore) {
+                    bestMoves.push(m);
+                }
+            }
+
+            let move = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            placeStone(move.x, move.y);
+        }
+
+        function getAllChessMoves(player) {
+            let moves = [];
+            for(let sy=0; sy<8; sy++) {
+                for(let sx=0; sx<8; sx++) {
+                    let piece = board[sy][sx];
+                    if (piece !== 0 && (piece < 10 ? 1 : 2) === player) {
+                        for(let dy=0; dy<8; dy++) {
+                            for(let dx=0; dx<8; dx++) {
+                                if (isValidChessMove(sx, sy, dx, dy, player, board) && isSafeMove(sx, sy, dx, dy, player, board)) {
+                                    moves.push({sx, sy, dx, dy});
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return moves;
+        }
+
+        function chessEval(tempBoard) {
+           let score = 0;
+           const pieceVals = {1:10, 2:50, 3:30, 4:30, 5:90, 6:9000};
+           for(let y=0; y<8; y++){
+              for(let x=0; x<8; x++){
+                 let p = tempBoard[y][x];
+                 if(p===0) continue;
+                 let val = pieceVals[p%10] + ((3.5 - Math.abs(x-3.5)) + (3.5 - Math.abs(y-3.5)));
+                 if(p<10) score -= val; 
+                 else score += val;     
+              }
+           }
+           return score;
+        }
+
+        function evaluateChessMove(move, depth, alpha, beta, isMax) {
+            let tempTarget = board[move.dy][move.dx];
+            board[move.dy][move.dx] = board[move.sy][move.sx];
+            board[move.sy][move.sx] = 0;
+            
+            let score;
+            if (tempTarget === 6) score = 99999; 
+            else if (tempTarget === 16) score = -99999;
+            else if (depth <= 1) score = chessEval(board);
+            else {
+                let nextMoves = getAllChessMoves(isMax ? 2 : 1);
+                if (isMax) {
+                    let maxEval = -Infinity;
+                    for(let m of nextMoves) {
+                        let ev = evaluateChessMove(m, depth-1, alpha, beta, false);
+                        maxEval = Math.max(maxEval, ev);
+                        alpha = Math.max(alpha, ev);
+                        if (beta <= alpha) break;
+                    }
+                    score = maxEval === -Infinity ? chessEval(board) : maxEval;
+                } else {
+                    let minEval = Infinity;
+                    for(let m of nextMoves) {
+                        let ev = evaluateChessMove(m, depth-1, alpha, beta, true);
+                        minEval = Math.min(minEval, ev);
+                        beta = Math.min(beta, ev);
+                        if (beta <= alpha) break;
+                    }
+                    score = minEval === Infinity ? chessEval(board) : minEval;
+                }
+            }
+            
+            board[move.sy][move.sx] = board[move.dy][move.dx];
+            board[move.dy][move.dx] = tempTarget;
+            return score;
+        }
+
+        function makeChessAI(diff) {
+            let moves = getAllChessMoves(2);
+            if (moves.length === 0) { 
+                let checkmated = isKingInCheck(2, board);
+                endGame(checkmated ? "백(White) 승리!" : "무승부", checkmated ? "체크메이트!" : "스테일메이트 (AI가 움직일 수 없습니다)."); 
+                return; 
+            }
+            
+            let bestMove = null;
+            if (diff === 'low') {
+                bestMove = moves[Math.floor(Math.random()*moves.length)];
+            } else {
+                let bestScore = -Infinity;
+                let depth = diff === 'pro' ? 3 : (diff === 'high' ? 2 : 1);
+                
+                if (depth === 3 && moves.length > 15) moves = moves.sort(() => Math.random() - 0.5).slice(0, 20);
+                
+                for(let m of moves) {
+                    let score = evaluateChessMove(m, depth, -Infinity, Infinity, false);
+                    if(score > bestScore) { bestScore = score; bestMove = m; }
+                }
+                if (!bestMove) bestMove = moves[0];
+            }
+            executeChessMove(bestMove.sx, bestMove.sy, bestMove.dx, bestMove.dy);
+        }
+
+        function updateStatus() {
+            let p1Str = config.game === 'chess' ? "백(White)" : "흑";
+            let p2Str = config.game === 'chess' ? "흑(Black)" : "백";
+            let p1Col = config.game === 'chess' ? "#fff" : "#000";
+            let p2Col = config.game === 'chess' ? "#000" : "#fff";
+
+            let text = currentPlayer === 1 ? `${p1Str}의 차례` : `${p2Str}의 차례`;
+            document.getElementById('turn-text').innerText = text;
+            document.getElementById('turn-color').style.background = currentPlayer === 1 ? p1Col : p2Col;
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            updateTimerUI();
+            timerInterval = setInterval(() => {
+                if (config.game === 'chess') {
+                    if (currentPlayer === 1) player1Time--;
+                    else player2Time--;
+                } else {
+                    player1Time--;
+                }
+                
+                updateTimerUI();
+                
+                if (config.game === 'chess') {
+                    if (player1Time <= 0 || player2Time <= 0) {
+                        clearInterval(timerInterval);
+                        handleTimeOut();
+                    }
+                } else {
+                    if (player1Time <= 0) {
+                        clearInterval(timerInterval);
+                        handleTimeOut();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerUI() {
+            if (config.game === 'chess') {
+                let m1 = Math.floor(player1Time / 60).toString().padStart(2, '0');
+                let s1 = (player1Time % 60).toString().padStart(2, '0');
+                let m2 = Math.floor(player2Time / 60).toString().padStart(2, '0');
+                let s2 = (player2Time % 60).toString().padStart(2, '0');
+                
+                let wStyle = currentPlayer === 1 ? 'color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);' : 'color: #94a3b8; font-weight: normal;';
+                let bStyle = currentPlayer === 2 ? 'color: #fbbf24; text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);' : 'color: #94a3b8; font-weight: normal;';
+                
+                document.getElementById('timer').innerHTML = 
+                    `<span style="${wStyle}">백 ${m1}:${s1}</span> &nbsp;|&nbsp; <span style="${bStyle}">흑 ${m2}:${s2}</span>`;
+            } else {
+                let m = Math.floor(player1Time / 60).toString().padStart(2, '0');
+                let s = (player1Time % 60).toString().padStart(2, '0');
+                document.getElementById('timer').innerText = `${m}:${s}`;
+            }
+        }
+
+        function handleTimeOut() {
+            gameActive = false;
+            let resultTitle = "", resultDesc = "";
+
+            if (config.game === 'chess') {
+                if (player1Time <= 0) {
+                    resultTitle = "흑(Black) 승리!";
+                    resultDesc = "백(White)의 3분 제한시간이 모두 초과되어 패배했습니다.";
+                } else if (player2Time <= 0) {
+                    resultTitle = "백(White) 승리!";
+                    resultDesc = "흑(Black)의 3분 제한시간이 모두 초과되어 패배했습니다.";
+                }
+            } else if (config.game === 'go') {
+                let blackCount = blackCaptures;
+                let whiteCount = whiteCaptures + 6.5; 
+                
+                for (let y = 0; y < boardSize; y++) {
+                    for (let x = 0; x < boardSize; x++) {
+                        if (board[y][x] === 1) blackCount++;
+                        else if (board[y][x] === 2) whiteCount++;
+                    }
+                }
+                if (blackCount > whiteCount) resultTitle = "흑 승리!";
+                else if (whiteCount > blackCount) resultTitle = "백 승리!";
+                else resultTitle = "무승부";
+                
+                resultDesc = `시간 종료에 따른 약식 계가 결과입니다.<br>(흑: ${blackCount}점 / 백(덤포함): ${whiteCount}점)`;
+            }
+
+            endGame(resultTitle, resultDesc);
+        }
+
+        function endGame(title, desc, isSpaceWar = false) {
+            gameActive = false;
+            stairsPlaying = false;
+            stairsFalling = false;
+            clearInterval(timerInterval);
+            if(snakeAnimId) { cancelAnimationFrame(snakeAnimId); snakeAnimId = null; }
+            if(stairsAnimId) { cancelAnimationFrame(stairsAnimId); stairsAnimId = null; }
+            if(spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
+            
+            window.removeEventListener('keydown', snakeKeyHandler);
+            document.getElementById('stairs-menu-overlay').style.display = 'none';
+            document.getElementById('result-title').innerText = title;
+            document.getElementById('result-desc').innerHTML = desc;
+
+            let btnContainer = document.getElementById('modal-buttons');
+            if (isSpaceWar) {
+                btnContainer.innerHTML = `
+                    <button id="modal-restart-btn" onclick="startSpaceWar(${spaceWarMode})">다시하기</button>
+                    <button class="btn-secondary" onclick="quitGame()">메인으로</button>
+                `;
+            } else if (config.game === 'stairs') {
+                btnContainer.innerHTML = `
+                    <button id="modal-restart-btn" onclick="restartStairsGame()">다시하기</button>
+                    <button class="btn-secondary" onclick="openStairsRankModal()">랭킹 등록</button>
+                    <button class="btn-secondary" onclick="quitGame()">메인으로</button>
+                `;
+            } else {
+                btnContainer.innerHTML = `<button onclick="quitGame()">메인으로 돌아가기</button>`;
+            }
+
+            document.getElementById('result-modal').style.display = 'flex';
+        }
+
+        // 결과창(다시하기/메인)이 떠 있을 때 스페이스바로 "다시하기" 버튼을 누를 수 있게 처리
+        window.addEventListener('keydown', function(e) {
+            if (e.code !== 'Space' && e.key !== ' ') return;
+            let modal = document.getElementById('result-modal');
+            if (modal.style.display !== 'flex') return;
+            let restartBtn = document.getElementById('modal-restart-btn');
+            if (restartBtn) {
+                e.preventDefault();
+                restartBtn.click();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            if (document.getElementById('screen-game').classList.contains('active')) {
+                if (config.game === 'snake' || config.game === 'stairs') {
+                    canvas.width = window.innerWidth * 0.95;
+                    canvas.height = window.innerHeight * 0.85;
+                    if (config.game === 'stairs') renderStairsFrame();
+                } else if (config.game === 'spacewar') {
+                    canvas.width = spaceWarMode === 2 ? Math.min(window.innerWidth * 0.9, 760) : Math.min(window.innerWidth * 0.9, 480);
+                    canvas.height = Math.min(window.innerHeight * 0.85, 750);
+                } else {
+                    initCanvas();
+                    drawBoard();
+                }
+            }
+        });
+
+        function initSpaceWarGame() {
+            canvas = document.getElementById('boardCanvas');
+            ctx = canvas.getContext('2d');
+            
+            let screenWidth = window.innerWidth;
+            let screenHeight = window.innerHeight;
+            canvas.width = spaceWarMode === 2 ? Math.min(screenWidth * 0.9, 760) : Math.min(screenWidth * 0.9, 480);
+            canvas.height = Math.min(screenHeight * 0.85, 750);
+
+            spacePlayers = [];
+            if (spaceWarMode === 1) {
+                spacePlayers.push({
+                    id: 1,
+                    x: canvas.width / 2 - 18,
+                    y: canvas.height - 70,
+                    w: 36,
+                    h: 36,
+                    speed: 6,
+                    hp: 3,
+                    score: 0,
+                    color: '#38bdf8',
+                    lastShot: 0,
+                    dead: false
+                });
+            } else {
+                spacePlayers.push({
+                    id: 1,
+                    x: canvas.width / 3 - 18,
+                    y: canvas.height - 70,
+                    w: 36,
+                    h: 36,
+                    speed: 6,
+                    hp: 3,
+                    score: 0,
+                    color: '#38bdf8',
+                    lastShot: 0,
+                    dead: false
+                });
+                spacePlayers.push({
+                    id: 2,
+                    x: (canvas.width / 3) * 2 - 18,
+                    y: canvas.height - 70,
+                    w: 36,
+                    h: 36,
+                    speed: 6,
+                    hp: 3,
+                    score: 0,
+                    color: '#f43f5e',
+                    lastShot: 0,
+                    dead: false
+                });
+            }
+
+            spaceBullets = [];
+            spaceEnemies = [];
+            spaceStars = [];
+            spaceKeys = {};
+
+            for (let i = 0; i < 60; i++) {
+                spaceStars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 1,
+                    speed: Math.random() * 2 + 0.5
+                });
+            }
+
+            window.removeEventListener('keydown', spaceWarKeyHandler);
+            window.removeEventListener('keyup', spaceWarKeyUpHandler);
+            window.addEventListener('keydown', spaceWarKeyHandler);
+            window.addEventListener('keyup', spaceWarKeyUpHandler);
+
+            canvas.onmousemove = null;
+            canvas.onmousedown = null;
+            canvas.onmouseup = null;
+
+            spaceWarLoop();
+        }
+
+        function spaceWarKeyHandler(e) {
+            if (!gameActive || config.game !== 'spacewar') return;
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'w', 'a', 's', 'd'].includes(e.code) || ['w','a','s','d','W','A','S','D'].includes(e.key)) {
+                e.preventDefault();
+            }
+            spaceKeys[e.code] = true;
+            spaceKeys[e.key.toLowerCase()] = true;
+        }
+
+        function spaceWarKeyUpHandler(e) {
+            if (config.game !== 'spacewar') return;
+            spaceKeys[e.code] = false;
+            spaceKeys[e.key.toLowerCase()] = false;
+        }
+
+        function spaceWarLoop() {
+            if (!gameActive || config.game !== 'spacewar') return;
+            spaceWarAnimId = requestAnimationFrame(spaceWarLoop);
+
+            let p1 = spacePlayers.find(p => p.id === 1 && !p.dead);
+            if (p1) {
+                if (spaceKeys['KeyA'] || spaceKeys['a']) p1.x -= p1.speed;
+                if (spaceKeys['KeyD'] || spaceKeys['d']) p1.x += p1.speed;
+                if (spaceKeys['KeyW'] || spaceKeys['w']) p1.y -= p1.speed;
+                if (spaceKeys['KeyS'] || spaceKeys['s']) p1.y += p1.speed;
+                p1.x = Math.max(0, Math.min(canvas.width - p1.w, p1.x));
+                p1.y = Math.max(0, Math.min(canvas.height - p1.h, p1.y));
+            }
+
+            let p2 = spacePlayers.find(p => p.id === 2 && !p.dead);
+            if (p2) {
+                if (spaceKeys['ArrowLeft']) p2.x -= p2.speed;
+                if (spaceKeys['ArrowRight']) p2.x += p2.speed;
+                if (spaceKeys['ArrowUp']) p2.y -= p2.speed;
+                if (spaceKeys['ArrowDown']) p2.y += p2.speed;
+                p2.x = Math.max(0, Math.min(canvas.width - p2.w, p2.x));
+                p2.y = Math.max(0, Math.min(canvas.height - p2.h, p2.y));
+            }
+
+            let now = Date.now();
+            spacePlayers.forEach(p => {
+                if (!p.dead && now - p.lastShot > 180) {
+                    spaceBullets.push({
+                        x: p.x + p.w / 2 - 3,
+                        y: p.y,
+                        w: 6,
+                        h: 14,
+                        speed: 10,
+                        ownerId: p.id,
+                        color: p.color
+                    });
+                    p.lastShot = now;
+                }
+            });
+
+            spaceStars.forEach(s => {
+                s.y += s.speed;
+                if (s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+            });
+
+            for (let i = spaceBullets.length - 1; i >= 0; i--) {
+                let b = spaceBullets[i];
+                b.y -= b.speed;
+                if (b.y < -20) spaceBullets.splice(i, 1);
+            }
+
+            let spawnRate = spaceWarMode === 2 ? 0.11 : 0.035;
+            if (Math.random() < spawnRate) {
+                let isBoss = Math.random() < 0.15;
+                spaceEnemies.push({
+                    x: Math.random() * (canvas.width - 35),
+                    y: -40,
+                    w: isBoss ? 45 : 32,
+                    h: isBoss ? 45 : 32,
+                    speed: isBoss ? 2 : Math.random() * 2 + 2,
+                    hp: isBoss ? 3 : 1,
+                    isBoss: isBoss,
+                    color: isBoss ? '#ef4444' : '#f59e0b'
+                });
+            }
+
+            for (let i = spaceEnemies.length - 1; i >= 0; i--) {
+                let e = spaceEnemies[i];
+                e.y += e.speed;
+
+                for (let j = spaceBullets.length - 1; j >= 0; j--) {
+                    let b = spaceBullets[j];
+                    if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+                        spaceBullets.splice(j, 1);
+                        e.hp--;
+                        if (e.hp <= 0) {
+                            let shooter = spacePlayers.find(p => p.id === b.ownerId);
+                            if (shooter) shooter.score += e.isBoss ? 300 : 100;
+                            spaceEnemies.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+
+                if (e.hp <= 0) continue;
+
+                for (let p of spacePlayers) {
+                    if (!p.dead) {
+                        if (p.x < e.x + e.w && p.x + p.w > e.x &&
+                            p.y < e.y + e.h && p.y + p.h > e.y) {
+                            spaceEnemies.splice(i, 1);
+                            p.hp--;
+                            if (p.hp <= 0) {
+                                p.dead = true;
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                if (e.y > canvas.height) {
+                    spaceEnemies.splice(i, 1);
+                }
+            }
+
+            if (spacePlayers.every(p => p.dead)) {
+                endSpaceWarGame();
+                return;
+            }
+
+            ctx.fillStyle = '#0a0a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#ffffff';
+            spaceStars.forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            spaceBullets.forEach(b => {
+                ctx.fillStyle = b.color;
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+            });
+
+            spaceEnemies.forEach(e => {
+                ctx.fillStyle = e.color;
+                ctx.beginPath();
+                if (e.isBoss) {
+                    ctx.moveTo(e.x + e.w / 2, e.y + e.h);
+                    ctx.lineTo(e.x + e.w, e.y);
+                    ctx.lineTo(e.x, e.y);
+                } else {
+                    ctx.arc(e.x + e.w / 2, e.y + e.h / 2, e.w / 2, 0, Math.PI * 2);
+                }
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(e.x + e.w / 4, e.y + e.h / 3, e.w / 2, 4);
+            });
+
+            spacePlayers.forEach(p => {
+                if (p.dead) return;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.moveTo(p.x + p.w / 2, p.y);
+                ctx.lineTo(p.x + p.w, p.y + p.h);
+                ctx.lineTo(p.x + p.w / 2, p.y + p.h - 8);
+                ctx.lineTo(p.x, p.y + p.h);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = '#f97316';
+                ctx.beginPath();
+                ctx.arc(p.x + p.w / 2, p.y + p.h + 4, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`P${p.id}`, p.x + p.w / 2, p.y + p.h / 2 + 4);
+            });
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.beginPath();
+            ctx.roundRect(10, 10, canvas.width - 20, 45, 10);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.stroke();
+
+            ctx.font = 'bold 15px Arial';
+            if (spaceWarMode === 1) {
+                let p1 = spacePlayers[0];
+                let hearts = '❤️'.repeat(Math.max(0, p1.hp));
+                ctx.fillStyle = '#38bdf8';
+                ctx.textAlign = 'left';
+                ctx.fillText(`1P ${hearts}`, 20, 37);
+                ctx.fillStyle = '#fbbf24';
+                ctx.textAlign = 'right';
+                ctx.fillText(`점수: ${p1.score}`, canvas.width - 20, 37);
+            } else {
+                let p1 = spacePlayers[0];
+                let p2 = spacePlayers[1];
+                let h1 = p1.dead ? '💀' : '❤️'.repeat(Math.max(0, p1.hp));
+                let h2 = p2.dead ? '💀' : '❤️'.repeat(Math.max(0, p2.hp));
+                
+                ctx.fillStyle = '#38bdf8';
+                ctx.textAlign = 'left';
+                ctx.fillText(`1P: ${h1} (${p1.score})`, 20, 37);
+                
+                ctx.fillStyle = '#f43f5e';
+                ctx.textAlign = 'right';
+                ctx.fillText(`2P: ${h2} (${p2.score})`, canvas.width - 20, 37);
+            }
+        }
+
+        function endSpaceWarGame() {
+            window.removeEventListener('keydown', spaceWarKeyHandler);
+            window.removeEventListener('keyup', spaceWarKeyUpHandler);
+            let scoreDesc = spaceWarMode === 1 ? 
+                `최종 점수: ${spacePlayers[0].score}점` : 
+                `1P 점수: ${spacePlayers[0].score}점 | 2P 점수: ${spacePlayers[1].score}점`;
+            
+            endGame("게임 오버", `우주선이 파괴되었습니다!<br>${scoreDesc}`, true);
+        }
+
+        function createSnakeData(id, x, y, isPlayer, name, color, initialScore = 0, isRainbow = false) {
+            return {
+                id, x, y, isPlayer, name, color, isRainbow,
+                angle: Math.random() * Math.PI * 2,
+                targetAngle: 0,
+                speed: isPlayer ? 4 : 3.5,
+                history: [],
+                score: initialScore,
+                radius: Math.min(30, 12 + initialScore * 0.015),
+                dead: false
+            };
+        }
+
+        function spawnSnakeFood(x, y, color, size, points) {
+            snakeFoods.push({
+                x: x !== undefined ? x : Math.random() * snakeWorld.width,
+                y: y !== undefined ? y : Math.random() * snakeWorld.height,
+                color: color || `hsl(${Math.random()*360}, 100%, 60%)`,
+                size: size || Math.random() * 4 + 4,
+                points: points || 2
+            });
+        }
+
+        function snakeKeyHandler(e) {
+            if (!gameActive || config.game !== 'snake') return;
+            if (e.code === 'Space') {
+                e.preventDefault();
+                let now = Date.now();
+                if (now >= snakeCooldownEndTime) {
+                    snakeBoostEndTime = now + 5000;
+                    snakeCooldownEndTime = now + 30000;
+                }
+            }
+        }
+
+        function initSnakeGame() {
+            canvas = document.getElementById('boardCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth * 0.95;
+            canvas.height = window.innerHeight * 0.85;
+
+            snakes = [];
+            snakeFoods = [];
+            snakeFireworks = [];
+            snakeBoostEndTime = 0;
+            snakeCooldownEndTime = 0;
+            
+            let isRainbowPlayer = Math.random() < 0.01;
+            let playerColor = isRainbowPlayer ? 'rainbow' : `hsl(${Math.floor(Math.random() * 360)}, 85%, 60%)`;
+            
+            snakes.push(createSnakeData(0, snakeWorld.width/2, snakeWorld.height/2, true, "Player", playerColor, 0, isRainbowPlayer));
+            
+            for(let i=1; i<=10; i++) {
+                let randomScore = Math.floor(Math.random() * 30);
+                snakes.push(createSnakeData(i, Math.random()*snakeWorld.width, Math.random()*snakeWorld.height, false, "AI " + i, `hsl(${Math.random()*360}, 80%, 60%)`, randomScore, false));
+            }
+
+            for(let i=0; i<400; i++) spawnSnakeFood();
+
+            canvas.onmousemove = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                snakeMouse.x = e.clientX - rect.left;
+                snakeMouse.y = e.clientY - rect.top;
+            };
+
+            window.removeEventListener('keydown', snakeKeyHandler);
+            window.addEventListener('keydown', snakeKeyHandler);
+
+            snakeLoop();
+        }
+
+        function snakeLoop() {
+            if (!gameActive || config.game !== 'snake') return;
+            snakeAnimId = requestAnimationFrame(snakeLoop);
+
+            let player = snakes.find(s => s.isPlayer);
+            
+            if (player && player.isRainbow) {
+                if (Math.random() < 0.25) {
+                    let fx = Math.random() * canvas.width;
+                    let fy = Math.random() * (canvas.height * 0.5);
+                    let color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+                    for (let i = 0; i < 25; i++) {
+                        let angle = Math.random() * Math.PI * 2;
+                        let speed = Math.random() * 6 + 2;
+                        snakeFireworks.push({
+                            x: fx, y: fy,
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed,
+                            color: color,
+                            alpha: 1,
+                            size: Math.random() * 3.5 + 2
+                        });
+                    }
+                }
+            }
+
+            while (snakes.length < 11) {
+                let randomScore = Math.floor(Math.random() * 30);
+                snakes.push(createSnakeData(Math.random(), Math.random()*snakeWorld.width, Math.random()*snakeWorld.height, false, "AI " + Math.floor(Math.random()*100), `hsl(${Math.random()*360}, 80%, 60%)`, randomScore, false));
+            }
+
+            let now = Date.now();
+            let isBoosting = now < snakeBoostEndTime;
+
+            snakes.forEach(s => {
+                if (s.dead) return;
+
+                if (s.isPlayer) {
+                    s.speed = isBoosting ? 8 : 4;
+                    s.targetAngle = Math.atan2(snakeMouse.y - canvas.height/2, snakeMouse.x - canvas.width/2);
+                } else {
+                    if (Math.random() < 0.03) {
+                        s.targetAngle += (Math.random() - 0.5) * Math.PI;
+                    }
+                    let margin = 150;
+                    if (s.x < margin) s.targetAngle = 0;
+                    else if (s.x > snakeWorld.width - margin) s.targetAngle = Math.PI;
+                    else if (s.y < margin) s.targetAngle = Math.PI/2;
+                    else if (s.y > snakeWorld.height - margin) s.targetAngle = -Math.PI/2;
+                }
+
+                let diff = s.targetAngle - s.angle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                s.angle += diff * 0.1;
+
+                s.x += Math.cos(s.angle) * s.speed;
+                s.y += Math.sin(s.angle) * s.speed;
+                s.x = Math.max(0, Math.min(snakeWorld.width, s.x));
+                s.y = Math.max(0, Math.min(snakeWorld.height, s.y));
+
+                s.history.unshift({x: s.x, y: s.y});
+                let targetLen = 20 + Math.floor(s.score / 4); 
+                let spacing = 3; 
+                if (s.history.length > targetLen * spacing) {
+                    s.history.length = targetLen * spacing; 
+                }
+
+                for (let i = snakeFoods.length - 1; i >= 0; i--) {
+                    let f = snakeFoods[i];
+                    let dx = s.x - f.x, dy = s.y - f.y;
+                    if (dx*dx + dy*dy < (s.radius + f.size)*(s.radius + f.size)) {
+                        s.score += f.points;
+                        s.radius = Math.min(30, 12 + s.score * 0.015);
+                        snakeFoods.splice(i, 1);
+                    }
+                }
+            });
+
+            if (snakeFoods.length < 400) spawnSnakeFood();
+
+            for (let i=0; i<snakes.length; i++) {
+                let s1 = snakes[i];
+                if (s1.dead) continue;
+                for (let j=0; j<snakes.length; j++) {
+                    if (i === j) continue;
+                    let s2 = snakes[j];
+                    if (s2.dead) continue;
+
+                    let hit = false;
+                    for (let k = 0; k < s2.history.length; k += 3) { 
+                        let pt = s2.history[k];
+                        let dx = s1.x - pt.x, dy = s1.y - pt.y;
+                        if (dx*dx + dy*dy < (s1.radius + s2.radius * 0.8)*(s1.radius + s2.radius * 0.8)) {
+                            hit = true; break;
+                        }
+                    }
+                    if (hit) {
+                        s1.dead = true;
+                        for (let k = 0; k < s1.history.length; k += 6) {
+                            let dropColor = s1.isRainbow ? `hsl(${Math.random()*360}, 100%, 60%)` : s1.color;
+                            spawnSnakeFood(s1.history[k].x, s1.history[k].y, dropColor, 8, 5); 
+                        }
+                        if (s1.isPlayer) {
+                            endGame("게임 오버", `충돌했습니다!<br>최종 점수: ${s1.score}점`);
+                        }
+                        break;
+                    }
+                }
+            }
+
+            snakes = snakes.filter(s => !s.dead);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (player) {
+                snakeCam.x = player.x - canvas.width / 2;
+                snakeCam.y = player.y - canvas.height / 2;
+            }
+
+            ctx.save();
+            ctx.translate(-snakeCam.x, -snakeCam.y);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+            ctx.beginPath();
+            for(let i=0; i<=snakeWorld.width; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,snakeWorld.height); }
+            for(let i=0; i<=snakeWorld.height; i+=100) { ctx.moveTo(0,i); ctx.lineTo(snakeWorld.width,i); }
+            ctx.stroke();
+
+            snakeFoods.forEach(f => {
+                ctx.fillStyle = f.color;
+                ctx.beginPath();
+                ctx.arc(f.x, f.y, f.size, 0, Math.PI*2);
+                ctx.fill();
+            });
+
+            snakes.forEach(s => {
+                let r = s.radius;
+                for (let i = s.history.length - 1; i >= 0; i -= 3) { 
+                    let pt = s.history[i];
+                    ctx.fillStyle = s.isRainbow ? `hsl(${(Date.now() / 5 + i * 10) % 360}, 100%, 50%)` : s.color;
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, r * 0.85, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; 
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                ctx.fillStyle = s.isRainbow ? `hsl(${(Date.now() / 5) % 360}, 100%, 50%)` : s.color;
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, r, 0, Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.beginPath(); ctx.arc(s.x + Math.cos(s.angle - 0.5)*r*0.6, s.y + Math.sin(s.angle - 0.5)*r*0.6, r*0.35, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x + Math.cos(s.angle + 0.5)*r*0.6, s.y + Math.sin(s.angle + 0.5)*r*0.6, r*0.35, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = 'black';
+                ctx.beginPath(); ctx.arc(s.x + Math.cos(s.angle - 0.5)*r*0.6 + Math.cos(s.angle)*1.5, s.y + Math.sin(s.angle - 0.5)*r*0.6 + Math.sin(s.angle)*1.5, r*0.15, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(s.x + Math.cos(s.angle + 0.5)*r*0.6 + Math.cos(s.angle)*1.5, s.y + Math.sin(s.angle + 0.5)*r*0.6 + Math.sin(s.angle)*1.5, r*0.15, 0, Math.PI*2); ctx.fill();
+            });
+            
+            ctx.restore();
+
+            for (let i = snakeFireworks.length - 1; i >= 0; i--) {
+                let p = snakeFireworks[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.08;
+                p.alpha -= 0.02;
+                if (p.alpha <= 0) {
+                    snakeFireworks.splice(i, 1);
+                    continue;
+                }
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            if (player && player.isRainbow) {
+                ctx.save();
+                let scale = 1 + Math.sin(Date.now() / 150) * 0.08;
+                ctx.translate(canvas.width / 2, 105);
+                ctx.scale(scale, scale);
+                ctx.font = '900 26px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.shadowColor = `hsl(${(Date.now() / 4) % 360}, 100%, 50%)`;
+                ctx.shadowBlur = 20;
+                ctx.fillStyle = '#fef08a';
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 4;
+                ctx.strokeText('🎆 1% 당첨! 무지개 지렁이! 🎆', 0, 0);
+                ctx.fillText('🎆 1% 당첨! 무지개 지렁이! 🎆', 0, 0);
+                ctx.restore();
+            }
+
+            let cdRemaining = Math.max(0, Math.ceil((snakeCooldownEndTime - now) / 1000));
+            let boostRemaining = Math.max(0, Math.ceil((snakeBoostEndTime - now) / 1000));
+            let skillText = "";
+            let skillColor = "";
+
+            if (boostRemaining > 0) {
+                skillText = `🚀 부스트 중! (${boostRemaining}초)`;
+                skillColor = '#38bdf8';
+            } else if (cdRemaining > 0) {
+                skillText = `⏳ 쿨타임: ${cdRemaining}초`;
+                skillColor = '#f43f5e';
+            } else {
+                skillText = `⚡ 스킬 [SPACE]: 준비 완료!`;
+                skillColor = '#10b981';
+            }
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.beginPath();
+            ctx.roundRect(20, canvas.height - 60, 240, 40, 10);
+            ctx.fill();
+            ctx.strokeStyle = skillColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = skillColor;
+            ctx.font = 'bold 15px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(skillText, 140, canvas.height - 40);
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.beginPath();
+            ctx.roundRect(canvas.width - 230, 20, 210, 280, 10);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.stroke();
+
+            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏆 포인트 순위', canvas.width - 125, 45);
+
+            let sorted = [...snakes].sort((a,b) => b.score - a.score);
+            ctx.textAlign = 'left';
+            ctx.font = 'bold 14px Arial';
+            for(let i=0; i<Math.min(10, sorted.length); i++) {
+                let s = sorted[i];
+                let name = s.isPlayer ? "나 (Player)" : s.name;
+                ctx.fillStyle = s.isPlayer ? '#10b981' : 'white';
+                ctx.fillText(`${i+1}. ${name}`, canvas.width - 210, 75 + i * 22);
+                ctx.textAlign = 'right';
+                ctx.fillText(`${s.score}`, canvas.width - 40, 75 + i * 22);
+                ctx.textAlign = 'left';
+            }
+
+            if (player) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.beginPath();
+                ctx.roundRect(canvas.width / 2 - 100, 20, 200, 50, 25);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#10b981';
+                ctx.font = 'bold 22px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                let playerLabel = player.isRainbow ? "🌈 무지개 지렁이" : `내 점수: ${player.score}`;
+                ctx.fillText(playerLabel, canvas.width / 2, 45);
+                ctx.textBaseline = 'alphabetic'; 
+            }
+        }
+
+        // ----------------- 무한의 계단 랭킹 시스템 (Firebase 온라인 공유) -----------------
+        // ⚠️ 아래 값을 본인의 Firebase 프로젝트 설정값으로 반드시 교체하세요.
+        // Firebase 콘솔(https://console.firebase.google.com) > 프로젝트 추가 > 웹 앱 추가 후 발급받는 값입니다.
+        const firebaseConfig = {
+            apiKey: "AIzaSyB-Hl1_NgCu9CRetCV6riv0hAu7hlOHfBw",
+            authDomain: "project-5885092822785266456.firebaseapp.com",
+            projectId: "project-5885092822785266456",
+            storageBucket: "project-5885092822785266456.firebasestorage.app",
+            messagingSenderId: "944337055726",
+            appId: "1:944337055726:web:bc20c1cd53e2dedecde8ff"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const stairsDb = firebase.firestore();
+        const stairsRankingCollection = stairsDb.collection('infiniteStairsRanking');
+
+        // 닉네임에 사용할 수 없는 단어 목록 (정치/욕설/음란성 단어 차단)
+        const stairsForbiddenWords = [
+            // 정치 관련
+            '정치', '대통령', '국회의원', '국회', '여당', '야당', '진보', '보수',
+            '민주당', '국민의힘', '더불어민주당', '정의당', '탄핵', '대선', '총선',
+            '문재인', '윤석열', '이재명', '박근혜', '이명박', '노무현', '김정은', '김정일',
+            // 욕설 (일부 예시, 변형 포함)
+            '씨발', '시발', 'ㅅㅂ', 'ㅆㅂ', '개새끼', '개새', '병신', 'ㅂㅅ', '지랄',
+            '좆', '존나', 'ㅈㄴ', '닥쳐', '미친놈', '미친년', '새끼', '걸레', '창녀',
+            'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'dick', 'pussy',
+            // 음란성 단어
+            '섹스', '섹스해', '야동', '포르노', '19금', '자위', '性', 'sex', 'porn',
+            '누드', '변태', '음란', '성인물', '몸매'
+        ];
+
+        function normalizeStairsNickname(str) {
+            return str.toLowerCase().replace(/\s+/g, '');
+        }
+
+        function isForbiddenStairsNickname(name) {
+            let normalized = normalizeStairsNickname(name);
+            if (!normalized) return true;
+            return stairsForbiddenWords.some(word => normalized.includes(normalizeStairsNickname(word)));
+        }
+
+        async function getStairsRankingList() {
+            try {
+                let snapshot = await stairsRankingCollection.orderBy('score', 'desc').limit(10).get();
+                return snapshot.docs.map(doc => doc.data());
+            } catch (e) {
+                console.error('랭킹 불러오기 실패:', e);
+                return [];
+            }
+        }
+
+        function openStairsRankModal() {
+            document.getElementById('result-modal').style.display = 'none';
+            document.getElementById('stairs-rank-score-preview').innerText = stairsLastFinalScore;
+            let input = document.getElementById('stairs-rank-name-input');
+            input.value = '';
+            document.getElementById('stairs-rank-warning').innerText = '';
+            let submitBtn = document.getElementById('stairs-rank-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+            document.getElementById('stairs-rank-modal').style.display = 'flex';
+            input.focus();
+        }
+
+        function closeStairsRankModal() {
+            document.getElementById('stairs-rank-modal').style.display = 'none';
+        }
+
+        function handleStairsNicknameInput() {
+            let input = document.getElementById('stairs-rank-name-input');
+            let warning = document.getElementById('stairs-rank-warning');
+            let submitBtn = document.getElementById('stairs-rank-submit-btn');
+            let name = input.value.trim();
+
+            let invalid = false;
+            if (!name) {
+                warning.innerText = '';
+                invalid = true;
+            } else if (isForbiddenStairsNickname(name)) {
+                warning.innerText = '사용할 수 없는 닉네임입니다 (정치/욕설/음란성 단어 포함)';
+                invalid = true;
+            } else {
+                warning.innerText = '';
+            }
+
+            submitBtn.disabled = invalid;
+            submitBtn.style.opacity = invalid ? '0.5' : '1';
+            submitBtn.style.cursor = invalid ? 'not-allowed' : 'pointer';
+        }
+
+        async function submitStairsRanking() {
+            let input = document.getElementById('stairs-rank-name-input');
+            let name = input.value.trim();
+            if (!name || isForbiddenStairsNickname(name)) return;
+
+            let submitBtn = document.getElementById('stairs-rank-submit-btn');
+            let warning = document.getElementById('stairs-rank-warning');
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.5';
+            submitBtn.style.cursor = 'not-allowed';
+            submitBtn.innerText = '등록 중...';
+
+            try {
+                await stairsRankingCollection.add({
+                    name: name,
+                    score: stairsLastFinalScore,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                let lastRanked = { name: name, score: stairsLastFinalScore };
+                try { localStorage.setItem(stairsLastRankedKey, JSON.stringify(lastRanked)); } catch (e) {}
+
+                closeStairsRankModal();
+                updateStairsRankBadge(lastRanked);
+                restartStairsGame();
+            } catch (e) {
+                console.error('랭킹 등록 실패:', e);
+                warning.innerText = '랭킹 등록에 실패했습니다. 인터넷 연결을 확인해주세요.';
+            } finally {
+                submitBtn.innerText = '완료';
+                submitBtn.disabled = false;
+                submitBtn.style.opacity = '1';
+                submitBtn.style.cursor = 'pointer';
+            }
+        }
+
+        function updateStairsRankBadge(record) {
+            let badge = document.getElementById('stairs-rank-badge');
+            let text = document.getElementById('stairs-rank-badge-text');
+            let data = record;
+            if (!data) {
+                try {
+                    let raw = localStorage.getItem(stairsLastRankedKey);
+                    data = raw ? JSON.parse(raw) : null;
+                } catch (e) { data = null; }
+            }
+            if (data && data.name) {
+                text.innerText = `${data.name} - ${data.score}점`;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        async function openStairsRankList() {
+            let body = document.getElementById('stairs-rank-list-body');
+            body.innerHTML = `<p style="text-align:center; color:#94a3b8; padding: 20px 0;">불러오는 중...</p>`;
+            document.getElementById('stairs-rank-list-modal').style.display = 'flex';
+
+            let list = await getStairsRankingList();
+            if (list.length === 0) {
+                body.innerHTML = `<p style="text-align:center; color:#94a3b8; padding: 20px 0;">아직 등록된 랭킹이 없습니다.</p>`;
+            } else {
+                let medals = ['🥇', '🥈', '🥉'];
+                body.innerHTML = list.map((entry, i) => {
+                    let rank = i + 1;
+                    let rankLabel = medals[i] || `${rank}위`;
+                    return `
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding: 10px 15px; margin-bottom: 8px; background: rgba(255,255,255,0.08); border-radius: 8px;">
+                            <span style="font-weight:bold; color:#f8fafc; width: 50px;">${rankLabel}</span>
+                            <span style="flex:1; text-align:left; color:#f8fafc;">${escapeStairsHtml(entry.name)}</span>
+                            <span style="font-weight:bold; color:#fbbf24;">${entry.score}점</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function closeStairsRankList() {
+            document.getElementById('stairs-rank-list-modal').style.display = 'none';
+        }
+
+        function escapeStairsHtml(str) {
+            let div = document.createElement('div');
+            div.innerText = str;
+            return div.innerHTML;
+        }
+
+        // ----------------- 무한의 계단 게임 엔진 -----------------
+        function initStairsGame() {
+            canvas = document.getElementById('boardCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth * 0.95;
+            canvas.height = window.innerHeight * 0.85;
+
+            stairsScore = 0;
+            stairsGauge = 100;
+            playerDir = 1;
+            playerStairIndex = 0;
+            stairsPath = [1]; 
+            stairPositions = [{ x: 0, y: 0 }];
+            stairsPlaying = false;
+            stairsFalling = false;
+            playerFallY = 0;
+            playerFallSpeed = 0;
+            playerFallRot = 0;
+            stairParticles = [];
+            stairFloatingTexts = [];
+            stairStepScale = 1;
+            
+            for(let i=0; i<50; i++) addStair();
+
+            document.getElementById('stairs-menu-overlay').style.display = 'flex';
+            let charBtn = document.getElementById('stairs-char-btn');
+            if (charBtn) charBtn.innerText = `캐릭터: ${stairsSkins[stairsCharIndex].name}`;
+            updateStairsRankBadge();
+
+            renderStairsFrame();
+        }
+
+        function changeStairsCharacter() {
+            stairsCharIndex = (stairsCharIndex + 1) % stairsSkins.length;
+            let charBtn = document.getElementById('stairs-char-btn');
+            if (charBtn) charBtn.innerText = `캐릭터: ${stairsSkins[stairsCharIndex].name}`;
+            renderStairsFrame();
+        }
+
+        function startStairsPlay() {
+            document.getElementById('stairs-menu-overlay').style.display = 'none';
+            stairsPlaying = true;
+            stairsFalling = false;
+            window.removeEventListener('keydown', stairsKeyHandler);
+            window.addEventListener('keydown', stairsKeyHandler);
+            stairsLoop();
+        }
+
+        // 다시하기 버튼/스페이스바 클릭 시 캐릭터 선택 메뉴를 거치지 않고 바로 게임을 재시작
+        function restartStairsGame() {
+            config.game = 'stairs';
+            gameActive = true;
+            document.getElementById('result-modal').style.display = 'none';
+            document.getElementById('timer').style.display = 'none';
+            document.querySelector('.status-box').style.display = 'none';
+            showScreen('screen-game');
+            initStairsGame();
+            startStairsPlay();
+        }
+
+        function addStair() {
+            let lastDir = stairsPath[stairsPath.length-1];
+            let nextDir = Math.random() < 0.5 ? lastDir : -lastDir;
+            stairsPath.push(nextDir);
+
+            let lastPos = stairPositions[stairPositions.length - 1];
+            stairPositions.push({
+                x: lastPos.x + nextDir * 60,
+                y: lastPos.y - 35
+            });
+        }
+
+        function triggerStairsFall() {
+            if (stairsFalling) return;
+            stairsFalling = true;
+            stairsPlaying = false;
+            playerFallY = 0;
+            playerFallSpeed = -6;
+            playerFallRot = 0;
+            window.removeEventListener('keydown', stairsKeyHandler);
+        }
+
+        function stairsKeyHandler(e) {
+            if(!gameActive || config.game !== 'stairs' || !stairsPlaying || stairsFalling) return;
+            let key = e.key.toLowerCase();
+            
+            if(key === 'm' || key === 'x') {
+                if(key === 'x') {
+                    playerDir = -playerDir; 
+                }
+                
+                let nextStairDir = stairsPath[playerStairIndex + 1];
+                if(playerDir === nextStairDir) {
+                    stairsScore++;
+                    playerStairIndex++;
+                    stairsGauge = Math.min(100, stairsGauge + 8); 
+                    
+                    if(stairsPath.length - playerStairIndex < 30) addStair();
+
+                    stairStepScale = 1.3;
+                    let pPos = stairPositions[playerStairIndex];
+                    let px = pPos.x + 30;
+                    let py = pPos.y;
+
+                    stairFloatingTexts.push({
+                        x: px,
+                        y: py - 20,
+                        text: "+1",
+                        alpha: 1.0,
+                        vy: -2
+                    });
+
+                    for (let i = 0; i < 10; i++) {
+                        let angle = Math.random() * Math.PI * 2;
+                        let speed = Math.random() * 4 + 2;
+                        stairParticles.push({
+                            x: px,
+                            y: py,
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed,
+                            color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+                            size: Math.random() * 3 + 2,
+                            alpha: 1.0
+                        });
+                    }
+                } else {
+                    triggerStairsFall();
+                }
+            }
+        }
+
+        function renderStairsFrame() {
+            if (config.game !== 'stairs') return;
+            
+            if (stairsPlaying && !stairsFalling) {
+                stairsGauge -= 0.35 + (stairsScore * 0.005);
+                if (stairsGauge <= 0) {
+                    stairsGauge = 0;
+                    triggerStairsFall();
+                }
+            }
+
+            if (stairsFalling) {
+                playerFallSpeed += 0.8;
+                playerFallY += playerFallSpeed;
+                playerFallRot += playerDir * 0.15;
+                if (playerFallY > canvas.height + 100) {
+                    stairsLastFinalScore = stairsScore;
+                    endGame("게임 오버", `계단에서 추락했습니다!<br>최종 점수: ${stairsScore}점`);
+                    return;
+                }
+            }
+
+            let conceptIndex = Math.floor(stairsScore / 50) % stairConcepts.length;
+            let concept = stairConcepts[conceptIndex];
+
+            let pPos = stairPositions[playerStairIndex] || { x: 0, y: 0 };
+            let camX = canvas.width / 2 - pPos.x - 30;
+            let camY = canvas.height * 0.65 - pPos.y;
+
+            ctx.save();
+            concept.bgDraw(ctx, canvas.width, canvas.height, 0);
+
+            ctx.translate(camX, camY);
+
+            // 계단 그리기
+            for (let i = Math.max(0, playerStairIndex - 15); i < Math.min(stairPositions.length, playerStairIndex + 30); i++) {
+                let pos = stairPositions[i];
+                ctx.fillStyle = concept.topColor;
+                ctx.fillRect(pos.x, pos.y, 60, 12);
+                ctx.fillStyle = concept.sideColor;
+                ctx.fillRect(pos.x, pos.y + 12, 60, 18);
+                ctx.strokeStyle = concept.strokeColor;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(pos.x, pos.y, 60, 30);
+            }
+
+            // 파티클
+            for (let i = stairParticles.length - 1; i >= 0; i--) {
+                let p = stairParticles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.03;
+                if (p.alpha <= 0) { stairParticles.splice(i, 1); continue; }
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 점수 플로팅 텍스트
+            for (let i = stairFloatingTexts.length - 1; i >= 0; i--) {
+                let t = stairFloatingTexts[i];
+                t.y += t.vy;
+                t.alpha -= 0.025;
+                if (t.alpha <= 0) { stairFloatingTexts.splice(i, 1); continue; }
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, t.alpha);
+                ctx.fillStyle = '#fef08a';
+                ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(t.text, t.x, t.y);
+                ctx.restore();
+            }
+
+            // 캐릭터 그리기 (시선/방향 표시)
+            let skin = stairsSkins[stairsCharIndex];
+            let charX = pPos.x + 30;
+            let charY = pPos.y + playerFallY;
+
+            ctx.save();
+            ctx.translate(charX, charY);
+            if (stairsFalling) {
+                ctx.rotate(playerFallRot);
+            }
+
+            stairStepScale = Math.max(1, stairStepScale - 0.05);
+            ctx.scale(1, stairStepScale);
+
+            // 몸통
+            ctx.fillStyle = skin.body;
+            ctx.beginPath();
+            ctx.roundRect(-14, -30, 28, 30, 6);
+            ctx.fill();
+
+            // 머리
+            ctx.fillStyle = skin.head;
+            ctx.beginPath();
+            ctx.arc(0, -42, 16, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 헤어밴드
+            ctx.fillStyle = skin.band;
+            ctx.fillRect(-16, -48, 32, 6);
+
+            // 시선 방향 (playerDir: 1 = 오른쪽, -1 = 왼쪽)
+            let eyeOffsetX = playerDir * 7;
+            
+            // 눈
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(eyeOffsetX, -43, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // 눈반사
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(eyeOffsetX + playerDir * 1, -44.5, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 코/돌출부 (바라보는 방향)
+            ctx.fillStyle = skin.body;
+            ctx.beginPath();
+            ctx.moveTo(eyeOffsetX, -40);
+            ctx.lineTo(eyeOffsetX + playerDir * 6, -38);
+            ctx.lineTo(eyeOffsetX, -36);
+            ctx.closePath();
+            ctx.fill();
+
+            // 머리 위 시선 표시 화살표
+            ctx.fillStyle = '#fbbf24';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(playerDir * 10, -66);
+            ctx.lineTo(playerDir * 22, -61);
+            ctx.lineTo(playerDir * 10, -56);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+            ctx.restore();
+
+            // 게이지 및 점수 UI
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.beginPath();
+            ctx.roundRect(canvas.width / 2 - 90, 20, 180, 50, 25);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 24px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`점수: ${stairsScore}`, canvas.width / 2, 45);
+
+            let barW = Math.min(canvas.width * 0.7, 400);
+            let barX = (canvas.width - barW) / 2;
+            let barY = 85;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.beginPath();
+            ctx.roundRect(barX, barY, barW, 16, 8);
+            ctx.fill();
+
+            let fillW = (stairsGauge / 100) * barW;
+            if (fillW > 0) {
+                let gaugeGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
+                gaugeGrad.addColorStop(0, '#ef4444');
+                gaugeGrad.addColorStop(0.5, '#f59e0b');
+                gaugeGrad.addColorStop(1, '#10b981');
+                ctx.fillStyle = gaugeGrad;
+                ctx.beginPath();
+                ctx.roundRect(barX, barY, fillW, 16, 8);
+                ctx.fill();
+            }
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(barX, barY, barW, 16);
+        }
+
+        function stairsLoop() {
+            if (!gameActive || config.game !== 'stairs') return;
+            stairsAnimId = requestAnimationFrame(stairsLoop);
+            renderStairsFrame();
+        }
+    </script>
+</body>
+</html>
