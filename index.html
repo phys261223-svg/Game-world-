@@ -313,6 +313,52 @@
         <iframe id="spacewar-uploaded-frame" style="width: 500px; max-width: 95vw; height: 720px; max-height: 90vh; border: none; border-radius: 8px; background: #05050d;"></iframe>
     </div>
 
+    <div id="screen-snake-mode" class="screen">
+        <h2>지렁이 게임</h2>
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 20px 30px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.2); max-width: 500px;">
+            <p style="font-size: 1.1rem; color: #f8fafc;">친구와 같은 맵에서 만나 서로 싸우고 싶다면 <b style="color:#fbbf24;">방 만들기</b>로 방을 만든 뒤 코드를 알려주고, 친구는 <b style="color:#fbbf24;">참가하기</b>로 그 코드를 입력하면 됩니다.</p>
+        </div>
+        <div class="btn-group">
+            <button onclick="startSnakeAI()">플레이 (AI와 대결)</button>
+            <button onclick="openSnakeCreateRoom()">방 만들기</button>
+            <button onclick="openSnakeJoinRoom()">참가하기</button>
+        </div>
+        <br>
+        <button class="btn-secondary" onclick="showScreen('screen-main')">메인으로</button>
+    </div>
+
+    <div id="snake-room-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <h2 id="snake-room-modal-title" style="font-size: 1.8rem;">방 만들기</h2>
+
+            <div id="snake-room-create-view" style="display:none;">
+                <p style="margin-bottom: 10px; color:#94a3b8;">닉네임을 입력하세요</p>
+                <input id="snake-create-name-input" type="text" maxlength="8" placeholder="닉네임 (최대 8자)"
+                    style="width: 100%; padding: 12px 14px; font-size: 1.1rem; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: white; text-align: center; font-family: inherit;">
+                <p style="margin: 18px 0 6px; color:#94a3b8;">방 코드 (친구에게 알려주세요)</p>
+                <div id="snake-room-code-display" style="font-size:2.2rem; font-weight:bold; color:#fbbf24; letter-spacing: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 0;">------</div>
+                <div style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
+                    <button onclick="startSnakeOnlineAsHost()">게임 시작</button>
+                    <button class="btn-secondary" onclick="closeSnakeRoomModal()">취소</button>
+                </div>
+            </div>
+
+            <div id="snake-room-join-view" style="display:none;">
+                <p style="margin-bottom: 10px; color:#94a3b8;">닉네임을 입력하세요</p>
+                <input id="snake-join-name-input" type="text" maxlength="8" placeholder="닉네임 (최대 8자)"
+                    style="width: 100%; padding: 12px 14px; font-size: 1.1rem; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: white; text-align: center; font-family: inherit; margin-bottom: 14px;">
+                <p style="margin-bottom: 10px; color:#94a3b8;">방 코드를 입력하세요</p>
+                <input id="snake-join-code-input" type="text" maxlength="6" placeholder="방 코드"
+                    style="width: 100%; padding: 12px 14px; font-size: 1.3rem; border-radius: 10px; border: 2px solid #475569; background: #0f172a; color: white; text-align: center; text-transform: uppercase; letter-spacing: 4px; font-family: inherit;">
+                <p id="snake-join-warning" style="min-height: 22px; color: #ef4444; font-size: 0.9rem; margin-top: 8px;"></p>
+                <div style="display:flex; gap:15px; justify-content:center; margin-top: 10px;">
+                    <button id="snake-join-submit-btn" onclick="joinSnakeRoom()">참가하기</button>
+                    <button class="btn-secondary" onclick="closeSnakeRoomModal()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="screen-mode" class="screen">
         <h2 id="mode-title">게임 모드 선택</h2>
         <div class="btn-group">
@@ -459,6 +505,17 @@
         let snakeCam = { x: 0, y: 0 };
         let snakeBoostEndTime = 0;
         let snakeCooldownEndTime = 0;
+
+        // ----------------- 지렁이 게임 온라인 멀티플레이 관련 상태 -----------------
+        let snakeOnlineMode = false;
+        let snakeRoomCode = null;
+        let snakePlayerId = null;
+        let snakePlayerName = null;
+        let snakePlayersUnsub = null;
+        let snakeRemotePlayers = {};
+        let snakeLastSyncAt = 0;
+        const SNAKE_SYNC_INTERVAL_MS = 120;
+        const SNAKE_REMOTE_TIMEOUT_MS = 6000;
 
         let stairsAnimId = null;
         let stairsScore = 0;
@@ -910,13 +967,135 @@
                 showScreen('screen-spacewar-mode');
                 return;
             }
-            if (game === 'snake' || game === 'stairs') {
+            if (game === 'snake') {
+                showScreen('screen-snake-mode');
+                return;
+            }
+            if (game === 'stairs') {
                 startGame(0); 
                 return;
             }
             let title = game === 'go' ? "바둑" : (game === 'gomoku' ? "오목" : "체스");
             document.getElementById('mode-title').innerText = `${title} - 모드 선택`;
             showScreen('screen-mode');
+        }
+
+        // ----------------- 지렁이 게임 온라인 멀티플레이 (방 만들기/참가) -----------------
+        function generateSnakeRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 5; i++) code += chars[Math.floor(Math.random() * chars.length)];
+            return code;
+        }
+
+        function startSnakeAI() {
+            snakeOnlineMode = false;
+            startGame(0);
+        }
+
+        function openSnakeCreateRoom() {
+            document.getElementById('snake-room-modal-title').innerText = '방 만들기';
+            document.getElementById('snake-room-create-view').style.display = 'block';
+            document.getElementById('snake-room-join-view').style.display = 'none';
+            document.getElementById('snake-create-name-input').value = '';
+            document.getElementById('snake-room-code-display').innerText = generateSnakeRoomCode();
+            document.getElementById('snake-room-modal').style.display = 'flex';
+        }
+
+        function openSnakeJoinRoom() {
+            document.getElementById('snake-room-modal-title').innerText = '참가하기';
+            document.getElementById('snake-room-create-view').style.display = 'none';
+            document.getElementById('snake-room-join-view').style.display = 'block';
+            document.getElementById('snake-join-name-input').value = '';
+            document.getElementById('snake-join-code-input').value = '';
+            document.getElementById('snake-join-warning').innerText = '';
+            document.getElementById('snake-room-modal').style.display = 'flex';
+        }
+
+        function closeSnakeRoomModal() {
+            document.getElementById('snake-room-modal').style.display = 'none';
+        }
+
+        async function startSnakeOnlineAsHost() {
+            let name = document.getElementById('snake-create-name-input').value.trim() || '플레이어';
+            let code = document.getElementById('snake-room-code-display').innerText;
+            try {
+                await snakeRoomsCollection.doc(code).set({ createdAt: Date.now() });
+            } catch (e) {
+                console.error('방 생성 실패:', e);
+                alert('방 생성에 실패했습니다. 인터넷 연결을 확인해주세요.');
+                return;
+            }
+            snakeRoomCode = code;
+            snakePlayerId = 'p_' + Math.random().toString(36).slice(2, 10);
+            snakePlayerName = name.slice(0, 8);
+            snakeOnlineMode = true;
+            closeSnakeRoomModal();
+            startGame(0);
+        }
+
+        async function joinSnakeRoom() {
+            let name = document.getElementById('snake-join-name-input').value.trim() || '플레이어';
+            let code = document.getElementById('snake-join-code-input').value.trim().toUpperCase();
+            let warning = document.getElementById('snake-join-warning');
+            let submitBtn = document.getElementById('snake-join-submit-btn');
+            if (!code) { warning.innerText = '방 코드를 입력하세요.'; return; }
+
+            submitBtn.disabled = true;
+            try {
+                let doc = await snakeRoomsCollection.doc(code).get();
+                if (!doc.exists) {
+                    warning.innerText = '존재하지 않는 방 코드입니다.';
+                    submitBtn.disabled = false;
+                    return;
+                }
+            } catch (e) {
+                console.error('방 확인 실패:', e);
+                warning.innerText = '접속에 실패했습니다. 인터넷 연결을 확인해주세요.';
+                submitBtn.disabled = false;
+                return;
+            }
+            submitBtn.disabled = false;
+
+            snakeRoomCode = code;
+            snakePlayerId = 'p_' + Math.random().toString(36).slice(2, 10);
+            snakePlayerName = name.slice(0, 8);
+            snakeOnlineMode = true;
+            closeSnakeRoomModal();
+            startGame(0);
+        }
+
+        function startSnakeOnlineSync() {
+            if (!snakeRoomCode || !snakePlayerId) return;
+            let playersRef = snakeRoomsCollection.doc(snakeRoomCode).collection('players');
+            snakePlayersUnsub = playersRef.onSnapshot(snapshot => {
+                snapshot.docChanges().forEach(change => {
+                    if (change.doc.id === snakePlayerId) return;
+                    if (change.type === 'removed') {
+                        delete snakeRemotePlayers[change.doc.id];
+                    } else {
+                        snakeRemotePlayers[change.doc.id] = change.doc.data();
+                    }
+                });
+            }, e => console.error('플레이어 동기화 실패:', e));
+        }
+
+        // 죽거나 나갈 때 - 방에서 내 흔적만 지움 (다시하기 시 같은 방 코드로 재입장 가능하도록 방 코드는 유지)
+        function snakeOnlineRemoveMe() {
+            if (snakePlayersUnsub) { snakePlayersUnsub(); snakePlayersUnsub = null; }
+            if (snakeRoomCode && snakePlayerId) {
+                snakeRoomsCollection.doc(snakeRoomCode).collection('players').doc(snakePlayerId).delete().catch(() => {});
+            }
+            snakeRemotePlayers = {};
+        }
+
+        // 메인 화면으로 완전히 나갈 때 - 방 정보까지 전부 초기화
+        function leaveSnakeRoom() {
+            snakeOnlineRemoveMe();
+            snakeOnlineMode = false;
+            snakeRoomCode = null;
+            snakePlayerId = null;
+            snakePlayerName = null;
         }
 
         function startSpaceWar(mode) {
@@ -1054,6 +1233,7 @@
             stairsPlaying = false;
             stairsFalling = false;
             clearInterval(timerInterval);
+            if (config.game === 'snake') leaveSnakeRoom();
             if (snakeAnimId) { cancelAnimationFrame(snakeAnimId); snakeAnimId = null; }
             if (stairsAnimId) { cancelAnimationFrame(stairsAnimId); stairsAnimId = null; }
             if (spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
@@ -1875,6 +2055,10 @@
             document.getElementById('result-title').innerText = title;
             document.getElementById('result-desc').innerHTML = desc;
 
+            if (config.game === 'snake' && snakeOnlineMode) {
+                snakeOnlineRemoveMe();
+            }
+
             let btnContainer = document.getElementById('modal-buttons');
             if (isSpaceWar) {
                 btnContainer.innerHTML = `
@@ -1885,6 +2069,11 @@
                 btnContainer.innerHTML = `
                     <button id="modal-restart-btn" onclick="restartStairsGame()">다시하기</button>
                     <button class="btn-secondary" onclick="openStairsRankModal()">랭킹 등록</button>
+                    <button class="btn-secondary" onclick="quitGame()">메인으로</button>
+                `;
+            } else if (config.game === 'snake' && snakeOnlineMode) {
+                btnContainer.innerHTML = `
+                    <button id="modal-restart-btn" onclick="startGame(0)">다시하기 (같은 방)</button>
                     <button class="btn-secondary" onclick="quitGame()">메인으로</button>
                 `;
             } else {
@@ -2267,15 +2456,23 @@
             snakeFireworks = [];
             snakeBoostEndTime = 0;
             snakeCooldownEndTime = 0;
+            snakeRemotePlayers = {};
+            snakeLastSyncAt = 0;
             
             let isRainbowPlayer = Math.random() < 0.01;
             let playerColor = isRainbowPlayer ? 'rainbow' : `hsl(${Math.floor(Math.random() * 360)}, 85%, 60%)`;
+            let playerName = snakeOnlineMode && snakePlayerName ? snakePlayerName : "Player";
             
-            snakes.push(createSnakeData(0, snakeWorld.width/2, snakeWorld.height/2, true, "Player", playerColor, 0, isRainbowPlayer));
+            snakes.push(createSnakeData(0, snakeWorld.width/2, snakeWorld.height/2, true, playerName, playerColor, 0, isRainbowPlayer));
             
-            for(let i=1; i<=10; i++) {
-                let randomScore = Math.floor(Math.random() * 30);
-                snakes.push(createSnakeData(i, Math.random()*snakeWorld.width, Math.random()*snakeWorld.height, false, "AI " + i, `hsl(${Math.random()*360}, 80%, 60%)`, randomScore, false));
+            if (snakeOnlineMode) {
+                // 온라인 모드: 같은 방 친구들만 등장 (AI 없음)
+                startSnakeOnlineSync();
+            } else {
+                for(let i=1; i<=10; i++) {
+                    let randomScore = Math.floor(Math.random() * 30);
+                    snakes.push(createSnakeData(i, Math.random()*snakeWorld.width, Math.random()*snakeWorld.height, false, "AI " + i, `hsl(${Math.random()*360}, 80%, 60%)`, randomScore, false));
+                }
             }
 
             for(let i=0; i<400; i++) spawnSnakeFood();
@@ -2318,16 +2515,44 @@
                 }
             }
 
-            while (snakes.length < 11) {
-                let randomScore = Math.floor(Math.random() * 30);
-                snakes.push(createSnakeData(Math.random(), Math.random()*snakeWorld.width, Math.random()*snakeWorld.height, false, "AI " + Math.floor(Math.random()*100), `hsl(${Math.random()*360}, 80%, 60%)`, randomScore, false));
+            if (!snakeOnlineMode) {
+                while (snakes.length < 11) {
+                    let randomScore = Math.floor(Math.random() * 30);
+                    snakes.push(createSnakeData(Math.random(), Math.random()*snakeWorld.width, Math.random()*snakeWorld.height, false, "AI " + Math.floor(Math.random()*100), `hsl(${Math.random()*360}, 80%, 60%)`, randomScore, false));
+                }
             }
 
             let now = Date.now();
+
+            if (snakeOnlineMode) {
+                // 같은 방의 다른 플레이어들을 이 클라이언트의 지렁이 목록에 반영 (같은 맵에서 실시간으로 서로 보임)
+                Object.keys(snakeRemotePlayers).forEach(pid => {
+                    let rp = snakeRemotePlayers[pid];
+                    if (now - (rp.updatedAt || 0) > SNAKE_REMOTE_TIMEOUT_MS) return;
+                    let existing = snakes.find(s => s.id === pid);
+                    let trail = (rp.trail || []).map(p => ({ x: p.x, y: p.y }));
+                    if (existing) {
+                        existing.x = rp.x; existing.y = rp.y; existing.angle = rp.angle || 0;
+                        existing.score = rp.score || 0; existing.radius = rp.radius || 12;
+                        existing.history = trail; existing.color = rp.color; existing.isRainbow = rp.isRainbow;
+                        existing.name = rp.name;
+                    } else {
+                        snakes.push({
+                            id: pid, x: rp.x, y: rp.y, angle: rp.angle || 0,
+                            isPlayer: false, isRemote: true, dead: false,
+                            name: rp.name || '플레이어', color: rp.color, isRainbow: rp.isRainbow,
+                            score: rp.score || 0, radius: rp.radius || 12, history: trail
+                        });
+                    }
+                });
+                snakes = snakes.filter(s => s.isPlayer || !s.isRemote || (snakeRemotePlayers[s.id] && now - (snakeRemotePlayers[s.id].updatedAt || 0) <= SNAKE_REMOTE_TIMEOUT_MS));
+            }
+
             let isBoosting = now < snakeBoostEndTime;
 
             snakes.forEach(s => {
                 if (s.dead) return;
+                if (s.isRemote) return; // 원격 플레이어는 동기화된 좌표를 그대로 사용 (직접 이동/충돌 판정 없음)
 
                 if (s.isPlayer) {
                     s.speed = isBoosting ? 8 : 4;
@@ -2371,11 +2596,27 @@
                 }
             });
 
+            if (snakeOnlineMode && player && !player.dead) {
+                if (now - snakeLastSyncAt > SNAKE_SYNC_INTERVAL_MS) {
+                    snakeLastSyncAt = now;
+                    let trail = [];
+                    for (let i = 0; i < player.history.length; i += 9) {
+                        trail.push({ x: Math.round(player.history[i].x), y: Math.round(player.history[i].y) });
+                        if (trail.length >= 15) break;
+                    }
+                    snakeRoomsCollection.doc(snakeRoomCode).collection('players').doc(snakePlayerId).set({
+                        name: player.name, color: player.color, isRainbow: player.isRainbow,
+                        x: player.x, y: player.y, angle: player.angle, radius: player.radius,
+                        score: player.score, trail: trail, updatedAt: Date.now()
+                    }).catch(() => {});
+                }
+            }
+
             if (snakeFoods.length < 400) spawnSnakeFood();
 
             for (let i=0; i<snakes.length; i++) {
                 let s1 = snakes[i];
-                if (s1.dead) continue;
+                if (s1.dead || s1.isRemote) continue;
                 for (let j=0; j<snakes.length; j++) {
                     if (i === j) continue;
                     let s2 = snakes[j];
@@ -2565,6 +2806,23 @@
                 ctx.fillText(playerLabel, canvas.width / 2, 45);
                 ctx.textBaseline = 'alphabetic'; 
             }
+
+            if (snakeOnlineMode && snakeRoomCode) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.beginPath();
+                ctx.roundRect(20, 20, 190, 40, 10);
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.6)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = 'bold 15px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`방 코드: ${snakeRoomCode}`, 115, 40);
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'alphabetic';
+            }
         }
 
         // ----------------- 무한의 계단 랭킹 시스템 (Firebase 온라인 공유) -----------------
@@ -2581,6 +2839,7 @@
         firebase.initializeApp(firebaseConfig);
         const stairsDb = firebase.firestore();
         const stairsRankingCollection = stairsDb.collection('infiniteStairsRanking');
+        const snakeRoomsCollection = stairsDb.collection('snakeRooms');
 
         // 전체 랭킹 초기화용 함수 (버튼 없음 - 브라우저 콘솔에서 resetAllStairsRanking() 을 직접 호출해서 사용)
         async function resetAllStairsRanking() {
