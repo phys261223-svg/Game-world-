@@ -296,12 +296,10 @@
         <h2>Space War 모드 선택</h2>
         <div style="background: rgba(255, 255, 255, 0.1); padding: 20px 30px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.2); max-width: 500px;">
             <p style="font-size: 1.2rem; color: #fbbf24; font-weight: bold; margin-bottom: 12px;">🎮 조작법 안내</p>
-            <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">1인용 : 우주선 1개를 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span> 키로 조종</p>
             <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">2인용 : 1P 우주선 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span> / 2P 우주선 <span style="background: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">화살표 키 (↑, ↓, ←, →)</span>로 조종</p>
             <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 10px;">* 공격은 자동으로 발사됩니다.</p>
         </div>
         <div class="btn-group">
-            <button onclick="startSpaceWar(1)">1인용</button>
             <button onclick="startSpaceWar(2)">2인용</button>
         </div>
         <br>
@@ -373,7 +371,7 @@
         <div id="stairs-menu-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.85); backdrop-filter: blur(5px); flex-direction: column; justify-content: center; align-items: center; z-index: 50; border-radius: 12px;">
             <h2 style="font-size: 2.5rem; margin-bottom: 25px; color: #f59e0b;">무한의 계단</h2>
             <div style="display: flex; gap: 15px; margin-bottom: 25px;">
-                <button id="stairs-char-btn" onclick="changeStairsCharacter()" style="background: linear-gradient(145deg, #f59e0b, #d97706);">캐릭터: 주황 (기본)</button>
+                <button id="stairs-char-btn" onclick="openStairsSkinModal()" style="background: linear-gradient(145deg, #f59e0b, #d97706);">캐릭터: 주황 (기본)</button>
                 <button id="stairs-start-btn" onclick="startStairsPlay()" style="background: linear-gradient(145deg, #10b981, #059669);">게임 시작</button>
                 <button id="stairs-rank-view-btn" onclick="openStairsRankList()" style="background: linear-gradient(145deg, #6366f1, #4338ca);">랭킹 보기</button>
             </div>
@@ -414,6 +412,15 @@
             <h2 style="font-size: 1.8rem; color: #fbbf24;">🏆 무한의 계단 랭킹 TOP 10</h2>
             <div id="stairs-rank-list-body" style="text-align: left; margin: 15px 0; max-height: 50vh; overflow-y: auto;"></div>
             <button class="btn-secondary" onclick="closeStairsRankList()">닫기</button>
+        </div>
+    </div>
+
+    <div id="stairs-skin-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <h2 style="font-size: 1.8rem; color: #f59e0b;">캐릭터 색상 선택</h2>
+            <p style="color: #94a3b8; margin-bottom: 10px; font-size: 0.95rem;">원하는 색상을 눌러서 선택하세요</p>
+            <div id="stairs-skin-list" style="display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin: 15px 0;"></div>
+            <button class="btn-secondary" onclick="closeStairsSkinModal()">닫기</button>
         </div>
     </div>
 
@@ -459,6 +466,10 @@
         let stairsRankingKey = 'infiniteStairsRankingList';
         let stairsLastRankedKey = 'infiniteStairsLastRanked';
         let stairsGauge = 100;
+        let stairsDoubleActive = false;
+        let stairsDoubleStage = 0;
+        let stairsDoubleEndTime = 0;
+        let stairsDoubleGaugeTriggered = false;
         let stairsPath = [];
         let stairPositions = [];
         let playerDir = 1;
@@ -476,10 +487,12 @@
 
         const stairsSkins = [
             { name: "주황 (기본)", body: '#ea580c', head: '#ffedd5', band: '#b91c1c' },
-            { name: "파랑", body: '#0284c7', head: '#e0f2fe', band: '#0369a1' },
-            { name: "초록", body: '#10b981', head: '#d1fae5', band: '#047857' },
-            { name: "보라", body: '#a855f7', head: '#f3e8ff', band: '#6b21a8' },
-            { name: "노랑", body: '#eab308', head: '#fef9c3', band: '#854d0e' }
+            { name: "파랑", body: '#2563eb', head: '#ffedd5', band: '#1e3a8a' },
+            { name: "초록", body: '#16a34a', head: '#ffedd5', band: '#14532d' },
+            { name: "보라", body: '#7c3aed', head: '#ffedd5', band: '#4c1d95' },
+            { name: "핑크", body: '#db2777', head: '#ffedd5', band: '#9d174d' },
+            { name: "노랑", body: '#facc15', head: '#ffedd5', band: '#a16207' },
+            { name: "검정", body: '#1e293b', head: '#ffedd5', band: '#0f172a' },
         ];
 
         const stairConcepts = [
@@ -705,6 +718,166 @@
                         ctx.fillText('❄️', w * 0.15, 110);
                         ctx.fillText('☃️', w * 0.75, h - 80);
                         ctx.fillText('🏔️', w * 0.45, 140);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "사막",
+                topColor: '#facc15',
+                sideColor: '#b45309',
+                strokeColor: '#78350f',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#fde68a');
+                    bg.addColorStop(1, '#d97706');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = '#fbbf24';
+                        for(let i=-20; i<w+50; i+=90) {
+                            ctx.beginPath();
+                            ctx.arc(i, h, 80, 0, Math.PI, true);
+                            ctx.fill();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('☀️', w * 0.8, 100);
+                        ctx.fillText('🌵', w * 0.2, 170);
+                        ctx.fillText('🐫', w * 0.55, 140);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "황무지",
+                topColor: '#78716c',
+                sideColor: '#44403c',
+                strokeColor: '#1c1917',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#3f3f46');
+                    bg.addColorStop(1, '#78716c');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+                        ctx.lineWidth = 3;
+                        for(let i=10; i<w+50; i+=110) {
+                            ctx.beginPath();
+                            ctx.moveTo(i, h);
+                            ctx.lineTo(i - 12, h - 60);
+                            ctx.moveTo(i, h);
+                            ctx.lineTo(i + 14, h - 45);
+                            ctx.stroke();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('💀', w * 0.2, 150);
+                        ctx.fillText('🦴', w * 0.75, 190);
+                        ctx.fillText('🌫️', w * 0.5, 100);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "학교",
+                topColor: '#fbbf24',
+                sideColor: '#b91c1c',
+                strokeColor: '#7f1d1d',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#dbeafe');
+                    bg.addColorStop(1, '#93c5fd');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('📚', w * 0.15, 140);
+                        ctx.fillText('🎒', w * 0.8, 180);
+                        ctx.fillText('🍎', w * 0.5, 100);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "천국",
+                topColor: '#fef9c3',
+                sideColor: '#fde68a',
+                strokeColor: '#ca8a04',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#fef9c3');
+                    bg.addColorStop(1, '#bfdbfe');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                        for(let i=-20; i<w+50; i+=90) {
+                            ctx.beginPath();
+                            ctx.arc(i, h * 0.5, 50, 0, Math.PI, true);
+                            ctx.fill();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('☁️', w * 0.2, 130);
+                        ctx.fillText('😇', w * 0.75, 170);
+                        ctx.fillText('✨', w * 0.5, 90);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "지옥",
+                topColor: '#7f1d1d',
+                sideColor: '#450a0a',
+                strokeColor: '#1c0a0a',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#1c0a0a');
+                    bg.addColorStop(1, '#7f1d1d');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = '#dc2626';
+                        ctx.beginPath();
+                        ctx.moveTo(0, h);
+                        ctx.lineTo(w * 0.3, h - 120);
+                        ctx.lineTo(w * 0.6, h);
+                        ctx.lineTo(w * 0.9, h - 90);
+                        ctx.lineTo(w, h);
+                        ctx.fill();
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('😈', w * 0.2, 150);
+                        ctx.fillText('🔥', w * 0.75, 190);
+                        ctx.fillText('💀', w * 0.5, 100);
                         ctx.restore();
                     }
                     ctx.restore();
@@ -2630,6 +2803,10 @@
 
             stairsScore = 0;
             stairsGauge = 100;
+            stairsDoubleActive = false;
+            stairsDoubleStage = 0;
+            stairsDoubleEndTime = 0;
+            stairsDoubleGaugeTriggered = false;
             playerDir = 1;
             playerStairIndex = 0;
             stairsPath = [1]; 
@@ -2654,11 +2831,24 @@
             renderStairsFrame();
         }
 
-        function changeStairsCharacter() {
-            stairsCharIndex = (stairsCharIndex + 1) % stairsSkins.length;
+        function openStairsSkinModal() {
+            let list = document.getElementById('stairs-skin-list');
+            list.innerHTML = stairsSkins.map((skin, i) => `
+                <button onclick="selectStairsSkin(${i})" style="width: 74px; height: 74px; border-radius: 12px; border: 3px solid ${i === stairsCharIndex ? '#f59e0b' : 'rgba(255,255,255,0.2)'}; background: ${skin.body}; cursor: pointer; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.75rem; color: #fff; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.7); padding: 4px;">${skin.name}</button>
+            `).join('');
+            document.getElementById('stairs-skin-modal').style.display = 'flex';
+        }
+
+        function selectStairsSkin(index) {
+            stairsCharIndex = index;
             let charBtn = document.getElementById('stairs-char-btn');
             if (charBtn) charBtn.innerText = `캐릭터: ${stairsSkins[stairsCharIndex].name}`;
             renderStairsFrame();
+            closeStairsSkinModal();
+        }
+
+        function closeStairsSkinModal() {
+            document.getElementById('stairs-skin-modal').style.display = 'none';
         }
 
         function startStairsPlay() {
@@ -2680,6 +2870,12 @@
             showScreen('screen-game');
             initStairsGame();
             startStairsPlay();
+        }
+
+        const stairsDoubleExtendThresholds = { 1: 130, 2: 200, 3: 300, 4: 450, 5: 625, 6: 900 };
+
+        function getStairsScoreMultiplier() {
+            return (stairsDoubleActive && stairsScore >= 50) ? 2 : 1;
         }
 
         function addStair() {
@@ -2715,7 +2911,8 @@
                 
                 let nextStairDir = stairsPath[playerStairIndex + 1];
                 if(playerDir === nextStairDir) {
-                    stairsScore++;
+                    let scoreGain = getStairsScoreMultiplier();
+                    stairsScore += scoreGain;
                     playerStairIndex++;
                     stairsGauge = Math.min(100, stairsGauge + 8); 
                     
@@ -2729,7 +2926,7 @@
                     stairFloatingTexts.push({
                         x: px,
                         y: py - 20,
-                        text: "+1",
+                        text: "+" + scoreGain,
                         alpha: 1.0,
                         vy: -2
                     });
@@ -2757,10 +2954,31 @@
             if (config.game !== 'stairs') return;
             
             if (stairsPlaying && !stairsFalling) {
-                stairsGauge -= 0.35 + (stairsScore * 0.005);
+                stairsGauge -= 0.28 + (stairsScore * 0.004);
                 if (stairsGauge <= 0) {
                     stairsGauge = 0;
                     triggerStairsFall();
+                }
+
+                let stairsNow = performance.now();
+
+                if (!stairsDoubleGaugeTriggered && stairsScore >= 1 && stairsScore <= 50 && stairsGauge > 80) {
+                    stairsDoubleActive = true;
+                    stairsDoubleStage = 1;
+                    stairsDoubleEndTime = stairsNow + 20000;
+                    stairsDoubleGaugeTriggered = true;
+                }
+
+                if (stairsDoubleActive) {
+                    let extendThreshold = stairsDoubleExtendThresholds[stairsDoubleStage];
+                    if (extendThreshold && stairsScore > extendThreshold) {
+                        stairsDoubleStage++;
+                        stairsDoubleEndTime = stairsNow + 20000;
+                    }
+                    if (stairsNow >= stairsDoubleEndTime) {
+                        stairsDoubleActive = false;
+                        stairsDoubleStage = 0;
+                    }
                 }
             }
 
@@ -2844,21 +3062,38 @@
             stairStepScale = Math.max(1, stairStepScale - 0.05);
             ctx.scale(1, stairStepScale);
 
+            // 이동 방향으로 살짝 기울이는 정도 (몸/머리/시선이 한 방향으로 자연스럽게 어우러지도록)
+            let dirLean = playerDir * 5;
+
             // 몸통
             ctx.fillStyle = skin.body;
             ctx.beginPath();
-            ctx.roundRect(-14, -30, 28, 30, 6);
+            ctx.roundRect(-14 + dirLean * 0.4, -30, 28, 30, 6);
             ctx.fill();
+            if (skin.drawBody) skin.drawBody(ctx);
+
+            // 머리~화살표까지는 몸과 같은 방향으로 살짝 기울여서 시선과 자연스럽게 어우러지게 함
+            // (몸과 같은 비율로 기울여야 머리가 몸보다 앞으로 튀어나와 거북목처럼 보이지 않음)
+            ctx.save();
+            ctx.translate(dirLean * 0.4, 0);
+
+            // 목 (머리와 몸을 자연스럽게 이어주는 부분)
+            ctx.fillStyle = skin.head;
+            ctx.fillRect(-6, -32, 12, 6);
 
             // 머리
             ctx.fillStyle = skin.head;
             ctx.beginPath();
-            ctx.arc(0, -42, 16, 0, Math.PI * 2);
+            ctx.arc(0, -44, 15, 0, Math.PI * 2);
             ctx.fill();
 
-            // 헤어밴드
-            ctx.fillStyle = skin.band;
-            ctx.fillRect(-16, -48, 32, 6);
+            // 헤어밴드 (기본) / 캐릭터 전용 장식
+            if (skin.drawHead) {
+                skin.drawHead(ctx);
+            } else {
+                ctx.fillStyle = skin.band;
+                ctx.fillRect(-16, -48, 32, 6);
+            }
 
             // 시선 방향 (playerDir: 1 = 오른쪽, -1 = 왼쪽)
             let eyeOffsetX = playerDir * 7;
@@ -2897,6 +3132,8 @@
             ctx.stroke();
 
             ctx.restore();
+
+            ctx.restore();
             ctx.restore();
 
             // 게이지 및 점수 UI
@@ -2913,6 +3150,14 @@
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText(`점수: ${stairsScore}`, canvas.width / 2, 45);
+
+            if (getStairsScoreMultiplier() === 2) {
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 16px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('x2', canvas.width / 2 + 78, 30);
+                ctx.textAlign = 'center';
+            }
 
             let barW = Math.min(canvas.width * 0.7, 400);
             let barX = (canvas.width - barW) / 2;
