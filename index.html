@@ -2409,6 +2409,37 @@
         const stairsDb = firebase.firestore();
         const stairsRankingCollection = stairsDb.collection('infiniteStairsRanking');
 
+        // 4등~10등 자동 초기화(30분 주기) 관련 설정
+        // - 1,2,3등은 기록이 깨지기 전까지 계속 유지됩니다.
+        // - 4등 이하는 마지막 초기화로부터 30분이 지나면, 누군가 랭킹을 불러올 때 자동으로 삭제됩니다.
+        //   (정적 사이트라 서버 타이머는 없고, 랭킹을 조회하는 시점에 30분 경과 여부를 체크하는 방식입니다)
+        const stairsRankingMetaDoc = stairsDb.collection('infiniteStairsRankingMeta').doc('resetInfo');
+        const STAIRS_RANK_RESET_INTERVAL_MS = 30 * 60 * 1000;
+
+        async function maybeResetStairsRankingBeyondTop3() {
+            try {
+                let metaSnap = await stairsRankingMetaDoc.get();
+                let now = Date.now();
+                if (!metaSnap.exists) {
+                    await stairsRankingMetaDoc.set({ lastResetAt: now });
+                    return;
+                }
+                let lastResetAt = metaSnap.data().lastResetAt || 0;
+                if (now - lastResetAt < STAIRS_RANK_RESET_INTERVAL_MS) return;
+
+                let snapshot = await stairsRankingCollection.orderBy('score', 'desc').get();
+                let docsToDelete = snapshot.docs.slice(3); // 1~3등 제외, 4등부터 전부
+                if (docsToDelete.length > 0) {
+                    let batch = stairsDb.batch();
+                    docsToDelete.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                }
+                await stairsRankingMetaDoc.set({ lastResetAt: now });
+            } catch (e) {
+                console.error('랭킹 자동 초기화 실패:', e);
+            }
+        }
+
         // 닉네임에 사용할 수 없는 단어 목록 (정치/욕설/음란성 단어 차단)
         const stairsForbiddenWords = [
             // 정치 관련
@@ -2436,6 +2467,7 @@
 
         async function getStairsRankingList() {
             try {
+                await maybeResetStairsRankingBeyondTop3();
                 let snapshot = await stairsRankingCollection.orderBy('score', 'desc').limit(10).get();
                 return snapshot.docs.map(doc => doc.data());
             } catch (e) {
