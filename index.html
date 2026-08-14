@@ -1572,16 +1572,82 @@
             return totalScore + centerBias;
         }
 
+        function gomokuNearEmptyCells(range) {
+            let hasStone = false;
+            for (let y = 0; y < boardSize && !hasStone; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (board[y][x] !== 0) { hasStone = true; break; }
+                }
+            }
+            if (!hasStone) {
+                let c = Math.floor(boardSize / 2);
+                return [{x: c, y: c}];
+            }
+            let cells = [];
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (board[y][x] !== 0) continue;
+                    let near = false;
+                    for (let dy = -range; dy <= range && !near; dy++) {
+                        for (let dx = -range; dx <= range && !near; dx++) {
+                            let nx = x + dx, ny = y + dy;
+                            if (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize && board[ny][nx] !== 0) near = true;
+                        }
+                    }
+                    if (near) cells.push({x, y});
+                }
+            }
+            return cells;
+        }
+
         function makeGomokuAI(diff) {
+            if (diff === 'high' || diff === 'pro') {
+                let cells = gomokuNearEmptyCells(2);
+                let candidates = cells.map(c => ({x: c.x, y: c.y, score: getGomokuScore(c.x, c.y, 2) + getGomokuScore(c.x, c.y, 1)}));
+                candidates.sort((a, b) => b.score - a.score);
+                let topN = diff === 'pro' ? 14 : 10;
+                candidates = candidates.slice(0, topN);
+
+                // 즉시 승리 수 확인
+                for (let c of candidates) {
+                    if (getGomokuScore(c.x, c.y, 2) >= 1000000) { placeStone(c.x, c.y); return; }
+                }
+                // 즉시 방어 수 확인 (상대가 다음 수에 이기는 것을 막음)
+                for (let c of candidates) {
+                    if (getGomokuScore(c.x, c.y, 1) >= 1000000) { placeStone(c.x, c.y); return; }
+                }
+
+                let bestScore = -Infinity, bestMoves = [];
+                for (let c of candidates) {
+                    board[c.y][c.x] = 2;
+                    let replyCells = gomokuNearEmptyCells(2);
+                    let oppBest = 0;
+                    for (let rc of replyCells) {
+                        if (rc.x === c.x && rc.y === c.y) continue;
+                        let s = getGomokuScore(rc.x, rc.y, 1);
+                        if (s > oppBest) oppBest = s;
+                    }
+                    board[c.y][c.x] = 0;
+
+                    let finalScore = c.score - oppBest * (diff === 'pro' ? 0.9 : 0.65);
+                    if (finalScore > bestScore) { bestScore = finalScore; bestMoves = [c]; }
+                    else if (finalScore === bestScore) bestMoves.push(c);
+                }
+
+                if (bestMoves.length > 0) {
+                    let m = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+                    placeStone(m.x, m.y);
+                } else endGame("무승부", "AI가 착수할 곳이 없습니다.");
+                return;
+            }
+
             let bestScore = -1, moves = [];
             for (let y = 0; y < boardSize; y++) {
                 for (let x = 0; x < boardSize; x++) {
                     if (board[y][x] === 0) {
                         let score = 0;
                         if (diff === 'low') score = Math.random();
-                        else if (diff === 'mid') score = getGomokuScore(x, y, 2) + getGomokuScore(x, y, 1)*0.5;
-                        else if (diff === 'high') score = getGomokuScore(x, y, 2) + getGomokuScore(x, y, 1)*0.8;
-                        else score = getGomokuScore(x, y, 2)*1.2 + getGomokuScore(x, y, 1);
+                        else score = getGomokuScore(x, y, 2) + getGomokuScore(x, y, 1)*0.7;
                         
                         if (score > bestScore) { bestScore = score; moves = [{x, y}]; } 
                         else if (score === bestScore) { moves.push({x, y}); }
@@ -1592,6 +1658,21 @@
                 let m = moves[Math.floor(Math.random() * moves.length)];
                 placeStone(m.x, m.y);
             } else endGame("무승부", "AI가 착수할 곳이 없습니다.");
+        }
+
+        function goCountAtariRisk(player) {
+            let visited = Array.from({ length: boardSize }, () => Array(boardSize).fill(false));
+            let riskStones = 0;
+            for (let y = 0; y < boardSize; y++) {
+                for (let x = 0; x < boardSize; x++) {
+                    if (board[y][x] === player && !visited[y][x]) {
+                        let info = getLiberties(x, y);
+                        info.group.forEach(s => visited[s.y][s.x] = true);
+                        if (info.liberties.length === 1) riskStones += info.group.length;
+                    }
+                }
+            }
+            return riskStones;
         }
 
         function makeGoAI(diff) {
@@ -1624,8 +1705,7 @@
                 return;
             }
 
-            let bestScore = -Infinity;
-            let bestMoves = [];
+            let scoredMoves = [];
 
             for (let m of validMoves) {
                 let score = 0;
@@ -1663,15 +1743,41 @@
                 if (diff === 'mid') score += Math.random() * 100;
                 if (diff === 'high' || diff === 'pro') score += Math.random() * 20;
 
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestMoves = [m];
-                } else if (score === bestScore) {
-                    bestMoves.push(m);
-                }
+                scoredMoves.push({ m, score });
             }
 
-            let move = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            scoredMoves.sort((a, b) => b.score - a.score);
+
+            let move;
+
+            if (diff === 'high' || diff === 'pro') {
+                // 상위 후보들에 대해 착수 직후 자신의 돌이 단수(atari)에 몰리는지 한 수 더 내다보고 재평가
+                let topN = diff === 'pro' ? 12 : 8;
+                let candidates = scoredMoves.slice(0, topN);
+                let bestFinal = -Infinity, bestList = [];
+
+                for (let c of candidates) {
+                    let { x, y } = c.m;
+                    let backup = board.map(row => row.slice());
+
+                    board[y][x] = 2;
+                    captureStones(x, y, 2, true);
+                    let riskStones = goCountAtariRisk(2);
+                    let finalScore = c.score - riskStones * 250;
+
+                    board = backup;
+
+                    if (finalScore > bestFinal) { bestFinal = finalScore; bestList = [c.m]; }
+                    else if (finalScore === bestFinal) bestList.push(c.m);
+                }
+
+                move = bestList[Math.floor(Math.random() * bestList.length)];
+            } else {
+                let bestScore = scoredMoves[0].score;
+                let bestMoves = scoredMoves.filter(sm => sm.score === bestScore).map(sm => sm.m);
+                move = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+            }
+
             placeStone(move.x, move.y);
         }
 
@@ -1692,6 +1798,26 @@
                 }
             }
             return moves;
+        }
+
+        function orderChessMoves(moves) {
+            const pieceVals = {1:10, 2:50, 3:30, 4:30, 5:90, 6:9000};
+            return moves.slice().sort((a, b) => {
+                let capA = board[a.dy][a.dx], capB = board[b.dy][b.dx];
+                let valA = capA !== 0 ? (pieceVals[capA % 10] || 0) : 0;
+                let valB = capB !== 0 ? (pieceVals[capB % 10] || 0) : 0;
+                if (valA !== valB) return valB - valA;
+                let centerA = Math.abs(a.dx - 3.5) + Math.abs(a.dy - 3.5);
+                let centerB = Math.abs(b.dx - 3.5) + Math.abs(b.dy - 3.5);
+                return centerA - centerB;
+            });
+        }
+
+        function chessBranchCap(depth) {
+            if (depth >= 4) return 8;
+            if (depth === 3) return 10;
+            if (depth === 2) return 14;
+            return 999;
         }
 
         function chessEval(tempBoard) {
@@ -1720,6 +1846,9 @@
             else if (depth <= 1) score = chessEval(board);
             else {
                 let nextMoves = getAllChessMoves(isMax ? 2 : 1);
+                nextMoves = orderChessMoves(nextMoves);
+                let cap = chessBranchCap(depth);
+                if (nextMoves.length > cap) nextMoves = nextMoves.slice(0, cap);
                 if (isMax) {
                     let maxEval = -Infinity;
                     for(let m of nextMoves) {
@@ -1759,9 +1888,11 @@
                 bestMove = moves[Math.floor(Math.random()*moves.length)];
             } else {
                 let bestScore = -Infinity;
-                let depth = diff === 'pro' ? 3 : (diff === 'high' ? 2 : 1);
+                let depth = diff === 'pro' ? 4 : (diff === 'high' ? 3 : 2);
                 
-                if (depth === 3 && moves.length > 15) moves = moves.sort(() => Math.random() - 0.5).slice(0, 20);
+                moves = orderChessMoves(moves);
+                let rootCap = diff === 'pro' ? 14 : (diff === 'high' ? 18 : moves.length);
+                if (moves.length > rootCap) moves = moves.slice(0, rootCap);
                 
                 for(let m of moves) {
                     let score = evaluateChessMove(m, depth, -Infinity, Infinity, false);
@@ -2970,7 +3101,7 @@
             if (config.game !== 'stairs') return;
             
             if (stairsPlaying && !stairsFalling) {
-                stairsGauge -= 0.28 + (stairsScore * 0.004);
+                stairsGauge -= 0.28 + (Math.min(stairsScore, 200) * 0.004);
                 if (stairsGauge <= 0) {
                     stairsGauge = 0;
                     triggerStairsFall();
