@@ -457,6 +457,41 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
     <script>
+        // ===== 기기 영구 차단(벤) 시스템 =====
+        // 무한의 계단에서 부정행위(매크로/조작/순간이동/시간-점수 불일치 등)가 감지되면
+        // 이 브라우저(기기)를 사이트 전체에서 영구적으로 차단합니다.
+        // 주의: localStorage 기반이므로 브라우저 데이터 삭제/시크릿 모드/다른 브라우저 사용 시 우회될 수 있습니다.
+        // 완전히 우회 불가능하게 하려면 서버(백엔드) 저장이 필요합니다.
+        const BAN_STORAGE_KEY = 'gw_device_banned';
+        const BAN_REASON_KEY = 'gw_device_banned_reason';
+
+        function showBanScreen(reason) {
+            document.title = '접속 차단됨';
+            let reasonText = reason || '비정상적인 행위가 감지되었습니다.';
+            document.body.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;width:100%;text-align:center;padding:20px;box-sizing:border-box;">
+                    <h1 style="color:#ef4444;font-size:2.2rem;margin-bottom:1rem;">🚫 접속이 영구적으로 차단되었습니다</h1>
+                    <p style="color:#94a3b8;font-size:1.1rem;max-width:500px;">${reasonText}<br>이 기기의 사이트 접속이 영구적으로 제한되었습니다.</p>
+                </div>
+            `;
+        }
+
+        function banThisDevice(reason) {
+            try {
+                localStorage.setItem(BAN_STORAGE_KEY, '1');
+                if (reason) localStorage.setItem(BAN_REASON_KEY, reason);
+            } catch (e) {}
+            showBanScreen(reason);
+        }
+
+        // 페이지 로드 시 이미 차단된 기기인지 먼저 확인합니다.
+        if (localStorage.getItem(BAN_STORAGE_KEY) === '1') {
+            let savedReason = null;
+            try { savedReason = localStorage.getItem(BAN_REASON_KEY); } catch (e) {}
+            showBanScreen(savedReason);
+            throw new Error('DEVICE_BANNED');
+        }
+
         let config = { game: '', mode: '', difficulty: 'mid', time: 0 };
         let boardSize = 15; 
         let board = [];
@@ -515,6 +550,15 @@
 
         // 무한의 계단 매크로/핵 감지 및 기기 차단 관련 상태
         let stairsClimbTimestamps = [];   // 최근 등반(성공 입력) 시각 기록
+        let stairsPlayStartTime = 0;      // 이번 판이 실제로 시작된 시각 (performance.now())
+        let stairsLastPlayDurationMs = 0; // 방금 끝난 판의 실제 플레이 시간(ms) - 랭킹 등록 시점 검증용
+        const STAIRS_MIN_MS_PER_CLIMB = 55; // 한 칸을 오르는 데 걸릴 수 있는 최소 시간(ms). checkStairsClimbSpeedCheat의 MIN_AVG_MS와 동일한 기준.
+
+        // Date.now()/performance.now()를 콘솔에서 조작해 "플레이 시간"을 속이는 경우에 대비한 2차 시계.
+        // requestAnimationFrame은 브라우저가 실제 화면 주사율에 맞춰 호출하므로 시간 함수 자체를 덮어써도 쉽게 속일 수 없습니다.
+        let stairsFrameCounter = 0;
+        let stairsLastFrameCounter = 0;
+        const STAIRS_MIN_MS_PER_FRAME = 4; // 240Hz 고주사율 모니터까지 감안한 프레임당 최소 시간(ms)
         let stairsBanTriggered = false;   // 이번 플레이 중 이미 차단 처리를 했는지 여부
         let stairsTotalClimbs = 0;        // 이번 판에서 "실제 정상 입력"으로 오른 총 횟수 (콘솔 변수 조작 감지용)
         let stairsLastTotalClimbs = 0;    // 방금 끝난 판의 stairsTotalClimbs 스냅샷 (랭킹 등록 시점 검증용)
@@ -2823,21 +2867,63 @@
             console.error('Firebase 초기화 실패 - 온라인 랭킹 기능이 비활성화됩니다:', e);
         }
 
-        // 기기별 고유 ID (최초 접속 시 1회 생성 후 localStorage에 보관)
+        // ===== 기기 지문(fingerprint) =====
+        // localStorage를 지우거나 캐시를 삭제해도 "같은 브라우저/기기"라면 최대한 같은 값이 나오도록
+        // 브라우저·화면·캔버스 렌더링 특성을 조합해 식별값을 만듭니다.
+        // (완벽한 방법은 아니며, 시크릿모드/다른 브라우저/지문 위장 확장 등으로는 우회될 수 있습니다)
+        function simpleHashString(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+            }
+            return Math.abs(hash).toString(36);
+        }
+
+        function computeStairsCanvasFingerprint() {
+            try {
+                let c = document.createElement('canvas');
+                c.width = 220; c.height = 40;
+                let fctx = c.getContext('2d');
+                fctx.textBaseline = 'top';
+                fctx.font = '14px Arial';
+                fctx.fillStyle = '#f60';
+                fctx.fillRect(0, 0, 220, 40);
+                fctx.fillStyle = '#069';
+                fctx.fillText('gw-fp-🔒-check', 2, 15);
+                fctx.strokeStyle = 'rgba(102,204,0,0.7)';
+                fctx.beginPath();
+                fctx.arc(50, 20, 15, 0, Math.PI * 2);
+                fctx.stroke();
+                return c.toDataURL();
+            } catch (e) {
+                return 'no-canvas';
+            }
+        }
+
+        function computeStairsDeviceFingerprint() {
+            let parts = [
+                navigator.userAgent || '',
+                navigator.language || '',
+                String(navigator.hardwareConcurrency || ''),
+                String(screen.width) + 'x' + String(screen.height) + 'x' + String(screen.colorDepth),
+                String(new Date().getTimezoneOffset()),
+                computeStairsCanvasFingerprint()
+            ].join('||');
+            return 'fp_' + simpleHashString(parts);
+        }
+
+        // 기기별 고유 ID: 브라우저 지문을 기반으로 생성해 localStorage에 캐시합니다.
+        // (localStorage를 지워도 같은 기기/브라우저면 같은 지문 값이 다시 계산되어 Firebase 차단 목록과 계속 매칭됩니다)
         function getStairsDeviceId() {
             try {
                 let id = localStorage.getItem(stairsDeviceIdKey);
                 if (!id) {
-                    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+                    id = computeStairsDeviceFingerprint();
                     localStorage.setItem(stairsDeviceIdKey, id);
                 }
                 return id;
             } catch (e) {
-                // localStorage를 쓸 수 없는 환경이면 세션 동안만 유지되는 임시 ID 사용
-                if (!window.__stairsTempDeviceId) {
-                    window.__stairsTempDeviceId = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
-                }
-                return window.__stairsTempDeviceId;
+                return computeStairsDeviceFingerprint();
             }
         }
 
@@ -2888,8 +2974,7 @@
             }
 
             document.getElementById('stairs-menu-overlay').style.display = 'none';
-            alert('비정상적인 입력 패턴(매크로/자동입력 의심)이 감지되어 이 기기는 무한의 계단 온라인 기능 이용이 제한됩니다.');
-            quitGame();
+            banThisDevice(`무한의 계단에서 비정상적인 행위(${reason})가 감지되었습니다.`);
         }
 
         // 등반 타이밍 패턴을 분석해 매크로/자동입력 여부를 판정
@@ -2924,6 +3009,36 @@
                 flagStairsCheatAndBan('점수/진행 변수 직접 조작 감지');
             }
         }
+
+        // 계단을 실제로 밟지 않고 위치(playerStairIndex)만 앞서가는 "순간이동"을 감지합니다.
+        // 정상 플레이에서는 한 칸 오를 때마다 stairsTotalClimbs와 playerStairIndex가 항상 함께, 같은 값으로 증가합니다.
+        // 콘솔 등에서 playerStairIndex(또는 stairPositions 등 위치값)만 직접 조작하면 두 값이 어긋나게 됩니다.
+        function checkStairsPositionIntegrity() {
+            if (playerStairIndex !== stairsTotalClimbs) {
+                flagStairsCheatAndBan('계단을 밟지 않고 이동(순간이동) 감지');
+            }
+        }
+
+        // 플레이 시간에 비해 점수(등반 횟수)가 물리적으로 불가능할 만큼 높은지 검증합니다.
+        // (한 칸당 최소 소요 시간 × 등반 횟수)가 실제 플레이 시간보다 크면 시간/점수 조작으로 간주합니다.
+        function isStairsTimeScoreMismatch(totalClimbs, playDurationMs) {
+            const BUFFER_MS = 300; // 렌더링/이벤트 지연 등을 고려한 여유 시간
+            let minPlausibleMs = totalClimbs * STAIRS_MIN_MS_PER_CLIMB;
+            return playDurationMs + BUFFER_MS < minPlausibleMs;
+        }
+
+        // Date.now()/performance.now()를 콘솔에서 덮어써서 durationMs를 속이는 경우를 잡기 위한 2차 검증.
+        // requestAnimationFrame 호출 횟수(stairsFrameCounter)는 시간 함수와 무관하게 브라우저가 직접 관리하므로,
+        // "측정된 플레이 시간"이 "실제 렌더링된 프레임 수로 계산한 최소 시간"보다 훨씬 짧으면 시계 조작으로 간주합니다.
+        function isStairsClockTampering(frameCount, playDurationMs) {
+            const BUFFER_MS = 300;
+            let minPlausibleMs = frameCount * STAIRS_MIN_MS_PER_FRAME;
+            return playDurationMs + BUFFER_MS < minPlausibleMs;
+        }
+
+        // 콘솔에서 stairsScore/stairsGauge 등 게임 상태를 다루는 데 쓰이는 핵심 함수 자체를
+        // 다른 함수로 덮어써서(예: flagStairsCheatAndBan = function(){}) 차단 로직을 무력화하는 것을 막기 위해
+        // 아래 함수들은 스크립트 마지막에서 재정의가 불가능하도록 잠급니다 (freezeStairsAntiCheatFunctions 참고).
 
         // 전체 랭킹 초기화용 함수 (버튼 없음 - 브라우저 콘솔에서 resetAllStairsRanking() 을 직접 호출해서 사용)
         async function resetAllStairsRanking() {
@@ -3019,10 +3134,40 @@
             return stairsForbiddenWords.some(word => normalized.includes(normalizeStairsNickname(word)));
         }
 
+        // 저장된 랭킹 기록 중 "플레이 시간에 맞지 않는 점수"나 "시계 조작이 의심되는 기록"을 찾아 자동으로 삭제합니다.
+        // totalClimbs/durationMs(또는 frameCount)가 함께 저장된 기록만 검사 대상입니다.
+        // (이 필드가 없는, 이 기능 도입 이전의 예전 기록은 판단 근거가 없으므로 건드리지 않습니다)
+        async function autoRemoveTimeMismatchedStairsRanking() {
+            if (!stairsFirebaseReady) return;
+            try {
+                let snapshot = await stairsRankingCollection.get();
+                let docsToDelete = snapshot.docs.filter(doc => {
+                    let data = doc.data();
+                    let mismatch = false;
+                    if (typeof data.totalClimbs === 'number' && typeof data.durationMs === 'number') {
+                        mismatch = mismatch || isStairsTimeScoreMismatch(data.totalClimbs, data.durationMs);
+                    }
+                    if (typeof data.frameCount === 'number' && typeof data.durationMs === 'number') {
+                        mismatch = mismatch || isStairsClockTampering(data.frameCount, data.durationMs);
+                    }
+                    return mismatch;
+                });
+                if (docsToDelete.length > 0) {
+                    let batch = stairsDb.batch();
+                    docsToDelete.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    console.log(`${docsToDelete.length}개의 시간/점수 불일치 기록이 자동 삭제되었습니다.`);
+                }
+            } catch (e) {
+                console.error('시간/점수 불일치 기록 자동 삭제 실패:', e);
+            }
+        }
+
         async function getStairsRankingList() {
             if (!stairsFirebaseReady) return [];
             try {
                 await maybeResetStairsRankingBeyondTop3();
+                await autoRemoveTimeMismatchedStairsRanking();
                 let snapshot = await stairsRankingCollection.orderBy('score', 'desc').limit(50).get();
                 return snapshot.docs.map(doc => doc.data());
             } catch (e) {
@@ -3097,6 +3242,18 @@
                 return;
             }
 
+            // 플레이 시간에 비해 등반 횟수가 물리적으로 불가능한 경우(시간/점수 조작, 순간이동 등) 차단
+            if (isStairsTimeScoreMismatch(stairsLastTotalClimbs, stairsLastPlayDurationMs)) {
+                await flagStairsCheatAndBan('플레이 시간과 점수가 맞지 않음 (시간/속도 조작 의심)');
+                return;
+            }
+
+            // 시계 함수(Date.now/performance.now) 조작 여부를 프레임 수 기준으로 한 번 더 재검증
+            if (isStairsClockTampering(stairsLastFrameCounter, stairsLastPlayDurationMs)) {
+                await flagStairsCheatAndBan('시계 함수 조작 감지 (랭킹 제출 시점 재검증)');
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.5';
             submitBtn.style.cursor = 'not-allowed';
@@ -3106,6 +3263,9 @@
                 await stairsRankingCollection.add({
                     name: name,
                     score: stairsLastFinalScore,
+                    totalClimbs: stairsLastTotalClimbs,
+                    durationMs: Math.round(stairsLastPlayDurationMs),
+                    frameCount: stairsLastFrameCounter,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
@@ -3362,6 +3522,8 @@
             window.removeEventListener('keydown', stairsKeyHandler);
 
             stairsPlaying = true;
+            stairsPlayStartTime = performance.now();
+            stairsFrameCounter = 0;
             window.addEventListener('keydown', stairsKeyHandler);
             stairsLoop();
         }
@@ -3471,6 +3633,15 @@
                 checkStairsScoreIntegrity();
                 if (stairsBanTriggered) return;
 
+                checkStairsPositionIntegrity();
+                if (stairsBanTriggered) return;
+
+                // 시계 조작(Date.now/performance.now 콘솔 덮어쓰기) 감지: 어느 정도 프레임이 쌓인 뒤부터 검사
+                if (stairsFrameCounter > 30 && isStairsClockTampering(stairsFrameCounter, performance.now() - stairsPlayStartTime)) {
+                    flagStairsCheatAndBan('시계 함수 조작 감지');
+                    return;
+                }
+
                 stairsGauge -= 0.28 + (Math.min(stairsScore, 200) * 0.004);
                 if (stairsGauge <= 0) {
                     stairsGauge = 0;
@@ -3506,6 +3677,8 @@
                 if (playerFallY > canvas.height + 100) {
                     stairsLastFinalScore = stairsScore;
                     stairsLastTotalClimbs = stairsTotalClimbs;
+                    stairsLastPlayDurationMs = performance.now() - stairsPlayStartTime;
+                    stairsLastFrameCounter = stairsFrameCounter;
                     endGame("게임 오버", `계단에서 추락했습니다!<br>최종 점수: ${stairsScore}점`);
                     return;
                 }
@@ -3720,8 +3893,40 @@
         function stairsLoop() {
             if (!gameActive || config.game !== 'stairs') return;
             stairsAnimId = requestAnimationFrame(stairsLoop);
+            stairsFrameCounter++;
             renderStairsFrame();
         }
+
+        // ===== 안티치트 함수 잠금 =====
+        // 콘솔에서 "flagStairsCheatAndBan = function(){}" 같은 식으로 차단 로직 자체를
+        // 무력화하는 것을 막기 위해, 핵심 함수들을 재할당 불가능하게 잠급니다.
+        // (이 코드가 실행되는 시점까지는 페이지가 아직 로드 중이라 사용자가 콘솔로 개입할 수 없으므로,
+        //  여기서 원본 함수를 그대로 고정할 수 있습니다)
+        function freezeStairsAntiCheatFunctions() {
+            let namesToLock = [
+                'showBanScreen', 'banThisDevice',
+                'getStairsDeviceId', 'checkStairsDeviceBan', 'flagStairsCheatAndBan',
+                'checkStairsClimbSpeedCheat', 'checkStairsScoreIntegrity',
+                'checkStairsPositionIntegrity', 'isStairsTimeScoreMismatch',
+                'isStairsClockTampering', 'autoRemoveTimeMismatchedStairsRanking',
+                'computeStairsDeviceFingerprint', 'computeStairsCanvasFingerprint'
+            ];
+            namesToLock.forEach(name => {
+                try {
+                    let original = window[name];
+                    if (typeof original !== 'function') return;
+                    Object.defineProperty(window, name, {
+                        value: original,
+                        writable: false,
+                        configurable: false,
+                        enumerable: true
+                    });
+                } catch (e) {
+                    console.error(`안티치트 함수 잠금 실패: ${name}`, e);
+                }
+            });
+        }
+        freezeStairsAntiCheatFunctions();
     </script>
 </body>
 </html>
