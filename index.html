@@ -932,9 +932,9 @@
                             ctx.fill();
                         }
                         ctx.font = '28px sans-serif';
-                        ctx.fillText('☁️', w * 0.2, 130);
-                        ctx.fillText('😇', w * 0.75, 170);
-                        ctx.fillText('✨', w * 0.5, 90);
+                        ctx.fillText('🕊️', w * 0.2, 130);
+                        ctx.fillText('🌈', w * 0.75, 170);
+                        ctx.fillText('⭐', w * 0.5, 90);
                         ctx.restore();
                     }
                     ctx.restore();
@@ -966,9 +966,347 @@
                         ctx.lineTo(w, h);
                         ctx.fill();
                         ctx.font = '28px sans-serif';
-                        ctx.fillText('😈', w * 0.2, 150);
-                        ctx.fillText('🔥', w * 0.75, 190);
-                        ctx.fillText('💀', w * 0.5, 100);
+                        ctx.fillText('👹', w * 0.2, 150);
+                        ctx.fillText('⚡', w * 0.75, 190);
+                        ctx.fillText('🩸', w * 0.5, 100);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "시간의 세계",
+                topColor: '#c4b5fd',
+                sideColor: '#6d28d9',
+                strokeColor: '#4c1d95',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#1e1b4b');
+                    bg.addColorStop(1, '#4c1d95');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.strokeStyle = 'rgba(196,181,253,0.5)';
+                        ctx.lineWidth = 2;
+                        for(let i=20; i<w+50; i+=140) {
+                            ctx.beginPath();
+                            ctx.arc(i, 140, 34, 0, Math.PI * 2);
+                            ctx.moveTo(i, 140);
+                            ctx.lineTo(i, 118);
+                            ctx.moveTo(i, 140);
+                            ctx.lineTo(i + 16, 140);
+                            ctx.stroke();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🕰️', w * 0.2, 200);
+                        ctx.fillText('⏳', w * 0.75, 170);
+                        ctx.fillText('🌀', w * 0.5, 260);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "세포 세계",
+                topColor: '#86efac',
+                sideColor: '#15803d',
+                strokeColor: '#14532d',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#022c22');
+                    bg.addColorStop(1, '#166534');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.strokeStyle = 'rgba(134,239,172,0.55)';
+                        ctx.lineWidth = 3;
+                        for(let i=0; i<3; i++) {
+                            let cx = w * (0.2 + i * 0.3);
+                            let cy = 90 + i * 60;
+                            ctx.beginPath();
+                            ctx.arc(cx, cy, 30 + i * 6, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🧬', w * 0.2, 150);
+                        ctx.fillText('🦠', w * 0.75, 200);
+                        ctx.fillText('🔬', w * 0.5, 110);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "차원 균열",
+                topColor: '#818cf8',
+                sideColor: '#4338ca',
+                strokeColor: '#1e1b4b',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#020617');
+                    bg.addColorStop(1, '#312e81');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.strokeStyle = 'rgba(236,72,153,0.6)';
+                        ctx.lineWidth = 3;
+                        for(let i=10; i<w+50; i+=130) {
+                            ctx.beginPath();
+                            ctx.moveTo(i, 40);
+                            ctx.lineTo(i + 20, 130);
+                            ctx.lineTo(i - 10, 220);
+                            ctx.lineTo(i + 14, 300);
+                            ctx.stroke();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🌌', w * 0.2, 150);
+                        ctx.fillText('⚡', w * 0.75, 200);
+                        ctx.fillText('🕳️', w * 0.5, 110);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "고대 유적",
+                topColor: '#d6d3d1',
+                sideColor: '#78716c',
+                strokeColor: '#44403c',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#78350f');
+                    bg.addColorStop(1, '#d97706');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = 'rgba(214,211,209,0.5)';
+                        for(let i=10; i<w+50; i+=100) {
+                            ctx.fillRect(i, h - 160, 16, 160);
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🏛️', w * 0.2, 150);
+                        ctx.fillText('🗿', w * 0.75, 190);
+                        ctx.fillText('⚱️', w * 0.5, 110);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "심해",
+                topColor: '#0c4a6e',
+                sideColor: '#082f49',
+                strokeColor: '#020617',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#020617');
+                    bg.addColorStop(1, '#0c4a6e');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = 'rgba(56,189,248,0.35)';
+                        for(let i=0; i<16; i++) {
+                            let bx = (i * 61) % w;
+                            let by = (i * 89) % h;
+                            ctx.beginPath();
+                            ctx.arc(bx, by, (i%3)+2, 0, Math.PI*2);
+                            ctx.fill();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🌊', w * 0.2, 150);
+                        ctx.fillText('🐙', w * 0.75, 200);
+                        ctx.fillText('🦑', w * 0.5, 110);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "폐허가 된 미래도시",
+                topColor: '#64748b',
+                sideColor: '#334155',
+                strokeColor: '#0f172a',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#0f172a');
+                    bg.addColorStop(1, '#475569');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = '#1e293b';
+                        const bWidths = [60, 90, 70, 100];
+                        let bx = 0;
+                        for(let i=0; bx < w; i++) {
+                            let bw = bWidths[i % bWidths.length];
+                            let bh = 140 + (i * 53) % 180;
+                            ctx.save();
+                            ctx.translate(bx + bw/2, h - bh/2);
+                            ctx.rotate((i % 2 === 0 ? 1 : -1) * 0.05);
+                            ctx.fillRect(-bw/2, -bh/2, bw, bh);
+                            ctx.restore();
+                            bx += bw + 10;
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🏙️', w * 0.2, 130);
+                        ctx.fillText('🤖', w * 0.75, 170);
+                        ctx.fillText('🛸', w * 0.5, 90);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "세계수",
+                topColor: '#84cc16',
+                sideColor: '#365314',
+                strokeColor: '#1a2e05',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#bae6fd');
+                    bg.addColorStop(1, '#4d7c0f');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = 'rgba(101,163,13,0.6)';
+                        ctx.fillRect(w * 0.46, 0, w * 0.08, h);
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🌳', w * 0.2, 150);
+                        ctx.fillText('🍃', w * 0.75, 190);
+                        ctx.fillText('☁️', w * 0.5, 100);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "거울 세계",
+                topColor: '#e2e8f0',
+                sideColor: '#94a3b8',
+                strokeColor: '#475569',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#f1f5f9');
+                    bg.addColorStop(1, '#94a3b8');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+                        ctx.lineWidth = 2;
+                        for(let i=20; i<w+50; i+=90) {
+                            ctx.beginPath();
+                            ctx.moveTo(i, 0);
+                            ctx.lineTo(i, h);
+                            ctx.stroke();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🪞', w * 0.2, 150);
+                        ctx.fillText('✨', w * 0.75, 190);
+                        ctx.fillText('🔮', w * 0.5, 110);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "중력 붕괴",
+                topColor: '#f472b6',
+                sideColor: '#831843',
+                strokeColor: '#500724',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#500724');
+                    bg.addColorStop(1, '#831843');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.strokeStyle = 'rgba(244,114,182,0.6)';
+                        ctx.lineWidth = 2;
+                        for(let i=0; i<4; i++) {
+                            ctx.beginPath();
+                            ctx.arc(w * 0.5, h * 0.5, 30 + i * 26, 0, Math.PI * 2);
+                            ctx.stroke();
+                        }
+                        ctx.font = '28px sans-serif';
+                        ctx.fillText('🌀', w * 0.2, 150);
+                        ctx.fillText('🔄', w * 0.75, 190);
+                        ctx.fillText('🕳️', w * 0.5, 250);
+                        ctx.restore();
+                    }
+                    ctx.restore();
+                }
+            },
+            {
+                name: "미지의 영역",
+                topColor: '#18181b',
+                sideColor: '#09090b',
+                strokeColor: '#000000',
+                bgDraw: (ctx, w, h, bgOffsetY = 0) => {
+                    let bg = ctx.createLinearGradient(0, 0, 0, h);
+                    bg.addColorStop(0, '#000000');
+                    bg.addColorStop(1, '#27272a');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, w, h);
+
+                    ctx.save();
+                    let shiftY = (bgOffsetY * 0.8) % h;
+                    for (let pass of [0, h]) {
+                        ctx.save();
+                        ctx.translate(0, shiftY + pass - h);
+                        ctx.fillStyle = 'rgba(148,163,184,0.15)';
+                        for(let i=-20; i<w+50; i+=90) {
+                            ctx.beginPath();
+                            ctx.arc(i, h, 100, 0, Math.PI, true);
+                            ctx.fill();
+                        }
+                        ctx.font = '30px sans-serif';
+                        ctx.fillText('👁️', w * 0.5, 150);
+                        ctx.fillText('🌫️', w * 0.2, 200);
+                        ctx.fillText('🌫️', w * 0.75, 220);
                         ctx.restore();
                     }
                     ctx.restore();
@@ -3061,6 +3399,30 @@
             }
         }
 
+        // 지금 이 기기에 걸린 차단(로컬 + 온라인 둘 다)을 직접 해제하는 함수
+        // 사용법: 브라우저 콘솔(F12)에서 unbanThisDevice() 입력 후 엔터
+        async function unbanThisDevice() {
+            try {
+                localStorage.removeItem(BAN_STORAGE_KEY);
+                localStorage.removeItem(BAN_REASON_KEY);
+                localStorage.removeItem(stairsBannedLocalKey);
+            } catch (e) {}
+
+            try {
+                if (stairsFirebaseReady && stairsBannedCollection) {
+                    let deviceId = getStairsDeviceId();
+                    await stairsBannedCollection.doc(deviceId).delete();
+                    console.log('온라인 차단 기록도 삭제되었습니다. (기기 ID: ' + deviceId + ')');
+                } else {
+                    console.log('Firebase가 아직 준비되지 않아 온라인 기록은 건너뛰었습니다. 로컬 차단만 해제됨.');
+                }
+            } catch (e) {
+                console.error('온라인 차단 기록 삭제 실패:', e);
+            }
+
+            console.log('차단이 해제되었습니다. 페이지를 새로고침 해주세요.');
+        }
+
         // 특정 점수를 초과하는 기록만 골라서 삭제 (핵/부정 점수 청소용)
         // 사용법: 실제 배포된 사이트에서 F12 콘솔을 열고 resetStairsRankingAbove(999) 입력 후 엔터
         // (threshold보다 "큰" 점수만 삭제됩니다. threshold와 같은 점수는 남습니다)
@@ -3082,9 +3444,9 @@
             }
         }
 
-        // 4등~10등 자동 초기화(30분 주기) 관련 설정
-        // - 1,2,3등은 기록이 깨지기 전까지 계속 유지됩니다.
-        // - 4등 이하는 마지막 초기화로부터 30분이 지나면, 누군가 랭킹을 불러올 때 자동으로 삭제됩니다.
+        // 11등 이하 자동 초기화(30분 주기) 관련 설정
+        // - 1~10등은 기록이 깨지기 전까지 계속 유지됩니다.
+        // - 11등 이하는 마지막 초기화로부터 30분이 지나면, 누군가 랭킹을 불러올 때 자동으로 삭제됩니다.
         //   (정적 사이트라 서버 타이머는 없고, 랭킹을 조회하는 시점에 30분 경과 여부를 체크하는 방식입니다)
         const STAIRS_RANK_RESET_INTERVAL_MS = 30 * 60 * 1000;
 
@@ -3101,7 +3463,7 @@
                 if (now - lastResetAt < STAIRS_RANK_RESET_INTERVAL_MS) return;
 
                 let snapshot = await stairsRankingCollection.orderBy('score', 'desc').get();
-                let docsToDelete = snapshot.docs.slice(50); // 1~50등 제외, 51등부터 전부
+                let docsToDelete = snapshot.docs.slice(10); // 1~10등 제외, 11등부터 전부
                 if (docsToDelete.length > 0) {
                     let batch = stairsDb.batch();
                     docsToDelete.forEach(doc => batch.delete(doc.ref));
@@ -3110,6 +3472,29 @@
                 await stairsRankingMetaDoc.set({ lastResetAt: now });
             } catch (e) {
                 console.error('랭킹 자동 초기화 실패:', e);
+            }
+        }
+
+        // 30분 대기 없이 지금 즉시 "11등 이하 초기화"를 강제로 실행 (디버그/테스트용)
+        // 사용법: 브라우저 콘솔(F12)에서 forceResetStairsRankingNow() 입력 후 엔터
+        async function forceResetStairsRankingNow() {
+            if (!stairsFirebaseReady) { console.error('Firebase가 아직 준비되지 않았습니다.'); return; }
+            try {
+                let snapshot = await stairsRankingCollection.orderBy('score', 'desc').get();
+                console.log(`현재 등록된 기록 수: ${snapshot.docs.length}개`);
+                let docsToDelete = snapshot.docs.slice(10);
+                if (docsToDelete.length === 0) {
+                    console.log('11등 이하 기록이 없어서 지울 게 없습니다. (전체 10개 이하)');
+                } else {
+                    let batch = stairsDb.batch();
+                    docsToDelete.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    console.log(`${docsToDelete.length}개의 기록(11등 이하)이 삭제되었습니다.`);
+                }
+                await stairsRankingMetaDoc.set({ lastResetAt: Date.now() });
+                console.log('초기화 기준 시각도 지금으로 갱신했습니다.');
+            } catch (e) {
+                console.error('강제 초기화 실패 (Firestore 권한 문제일 수 있음):', e);
             }
         }
 
@@ -3577,6 +3962,7 @@
         function stairsKeyHandler(e) {
             if(!gameActive || config.game !== 'stairs' || !stairsPlaying || stairsFalling) return;
             if (stairsBanTriggered) return;
+            if (e.repeat) return; // 키를 꾹 누르고 있을 때 OS/브라우저가 자동으로 반복 발생시키는 입력은 무시 (오탐 방지)
             let key = e.key.toLowerCase();
             
             if(key === stairsKeybinds.climb || key === stairsKeybinds.turn) {
