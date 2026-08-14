@@ -2930,6 +2930,27 @@
             }
         }
 
+        // 특정 점수를 초과하는 기록만 골라서 삭제 (핵/부정 점수 청소용)
+        // 사용법: 실제 배포된 사이트에서 F12 콘솔을 열고 resetStairsRankingAbove(999) 입력 후 엔터
+        // (threshold보다 "큰" 점수만 삭제됩니다. threshold와 같은 점수는 남습니다)
+        async function resetStairsRankingAbove(threshold) {
+            if (!stairsFirebaseReady) { console.error('Firebase가 초기화되지 않아 랭킹 삭제를 할 수 없습니다.'); return; }
+            if (typeof threshold !== 'number' || isNaN(threshold)) { console.error('threshold는 숫자로 입력해주세요. 예: resetStairsRankingAbove(999)'); return; }
+            try {
+                let snapshot = await stairsRankingCollection.where('score', '>', threshold).get();
+                if (snapshot.empty) {
+                    console.log(`점수가 ${threshold}점을 초과하는 기록이 없습니다.`);
+                    return;
+                }
+                let batch = stairsDb.batch();
+                snapshot.docs.forEach(doc => batch.delete(doc.ref));
+                await batch.commit();
+                console.log(`${snapshot.size}개의 기록(${threshold}점 초과)이 삭제되었습니다.`);
+            } catch (e) {
+                console.error(`${threshold}점 초과 기록 삭제 실패:`, e);
+            }
+        }
+
         // 4등~10등 자동 초기화(30분 주기) 관련 설정
         // - 1,2,3등은 기록이 깨지기 전까지 계속 유지됩니다.
         // - 4등 이하는 마지막 초기화로부터 30분이 지나면, 누군가 랭킹을 불러올 때 자동으로 삭제됩니다.
