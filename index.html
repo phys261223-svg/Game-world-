@@ -516,6 +516,8 @@
         // 무한의 계단 매크로/핵 감지 및 기기 차단 관련 상태
         let stairsClimbTimestamps = [];   // 최근 등반(성공 입력) 시각 기록
         let stairsBanTriggered = false;   // 이번 플레이 중 이미 차단 처리를 했는지 여부
+        let stairsTotalClimbs = 0;        // 이번 판에서 "실제 정상 입력"으로 오른 총 횟수 (콘솔 변수 조작 감지용)
+        let stairsLastTotalClimbs = 0;    // 방금 끝난 판의 stairsTotalClimbs 스냅샷 (랭킹 등록 시점 검증용)
         const stairsBannedLocalKey = 'infiniteStairsBannedDevice';
         const stairsDeviceIdKey = 'infiniteStairsDeviceId';
 
@@ -2914,6 +2916,15 @@
             }
         }
 
+        // stairsScore가 실제 정상 입력 횟수(stairsTotalClimbs)로 설명되지 않으면
+        // 콘솔 등에서 점수/진행 변수를 직접 조작한 것으로 간주 (매크로 우회 방지용 2차 검증)
+        function checkStairsScoreIntegrity() {
+            const BUFFER = 2; // 배율/타이밍 오차 여유분
+            if (stairsScore > stairsTotalClimbs * 2 + BUFFER) {
+                flagStairsCheatAndBan('점수/진행 변수 직접 조작 감지');
+            }
+        }
+
         // 전체 랭킹 초기화용 함수 (버튼 없음 - 브라우저 콘솔에서 resetAllStairsRanking() 을 직접 호출해서 사용)
         async function resetAllStairsRanking() {
             if (!stairsFirebaseReady) { console.error('Firebase가 초기화되지 않아 랭킹 초기화를 할 수 없습니다.'); return; }
@@ -3079,6 +3090,13 @@
                 return;
             }
 
+            // 최종 제출 직전 정합성 검증: 게임 루프가 멈춘 뒤(게임오버 화면)
+            // 콘솔 등에서 stairsLastFinalScore 값만 직접 바꿔 제출하는 경우를 차단
+            if (stairsLastFinalScore > stairsLastTotalClimbs * 2 + 2) {
+                await flagStairsCheatAndBan('랭킹 제출 점수 조작 감지');
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.5';
             submitBtn.style.cursor = 'not-allowed';
@@ -3195,6 +3213,7 @@
             stairsScore = 0;
             stairsGauge = 100;
             stairsClimbTimestamps = [];
+            stairsTotalClimbs = 0;
             stairsBanTriggered = false;
             stairsDoubleActive = false;
             stairsDoubleStage = 0;
@@ -3402,6 +3421,7 @@
                 if(playerDir === nextStairDir) {
                     stairsClimbTimestamps.push(performance.now());
                     if (stairsClimbTimestamps.length > 30) stairsClimbTimestamps.shift();
+                    stairsTotalClimbs++;
                     checkStairsClimbSpeedCheat();
                     if (stairsBanTriggered) return;
 
@@ -3448,6 +3468,9 @@
             if (config.game !== 'stairs') return;
             
             if (stairsPlaying && !stairsFalling) {
+                checkStairsScoreIntegrity();
+                if (stairsBanTriggered) return;
+
                 stairsGauge -= 0.28 + (Math.min(stairsScore, 200) * 0.004);
                 if (stairsGauge <= 0) {
                     stairsGauge = 0;
@@ -3482,6 +3505,7 @@
                 playerFallRot += playerDir * 0.15;
                 if (playerFallY > canvas.height + 100) {
                     stairsLastFinalScore = stairsScore;
+                    stairsLastTotalClimbs = stairsTotalClimbs;
                     endGame("게임 오버", `계단에서 추락했습니다!<br>최종 점수: ${stairsScore}점`);
                     return;
                 }
