@@ -369,6 +369,7 @@
         </div>
 
         <div id="stairs-menu-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.85); backdrop-filter: blur(5px); flex-direction: column; justify-content: center; align-items: center; z-index: 50; border-radius: 12px;">
+            <button onclick="openStairsSettingsModal()" style="position: absolute; top: 15px; right: 15px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.3); padding: 8px 14px; font-size: 0.95rem; border-radius: 8px;">⚙ 설정</button>
             <h2 style="font-size: 2.5rem; margin-bottom: 25px; color: #f59e0b;">무한의 계단</h2>
             <div style="display: flex; gap: 15px; margin-bottom: 25px;">
                 <button id="stairs-char-btn" onclick="openStairsSkinModal()" style="background: linear-gradient(145deg, #f59e0b, #d97706);">캐릭터: 주황 (기본)</button>
@@ -376,9 +377,10 @@
                 <button id="stairs-rank-view-btn" onclick="openStairsRankList()" style="background: linear-gradient(145deg, #6366f1, #4338ca);">랭킹 보기</button>
             </div>
             <div style="background: rgba(255, 255, 255, 0.1); padding: 20px 35px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.2);">
-                <p style="font-size: 1.2rem; color: #f8fafc; margin-bottom: 10px;"><span style="background: #3b82f6; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: white;">M</span> : 한 칸 올라가기</p>
-                <p style="font-size: 1.2rem; color: #f8fafc;"><span style="background: #ef4444; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: white;">X</span> : 방향 전환</p>
+                <p style="font-size: 1.2rem; color: #f8fafc; margin-bottom: 10px;"><span id="stairs-key-hint-climb" style="background: #3b82f6; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: white;">M</span> : 한 칸 올라가기</p>
+                <p style="font-size: 1.2rem; color: #f8fafc;"><span id="stairs-key-hint-turn" style="background: #ef4444; padding: 4px 10px; border-radius: 6px; font-weight: bold; color: white;">X</span> : 방향 전환</p>
             </div>
+
         </div>
     </div>
 
@@ -402,7 +404,7 @@
             <p id="stairs-rank-warning" style="min-height: 22px; color: #ef4444; font-size: 0.9rem; margin-top: 8px;"></p>
             <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
                 <button id="stairs-rank-submit-btn" onclick="submitStairsRanking()" disabled style="opacity: 0.5; cursor: not-allowed;">완료</button>
-                <button class="btn-secondary" onclick="closeStairsRankModal()">취소</button>
+                <button class="btn-secondary" onclick="cancelStairsRankModal()">취소</button>
             </div>
         </div>
     </div>
@@ -421,6 +423,32 @@
             <p style="color: #94a3b8; margin-bottom: 10px; font-size: 0.95rem;">원하는 색상을 눌러서 선택하세요</p>
             <div id="stairs-skin-list" style="display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin: 15px 0;"></div>
             <button class="btn-secondary" onclick="closeStairsSkinModal()">닫기</button>
+        </div>
+    </div>
+
+    <div id="stairs-settings-modal" class="modal">
+        <div class="modal-content" style="max-width: 420px;">
+            <h2 style="font-size: 1.8rem; color: #f59e0b;">⚙ 설정</h2>
+            <p style="color: #94a3b8; margin-bottom: 15px; font-size: 0.95rem;">원하는 키로 바꾸려면 버튼을 누른 뒤 원하는 키를 눌러주세요</p>
+
+            <div style="display:flex; flex-direction:column; gap:14px;">
+                <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; display:flex; justify-content:space-between; align-items:center; gap: 10px; text-align:left;">
+                    <div style="font-weight:bold; font-size:1.05rem;">한 칸 올라가기</div>
+                    <button id="stairs-rebind-climb-btn" onclick="startStairsKeyRebind('climb')" style="padding: 8px 16px; font-size: 0.95rem; min-width: 90px; background: linear-gradient(145deg, #3b82f6, #2563eb);"></button>
+                </div>
+
+                <div style="background: rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; display:flex; justify-content:space-between; align-items:center; gap: 10px; text-align:left;">
+                    <div style="font-weight:bold; font-size:1.05rem;">방향 전환</div>
+                    <button id="stairs-rebind-turn-btn" onclick="startStairsKeyRebind('turn')" style="padding: 8px 16px; font-size: 0.95rem; min-width: 90px; background: linear-gradient(145deg, #ef4444, #b91c1c);"></button>
+                </div>
+            </div>
+
+            <p id="stairs-rebind-msg" style="min-height: 20px; color: #fbbf24; font-size: 0.9rem; margin-top: 12px;"></p>
+
+            <div style="display: flex; gap: 15px; justify-content: center; margin-top: 15px;">
+                <button class="btn-secondary" onclick="resetStairsKeybinds()">기본값으로 초기화</button>
+                <button class="btn-secondary" onclick="closeStairsSettingsModal()">닫기</button>
+            </div>
         </div>
     </div>
 
@@ -484,6 +512,18 @@
         let playerFallY = 0;
         let playerFallSpeed = 0;
         let playerFallRot = 0;
+
+        // 무한의 계단 매크로/핵 감지 및 기기 차단 관련 상태
+        let stairsClimbTimestamps = [];   // 최근 등반(성공 입력) 시각 기록
+        let stairsBanTriggered = false;   // 이번 플레이 중 이미 차단 처리를 했는지 여부
+        const stairsBannedLocalKey = 'infiniteStairsBannedDevice';
+        const stairsDeviceIdKey = 'infiniteStairsDeviceId';
+
+        // 무한의 계단 키 설정 (기기별 localStorage 저장)
+        let stairsKeybindsKey = 'infiniteStairsKeybinds';
+        let stairsDefaultKeybinds = { climb: 'm', turn: 'x' };
+        let stairsKeybinds = loadStairsKeybinds();
+        let stairsRebindTarget = null; // 'climb' 또는 'turn' — 리바인딩 대기 중일 때만 값 존재
 
         const stairsSkins = [
             { name: "주황 (기본)", body: '#ea580c', head: '#ffedd5', band: '#b91c1c' },
@@ -1085,25 +1125,36 @@
             canvas.onclick = handleBoardClick;
         }
 
+        // 1대1(2인용) 체스: 보드 자체는 뒤집지 않고, 검정 기물 글자만 180도 돌려서 그림
+        // (패드를 책상에 눕혀두고 마주 앉았을 때, 흰색 쪽은 정방향으로, 검정 쪽은 자기 자리에서 바로 보이도록)
+        function getChessBoardFlip() {
+            return false;
+        }
+
         function drawBoard() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (config.game === 'chess') {
+                let flip = getChessBoardFlip();
+                let sxFn = x => flip ? 7 - x : x;
+                let syFn = y => flip ? 7 - y : y;
+
                 for (let y = 0; y < 8; y++) {
                     for (let x = 0; x < 8; x++) {
+                        let dx = sxFn(x), dy = syFn(y);
                         ctx.fillStyle = (x + y) % 2 === 0 ? '#f0d9b5' : '#8b5a2b';
-                        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                        ctx.fillRect(dx * cellSize, dy * cellSize, cellSize, cellSize);
                         
                         if (chessSelected && chessSelected.x === x && chessSelected.y === y) {
                             ctx.fillStyle = 'rgba(255, 255, 0, 0.5)';
-                            ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                            ctx.fillRect(dx * cellSize, dy * cellSize, cellSize, cellSize);
                         }
 
                         if (chessSelected) {
                             let p = board[chessSelected.y][chessSelected.x] < 10 ? 1 : 2;
                             if (isValidChessMove(chessSelected.x, chessSelected.y, x, y, p, board) && isSafeMove(chessSelected.x, chessSelected.y, x, y, p, board)) {
                                 ctx.beginPath();
-                                ctx.arc(x * cellSize + cellSize / 2, y * cellSize + cellSize / 2, cellSize * 0.15, 0, Math.PI * 2);
+                                ctx.arc(dx * cellSize + cellSize / 2, dy * cellSize + cellSize / 2, cellSize * 0.15, 0, Math.PI * 2);
                                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
                                 ctx.fill();
                             }
@@ -1112,18 +1163,19 @@
                 }
 
                 if (isCheck && checkKingPos) {
-                    let kx = checkKingPos.x * cellSize + cellSize / 2;
-                    let ky = checkKingPos.y * cellSize + cellSize / 2;
+                    let kdx = sxFn(checkKingPos.x), kdy = syFn(checkKingPos.y);
+                    let kx = kdx * cellSize + cellSize / 2;
+                    let ky = kdy * cellSize + cellSize / 2;
                     let rg = ctx.createRadialGradient(kx, ky, 0, kx, ky, cellSize * 0.8);
                     rg.addColorStop(0, 'rgba(255, 0, 0, 0.9)');
                     rg.addColorStop(0.5, 'rgba(255, 0, 0, 0.5)');
                     rg.addColorStop(1, 'rgba(255, 0, 0, 0)');
                     ctx.fillStyle = rg;
-                    ctx.fillRect(checkKingPos.x * cellSize, checkKingPos.y * cellSize, cellSize, cellSize);
+                    ctx.fillRect(kdx * cellSize, kdy * cellSize, cellSize, cellSize);
                     
                     ctx.strokeStyle = 'red';
                     ctx.lineWidth = 4;
-                    ctx.strokeRect(checkKingPos.x * cellSize, checkKingPos.y * cellSize, cellSize, cellSize);
+                    ctx.strokeRect(kdx * cellSize, kdy * cellSize, cellSize, cellSize);
                 }
 
                 for (let y = 0; y < 8; y++) {
@@ -1131,8 +1183,9 @@
                         let piece = board[y][x];
                         if (piece !== 0) {
                             let isWhite = piece < 10;
-                            let cx = x * cellSize + cellSize / 2;
-                            let cy = y * cellSize + cellSize / 2;
+                            let dx = sxFn(x), dy = syFn(y);
+                            let cx = dx * cellSize + cellSize / 2;
+                            let cy = dy * cellSize + cellSize / 2;
 
                             ctx.font = `bold ${cellSize * 0.75}px Arial`;
                             ctx.textAlign = 'center';
@@ -1146,11 +1199,16 @@
                                 ctx.strokeText(chessChars[piece], cx, cy + 2);
                                 ctx.fillText(chessChars[piece], cx, cy + 2);
                             } else {
+                                // 검정 기물만 180도 회전시켜서, 마주앉은 흑 플레이어 쪽에서 정방향으로 보이게 함
+                                ctx.save();
+                                ctx.translate(cx, cy);
+                                ctx.rotate(Math.PI);
                                 ctx.fillStyle = '#000000';
                                 ctx.strokeStyle = '#ffffff';
                                 ctx.lineWidth = 1;
-                                ctx.strokeText(chessChars[piece], cx, cy + 2);
-                                ctx.fillText(chessChars[piece], cx, cy + 2);
+                                ctx.strokeText(chessChars[piece], 0, 2);
+                                ctx.fillText(chessChars[piece], 0, 2);
+                                ctx.restore();
                             }
                         }
                     }
@@ -1239,8 +1297,12 @@
             if (config.mode === 'ai' && currentPlayer === 2) return;
 
             const rect = canvas.getBoundingClientRect();
-            const x = Math.floor((e.clientX - rect.left) / cellSize);
-            const y = Math.floor((e.clientY - rect.top) / cellSize);
+            let clickCol = Math.floor((e.clientX - rect.left) / cellSize);
+            let clickRow = Math.floor((e.clientY - rect.top) / cellSize);
+
+            let flip = getChessBoardFlip();
+            const x = flip ? 7 - clickCol : clickCol;
+            const y = flip ? 7 - clickRow : clickRow;
 
             if (x < 0 || x >= boardSize || y < 0 || y >= boardSize) return;
 
@@ -1358,8 +1420,8 @@
             return !inCheck;
         }
 
-        function isCheckmate(player, b) {
-            if(!isKingInCheck(player, b)) return false;
+        // 지정한 플레이어가 둘 수 있는 합법적인 수가 하나라도 있는지 확인 (체크메이트/스테일메이트 판정에 공용으로 사용)
+        function hasAnyLegalChessMove(player, b) {
             for(let sy=0; sy<8; sy++) {
                 for(let sx=0; sx<8; sx++) {
                     let piece = b[sy][sx];
@@ -1373,14 +1435,19 @@
                                     let stillInCheck = isKingInCheck(player, b);
                                     b[sy][sx] = piece;
                                     b[dy][dx] = target;
-                                    if(!stillInCheck) return false;
+                                    if(!stillInCheck) return true;
                                 }
                             }
                         }
                     }
                 }
             }
-            return true;
+            return false;
+        }
+
+        function isCheckmate(player, b) {
+            if(!isKingInCheck(player, b)) return false;
+            return !hasAnyLegalChessMove(player, b);
         }
 
         function executeChessMove(sx, sy, dx, dy) {
@@ -1399,6 +1466,7 @@
             let nextPlayer = p === 1 ? 2 : 1;
             let checked = isKingInCheck(nextPlayer, board);
             let checkmated = false;
+            let stalemated = false;
 
             if (checked) {
                 checkmated = isCheckmate(nextPlayer, board);
@@ -1407,6 +1475,9 @@
             } else {
                 isCheck = false;
                 checkKingPos = null;
+                if (!hasAnyLegalChessMove(nextPlayer, board)) {
+                    stalemated = true;
+                }
             }
 
             if (target === 6 || target === 16 || checkmated) {
@@ -1418,6 +1489,14 @@
                     document.getElementById('result-modal').style.background = "rgba(150, 0, 0, 0.85)";
                     document.querySelector('.modal-content').style.boxShadow = "0 0 50px rgba(255,0,0,0.8)";
                     endGame(p === 1 ? "백(White) 승리!" : "흑(Black) 승리!", checkmated ? "체크메이트! 상대의 킹이 도망칠 곳이 없습니다." : "상대의 킹을 잡았습니다.");
+                }, 300);
+                return;
+            }
+
+            if (stalemated) {
+                drawBoard();
+                setTimeout(() => {
+                    endGame("무승부", "스테일메이트! 체크 상태는 아니지만 둘 수 있는 수가 없습니다.");
                 }, 300);
                 return;
             }
@@ -2016,6 +2095,7 @@
                 btnContainer.innerHTML = `
                     <button id="modal-restart-btn" onclick="restartStairsGame()">다시하기</button>
                     <button class="btn-secondary" onclick="openStairsRankModal()">랭킹 등록</button>
+                    <button class="btn-secondary" onclick="openStairsRankList()">랭킹 보기</button>
                     <button class="btn-secondary" onclick="quitGame()">메인으로</button>
                 `;
             } else {
@@ -2026,14 +2106,25 @@
         }
 
         // 결과창(다시하기/메인)이 떠 있을 때 스페이스바로 "다시하기" 버튼을 누를 수 있게 처리
+        // + 무한의 계단 첫 시작 메뉴가 떠 있을 때 스페이스바로 "게임 시작" 버튼을 누를 수 있게 처리
         window.addEventListener('keydown', function(e) {
             if (e.code !== 'Space' && e.key !== ' ') return;
             let modal = document.getElementById('result-modal');
-            if (modal.style.display !== 'flex') return;
-            let restartBtn = document.getElementById('modal-restart-btn');
-            if (restartBtn) {
-                e.preventDefault();
-                restartBtn.click();
+            if (modal.style.display === 'flex') {
+                let restartBtn = document.getElementById('modal-restart-btn');
+                if (restartBtn) {
+                    e.preventDefault();
+                    restartBtn.click();
+                }
+                return;
+            }
+            let stairsMenu = document.getElementById('stairs-menu-overlay');
+            if (stairsMenu.style.display === 'flex' && config.game === 'stairs' && !stairsPlaying) {
+                let startBtn = document.getElementById('stairs-start-btn');
+                if (startBtn) {
+                    e.preventDefault();
+                    startBtn.click();
+                }
             }
         });
 
@@ -2709,12 +2800,123 @@
             messagingSenderId: "944337055726",
             appId: "1:944337055726:web:bc20c1cd53e2dedecde8ff"
         };
-        firebase.initializeApp(firebaseConfig);
-        const stairsDb = firebase.firestore();
-        const stairsRankingCollection = stairsDb.collection('infiniteStairsRanking');
+
+        // Firebase SDK가 어떤 이유로든 로드/초기화되지 않아도(네트워크 차단, 미리보기 환경 등)
+        // 스크립트 전체가 멈추지 않도록 안전하게 초기화합니다. 실패 시 온라인 랭킹 기능만 조용히 비활성화됩니다.
+        let stairsFirebaseReady = false;
+        let stairsDb = null;
+        let stairsRankingCollection = null;
+        let stairsRankingMetaDoc = null;
+        let stairsBannedCollection = null;
+
+        try {
+            if (typeof firebase === 'undefined') throw new Error('firebase SDK가 로드되지 않았습니다.');
+            firebase.initializeApp(firebaseConfig);
+            stairsDb = firebase.firestore();
+            stairsRankingCollection = stairsDb.collection('infiniteStairsRanking');
+            stairsRankingMetaDoc = stairsDb.collection('infiniteStairsRankingMeta').doc('resetInfo');
+            stairsBannedCollection = stairsDb.collection('infiniteStairsBannedDevices');
+            stairsFirebaseReady = true;
+        } catch (e) {
+            console.error('Firebase 초기화 실패 - 온라인 랭킹 기능이 비활성화됩니다:', e);
+        }
+
+        // 기기별 고유 ID (최초 접속 시 1회 생성 후 localStorage에 보관)
+        function getStairsDeviceId() {
+            try {
+                let id = localStorage.getItem(stairsDeviceIdKey);
+                if (!id) {
+                    id = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+                    localStorage.setItem(stairsDeviceIdKey, id);
+                }
+                return id;
+            } catch (e) {
+                // localStorage를 쓸 수 없는 환경이면 세션 동안만 유지되는 임시 ID 사용
+                if (!window.__stairsTempDeviceId) {
+                    window.__stairsTempDeviceId = 'dev_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 12);
+                }
+                return window.__stairsTempDeviceId;
+            }
+        }
+
+        // 이 기기가 차단된 기기인지 확인 (로컬 캐시 먼저 확인 후, 온라인 차단 목록도 확인)
+        async function checkStairsDeviceBan() {
+            try {
+                if (localStorage.getItem(stairsBannedLocalKey) === '1') return true;
+            } catch (e) {}
+
+            if (!stairsFirebaseReady || !stairsBannedCollection) return false;
+            try {
+                let deviceId = getStairsDeviceId();
+                let doc = await stairsBannedCollection.doc(deviceId).get();
+                if (doc.exists) {
+                    try { localStorage.setItem(stairsBannedLocalKey, '1'); } catch (e) {}
+                    return true;
+                }
+            } catch (e) {
+                console.error('기기 차단 여부 확인 실패:', e);
+            }
+            return false;
+        }
+
+        // 비정상(매크로/자동입력)으로 판단된 기기를 차단 처리
+        async function flagStairsCheatAndBan(reason) {
+            if (stairsBanTriggered) return;
+            stairsBanTriggered = true;
+
+            gameActive = false;
+            stairsPlaying = false;
+            stairsFalling = true;
+            window.removeEventListener('keydown', stairsKeyHandler);
+            if (stairsAnimId) { cancelAnimationFrame(stairsAnimId); stairsAnimId = null; }
+
+            try { localStorage.setItem(stairsBannedLocalKey, '1'); } catch (e) {}
+
+            try {
+                if (stairsFirebaseReady && stairsBannedCollection) {
+                    let deviceId = getStairsDeviceId();
+                    await stairsBannedCollection.doc(deviceId).set({
+                        reason: reason,
+                        score: stairsScore,
+                        bannedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch (e) {
+                console.error('기기 차단 등록 실패:', e);
+            }
+
+            document.getElementById('stairs-menu-overlay').style.display = 'none';
+            alert('비정상적인 입력 패턴(매크로/자동입력 의심)이 감지되어 이 기기는 무한의 계단 온라인 기능 이용이 제한됩니다.');
+            quitGame();
+        }
+
+        // 등반 타이밍 패턴을 분석해 매크로/자동입력 여부를 판정
+        function checkStairsClimbSpeedCheat() {
+            const WINDOW = 20;          // 최근 몇 번의 입력을 볼지
+            const MIN_AVG_MS = 55;      // 평균 간격이 이보다 짧으면 비정상 (초당 약 18회 이상)
+            const MAX_STDDEV_MS = 5;    // 간격 편차가 이보다 작으면(너무 일정하면) 자동입력 의심
+
+            if (stairsClimbTimestamps.length < WINDOW) return;
+
+            let recent = stairsClimbTimestamps.slice(-WINDOW);
+            let intervals = [];
+            for (let i = 1; i < recent.length; i++) intervals.push(recent[i] - recent[i - 1]);
+
+            let avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            let variance = intervals.reduce((a, b) => a + (b - avg) * (b - avg), 0) / intervals.length;
+            let stddev = Math.sqrt(variance);
+
+            let tooFast = avg < MIN_AVG_MS;
+            let tooRegular = avg < 120 && stddev < MAX_STDDEV_MS;
+
+            if (tooFast || tooRegular) {
+                flagStairsCheatAndBan(tooFast ? '비정상적으로 빠른 입력 속도' : '기계적으로 일정한 입력 간격(자동입력 의심)');
+            }
+        }
 
         // 전체 랭킹 초기화용 함수 (버튼 없음 - 브라우저 콘솔에서 resetAllStairsRanking() 을 직접 호출해서 사용)
         async function resetAllStairsRanking() {
+            if (!stairsFirebaseReady) { console.error('Firebase가 초기화되지 않아 랭킹 초기화를 할 수 없습니다.'); return; }
             try {
                 let snapshot = await stairsRankingCollection.get();
                 let batch = stairsDb.batch();
@@ -2732,10 +2934,10 @@
         // - 1,2,3등은 기록이 깨지기 전까지 계속 유지됩니다.
         // - 4등 이하는 마지막 초기화로부터 30분이 지나면, 누군가 랭킹을 불러올 때 자동으로 삭제됩니다.
         //   (정적 사이트라 서버 타이머는 없고, 랭킹을 조회하는 시점에 30분 경과 여부를 체크하는 방식입니다)
-        const stairsRankingMetaDoc = stairsDb.collection('infiniteStairsRankingMeta').doc('resetInfo');
         const STAIRS_RANK_RESET_INTERVAL_MS = 30 * 60 * 1000;
 
         async function maybeResetStairsRankingBeyondTop3() {
+            if (!stairsFirebaseReady) return;
             try {
                 let metaSnap = await stairsRankingMetaDoc.get();
                 let now = Date.now();
@@ -2768,6 +2970,7 @@
             // 욕설 (일부 예시, 변형 포함)
             '씨발', '시발', 'ㅅㅂ', 'ㅆㅂ', '개새끼', '개새', '병신', 'ㅂㅅ', '지랄',
             '좆', '존나', 'ㅈㄴ', '닥쳐', '미친놈', '미친년', '새끼', '걸레', '창녀',
+            '자지', '보지', '한정훈',
             'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'dick', 'pussy',
             // 음란성 단어
             '섹스', '섹스해', '야동', '포르노', '19금', '자위', '性', 'sex', 'porn',
@@ -2785,6 +2988,7 @@
         }
 
         async function getStairsRankingList() {
+            if (!stairsFirebaseReady) return [];
             try {
                 await maybeResetStairsRankingBeyondTop3();
                 let snapshot = await stairsRankingCollection.orderBy('score', 'desc').limit(50).get();
@@ -2811,6 +3015,12 @@
 
         function closeStairsRankModal() {
             document.getElementById('stairs-rank-modal').style.display = 'none';
+        }
+
+        // 랭킹 등록 취소 시 메인화면으로 돌아가기
+        function cancelStairsRankModal() {
+            closeStairsRankModal();
+            quitGame();
         }
 
         function handleStairsNicknameInput() {
@@ -2842,6 +3052,12 @@
 
             let submitBtn = document.getElementById('stairs-rank-submit-btn');
             let warning = document.getElementById('stairs-rank-warning');
+
+            if (!stairsFirebaseReady) {
+                warning.innerText = '온라인 랭킹 서비스에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.';
+                return;
+            }
+
             submitBtn.disabled = true;
             submitBtn.style.opacity = '0.5';
             submitBtn.style.cursor = 'not-allowed';
@@ -2942,7 +3158,14 @@
         }
 
         // ----------------- 무한의 계단 게임 엔진 -----------------
-        function initStairsGame() {
+        async function initStairsGame() {
+            let banned = await checkStairsDeviceBan();
+            if (banned) {
+                alert('이 기기는 비정상적인 플레이(매크로/자동입력)로 인해 무한의 계단 온라인 기능 이용이 제한된 상태입니다.');
+                quitGame();
+                return;
+            }
+
             canvas = document.getElementById('boardCanvas');
             ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth * 0.95;
@@ -2950,6 +3173,8 @@
 
             stairsScore = 0;
             stairsGauge = 100;
+            stairsClimbTimestamps = [];
+            stairsBanTriggered = false;
             stairsDoubleActive = false;
             stairsDoubleStage = 0;
             stairsDoubleEndTime = 0;
@@ -2974,6 +3199,7 @@
             if (charBtn) charBtn.innerText = `캐릭터: ${stairsSkins[stairsCharIndex].name}`;
             updateStairsRankBadge();
             updateStairsTop3Badge();
+            updateStairsKeyHintDisplay();
 
             renderStairsFrame();
         }
@@ -2998,24 +3224,118 @@
             document.getElementById('stairs-skin-modal').style.display = 'none';
         }
 
+        // ----------------- 무한의 계단 키 설정 (기기별 localStorage 저장) -----------------
+        function loadStairsKeybinds() {
+            try {
+                let saved = JSON.parse(localStorage.getItem(stairsKeybindsKey));
+                if (saved && saved.climb && saved.turn) return saved;
+            } catch (e) {}
+            return { ...stairsDefaultKeybinds };
+        }
+
+        function saveStairsKeybinds() {
+            try { localStorage.setItem(stairsKeybindsKey, JSON.stringify(stairsKeybinds)); } catch (e) {}
+        }
+
+        // 키 이름을 화면에 보여줄 형태로 변환 (예: ' ' -> 'Space', 'arrowup' -> '↑')
+        function formatStairsKeyLabel(key) {
+            let map = { ' ': 'Space', 'spacebar': 'Space', 'arrowup': '↑', 'arrowdown': '↓', 'arrowleft': '←', 'arrowright': '→' };
+            if (map[key]) return map[key];
+            return key.length === 1 ? key.toUpperCase() : key;
+        }
+
+        // 메뉴 화면과 설정 모달에 표시되는 현재 키 안내 갱신
+        function updateStairsKeyHintDisplay() {
+            let climbLabel = formatStairsKeyLabel(stairsKeybinds.climb);
+            let turnLabel = formatStairsKeyLabel(stairsKeybinds.turn);
+
+            let hintClimb = document.getElementById('stairs-key-hint-climb');
+            let hintTurn = document.getElementById('stairs-key-hint-turn');
+            if (hintClimb) hintClimb.innerText = climbLabel;
+            if (hintTurn) hintTurn.innerText = turnLabel;
+
+            let btnClimb = document.getElementById('stairs-rebind-climb-btn');
+            let btnTurn = document.getElementById('stairs-rebind-turn-btn');
+            if (btnClimb) btnClimb.innerText = climbLabel;
+            if (btnTurn) btnTurn.innerText = turnLabel;
+        }
+
+        function openStairsSettingsModal() {
+            stairsRebindTarget = null;
+            document.getElementById('stairs-rebind-msg').innerText = '';
+            updateStairsKeyHintDisplay();
+            document.getElementById('stairs-settings-modal').style.display = 'flex';
+            window.addEventListener('keydown', stairsRebindKeyListener);
+        }
+
+        function closeStairsSettingsModal() {
+            stairsRebindTarget = null;
+            document.getElementById('stairs-rebind-msg').innerText = '';
+            document.getElementById('stairs-settings-modal').style.display = 'none';
+            window.removeEventListener('keydown', stairsRebindKeyListener);
+        }
+
+        function startStairsKeyRebind(target) {
+            stairsRebindTarget = target;
+            document.getElementById('stairs-rebind-msg').innerText = '원하는 키를 눌러주세요...';
+            let btn = document.getElementById(target === 'climb' ? 'stairs-rebind-climb-btn' : 'stairs-rebind-turn-btn');
+            if (btn) btn.innerText = '입력 대기중...';
+        }
+
+        // 설정 모달이 열려 있을 때 키 입력을 받아서 리바인딩 처리
+        function stairsRebindKeyListener(e) {
+            if (!stairsRebindTarget) return;
+            e.preventDefault();
+
+            let newKey = e.key.toLowerCase();
+            if (newKey === 'escape') {
+                stairsRebindTarget = null;
+                document.getElementById('stairs-rebind-msg').innerText = '취소되었습니다.';
+                updateStairsKeyHintDisplay();
+                return;
+            }
+
+            let otherTarget = stairsRebindTarget === 'climb' ? 'turn' : 'climb';
+            if (newKey === stairsKeybinds[otherTarget]) {
+                document.getElementById('stairs-rebind-msg').innerText = '이미 다른 동작에 사용 중인 키입니다.';
+                return;
+            }
+
+            stairsKeybinds[stairsRebindTarget] = newKey;
+            saveStairsKeybinds();
+            document.getElementById('stairs-rebind-msg').innerText = `설정되었습니다: ${formatStairsKeyLabel(newKey)}`;
+            stairsRebindTarget = null;
+            updateStairsKeyHintDisplay();
+        }
+
+        function resetStairsKeybinds() {
+            stairsKeybinds = { ...stairsDefaultKeybinds };
+            saveStairsKeybinds();
+            stairsRebindTarget = null;
+            document.getElementById('stairs-rebind-msg').innerText = '기본값으로 초기화되었습니다.';
+            updateStairsKeyHintDisplay();
+        }
+
         function startStairsPlay() {
             document.getElementById('stairs-menu-overlay').style.display = 'none';
-            stairsPlaying = true;
             stairsFalling = false;
             window.removeEventListener('keydown', stairsKeyHandler);
+
+            stairsPlaying = true;
             window.addEventListener('keydown', stairsKeyHandler);
             stairsLoop();
         }
 
         // 다시하기 버튼/스페이스바 클릭 시 캐릭터 선택 메뉴를 거치지 않고 바로 게임을 재시작
-        function restartStairsGame() {
+        async function restartStairsGame() {
             config.game = 'stairs';
             gameActive = true;
             document.getElementById('result-modal').style.display = 'none';
             document.getElementById('timer').style.display = 'none';
             document.querySelector('.status-box').style.display = 'none';
             showScreen('screen-game');
-            initStairsGame();
+            await initStairsGame();
+            if (!gameActive) return; // 차단된 기기라 initStairsGame이 게임을 종료시킨 경우 재생 시작하지 않음
             startStairsPlay();
         }
 
@@ -3049,15 +3369,21 @@
 
         function stairsKeyHandler(e) {
             if(!gameActive || config.game !== 'stairs' || !stairsPlaying || stairsFalling) return;
+            if (stairsBanTriggered) return;
             let key = e.key.toLowerCase();
             
-            if(key === 'm' || key === 'x') {
-                if(key === 'x') {
+            if(key === stairsKeybinds.climb || key === stairsKeybinds.turn) {
+                if(key === stairsKeybinds.turn) {
                     playerDir = -playerDir; 
                 }
                 
                 let nextStairDir = stairsPath[playerStairIndex + 1];
                 if(playerDir === nextStairDir) {
+                    stairsClimbTimestamps.push(performance.now());
+                    if (stairsClimbTimestamps.length > 30) stairsClimbTimestamps.shift();
+                    checkStairsClimbSpeedCheat();
+                    if (stairsBanTriggered) return;
+
                     let scoreGain = getStairsScoreMultiplier();
                     stairsScore += scoreGain;
                     playerStairIndex++;
