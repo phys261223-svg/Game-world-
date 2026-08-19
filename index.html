@@ -296,10 +296,12 @@
         <h2>Space War 모드 선택</h2>
         <div style="background: rgba(255, 255, 255, 0.1); padding: 20px 30px; border-radius: 12px; margin-bottom: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.2); max-width: 500px;">
             <p style="font-size: 1.2rem; color: #fbbf24; font-weight: bold; margin-bottom: 12px;">🎮 조작법 안내</p>
+            <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">1인용 : 우주선 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span>로 조종</p>
             <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">2인용 : 1P 우주선 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span> / 2P 우주선 <span style="background: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">화살표 키 (↑, ↓, ←, →)</span>로 조종</p>
             <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 10px;">* 공격은 자동으로 발사됩니다.</p>
         </div>
         <div class="btn-group">
+            <button onclick="startSpaceWar(1)">1인용</button>
             <button onclick="startSpaceWar(2)">2인용</button>
         </div>
         <br>
@@ -1348,6 +1350,7 @@
         let spaceEnemies = [];
         let spaceStars = [];
         let spaceKeys = {};
+        let spaceEnergies = []; // 적 처치 시 5% 확률로 드롭되는 진화 에너지
 
         const chessChars = {
             1: '♙', 2: '♖', 3: '♘', 4: '♗', 5: '♕', 6: '♔',
@@ -1377,13 +1380,11 @@
         function startSpaceWar(mode) {
             spaceWarMode = mode || 1;
             config.game = 'spacewar';
-            if (spaceWarMode === 2) {
-                // 2인용: 화면이 더 넓고 1P(WASD) / 2P(화살표)가 함께 조종하는 캔버스 기반 스페이스워
-                startGame(0);
-            } else {
-                // 1인용: 기존 업로드된 스페이스워 게임 그대로 실행
-                openUploadedSpaceWar();
-            }
+            // 1인용/2인용 모두 동일한 캔버스 기반 스페이스워 엔진(initSpaceWarGame)을 사용.
+            // 1인용: 우주선 1대(WASD 조작), 화면 폭이 좁고, 적 스폰 확률도 더 낮음.
+            // 2인용: 우주선 2대(1P WASD / 2P 화살표), 화면 폭이 더 넓고, 적 스폰 확률도 더 높음.
+            // (분기 로직은 initSpaceWarGame / spaceWarLoop 안의 spaceWarMode 체크에 있음)
+            startGame(0);
         }
 
         // ▼▼▼ 업로드된 "space war 게임 수정 필요.html" 게임을 iframe으로 재생하기 위한 코드 ▼▼▼
@@ -2496,6 +2497,9 @@
             if(spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
             
             window.removeEventListener('keydown', snakeKeyHandler);
+            window.removeEventListener('keydown', stairsKeyHandler);
+            window.removeEventListener('keydown', spaceWarKeyHandler);
+            window.removeEventListener('keyup', spaceWarKeyUpHandler);
             document.getElementById('stairs-menu-overlay').style.display = 'none';
             document.getElementById('result-title').innerText = title;
             document.getElementById('result-desc').innerHTML = desc;
@@ -2581,7 +2585,8 @@
                     score: 0,
                     color: '#38bdf8',
                     lastShot: 0,
-                    dead: false
+                    dead: false,
+                    evolution: 0 // 진화 단계 (0~5)
                 });
             } else {
                 spacePlayers.push({
@@ -2595,7 +2600,8 @@
                     score: 0,
                     color: '#38bdf8',
                     lastShot: 0,
-                    dead: false
+                    dead: false,
+                    evolution: 0 // 진화 단계 (0~5)
                 });
                 spacePlayers.push({
                     id: 2,
@@ -2608,7 +2614,8 @@
                     score: 0,
                     color: '#f43f5e',
                     lastShot: 0,
-                    dead: false
+                    dead: false,
+                    evolution: 0 // 진화 단계 (0~5)
                 });
             }
 
@@ -2616,6 +2623,7 @@
             spaceEnemies = [];
             spaceStars = [];
             spaceKeys = {};
+            spaceEnergies = [];
 
             for (let i = 0; i < 60; i++) {
                 spaceStars.push({
@@ -2653,6 +2661,188 @@
             spaceKeys[e.key.toLowerCase()] = false;
         }
 
+        // 적 우주선 그리기 (일반: 스텔스 전투기형 / 보스: 뾰족한 스파이크가 달린 강화형)
+        function drawSpaceEnemyShip(e) {
+            let cx = e.x + e.w / 2;
+            let cy = e.y + e.h / 2;
+            let w = e.w, h = e.h;
+
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // 후미 엔진 광채 (기체가 아래로 내려오므로 엔진은 위쪽을 향함)
+            ctx.save();
+            ctx.shadowColor = e.isBoss ? '#f87171' : '#fbbf24';
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = e.isBoss ? 'rgba(248,113,113,0.65)' : 'rgba(251,191,36,0.65)';
+            ctx.beginPath();
+            ctx.ellipse(0, -h * 0.42, w * 0.11, h * 0.16, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // 본체 (앞으로 갈수록 뾰족해지는 스웹트윙 전투기 형태, 기수는 아래를 향함)
+            ctx.fillStyle = e.color;
+            ctx.beginPath();
+            ctx.moveTo(0, h * 0.52);
+            ctx.lineTo(w * 0.5, -h * 0.08);
+            ctx.lineTo(w * 0.22, -h * 0.5);
+            ctx.lineTo(0, -h * 0.3);
+            ctx.lineTo(-w * 0.22, -h * 0.5);
+            ctx.lineTo(-w * 0.5, -h * 0.08);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 콕핏
+            ctx.fillStyle = e.isBoss ? '#fee2e2' : '#fff7ed';
+            ctx.beginPath();
+            ctx.ellipse(0, h * 0.02, w * 0.13, h * 0.17, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // 날개 라인 장식
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.12, -h * 0.02);
+            ctx.lineTo(w * 0.38, -h * 0.24);
+            ctx.moveTo(-w * 0.12, -h * 0.02);
+            ctx.lineTo(-w * 0.38, -h * 0.24);
+            ctx.stroke();
+
+            if (e.isBoss) {
+                // 보스 전용 스파이크 안테나
+                ctx.strokeStyle = '#fecaca';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-w * 0.12, -h * 0.48);
+                ctx.lineTo(-w * 0.16, -h * 0.66);
+                ctx.moveTo(w * 0.12, -h * 0.48);
+                ctx.lineTo(w * 0.16, -h * 0.66);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        // 진화 에너지 아이템 그리기 (은은하게 맥동하는 에너지 구슬)
+        function drawSpaceEnergy(en) {
+            let cx = en.x + en.w / 2, cy = en.y + en.h / 2;
+            let pulseR = en.w / 2 + Math.sin(en.pulse) * 2;
+            ctx.save();
+            ctx.shadowColor = '#22d3ee';
+            ctx.shadowBlur = 14;
+            let grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(pulseR, 1));
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.45, '#67e8f9');
+            grad.addColorStop(1, '#0891b2');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(cx, cy, Math.max(pulseR, 1), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        // 플레이어 우주선 그리기 (진화 단계(evolution 0~5)가 오를수록 외형이 화려해짐)
+        function drawPlayerShip(p) {
+            let lvl = p.evolution || 0;
+            let cx = p.x + p.w / 2;
+
+            // 후광 오라 (3단계 이상)
+            if (lvl >= 3) {
+                ctx.save();
+                ctx.shadowColor = lvl >= 5 ? '#fbbf24' : p.color;
+                ctx.shadowBlur = lvl >= 5 ? 20 : 10;
+                ctx.globalAlpha = 0.9;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.moveTo(cx, p.y - 2);
+                ctx.lineTo(p.x + p.w + 2, p.y + p.h + 2);
+                ctx.lineTo(cx, p.y + p.h - 8);
+                ctx.lineTo(p.x - 2, p.y + p.h + 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 날개 (1단계 이상, 진화할수록 더 넓게 펼쳐짐)
+            if (lvl >= 1) {
+                let wingOut = 6 + Math.min(lvl, 4) * 5;
+                ctx.fillStyle = lvl >= 5 ? '#fde68a' : (lvl >= 3 ? '#e2e8f0' : p.color);
+                ctx.beginPath();
+                ctx.moveTo(p.x + p.w * 0.75, p.y + p.h * 0.35);
+                ctx.lineTo(p.x + p.w + wingOut, p.y + p.h * 0.7);
+                ctx.lineTo(p.x + p.w * 0.6, p.y + p.h * 0.85);
+                ctx.closePath();
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(p.x + p.w * 0.25, p.y + p.h * 0.35);
+                ctx.lineTo(p.x - wingOut, p.y + p.h * 0.7);
+                ctx.lineTo(p.x + p.w * 0.4, p.y + p.h * 0.85);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // 본체
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.moveTo(cx, p.y);
+            ctx.lineTo(p.x + p.w, p.y + p.h);
+            ctx.lineTo(cx, p.y + p.h - 8);
+            ctx.lineTo(p.x, p.y + p.h);
+            ctx.closePath();
+            ctx.fill();
+
+            // 콕핏 라인 (2단계 이상)
+            if (lvl >= 2) {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, p.y + p.h * 0.15);
+                ctx.lineTo(cx, p.y + p.h * 0.7);
+                ctx.stroke();
+            }
+
+            // 골드 테두리 (4단계 이상)
+            if (lvl >= 4) {
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx, p.y);
+                ctx.lineTo(p.x + p.w, p.y + p.h);
+                ctx.lineTo(cx, p.y + p.h - 8);
+                ctx.lineTo(p.x, p.y + p.h);
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            // 엔진 불꽃 (2단계부터 듀얼 엔진, 5단계는 더 밝게 빛남)
+            ctx.save();
+            let engineColor = lvl >= 5 ? '#fde047' : '#f97316';
+            if (lvl >= 5) { ctx.shadowColor = '#fde047'; ctx.shadowBlur = 12; }
+            ctx.fillStyle = engineColor;
+            if (lvl >= 2) {
+                ctx.beginPath();
+                ctx.arc(p.x + p.w * 0.28, p.y + p.h + 3, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(p.x + p.w * 0.72, p.y + p.h + 3, 4, 0, Math.PI * 2);
+                ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.arc(cx, p.y + p.h + 4, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.restore();
+
+            // 라벨
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`P${p.id}`, cx, p.y + p.h / 2 + 4);
+        }
+
         function spaceWarLoop() {
             if (!gameActive || config.game !== 'spacewar') return;
             spaceWarAnimId = requestAnimationFrame(spaceWarLoop);
@@ -2679,16 +2869,24 @@
 
             let now = Date.now();
             spacePlayers.forEach(p => {
-                if (!p.dead && now - p.lastShot > 180) {
-                    spaceBullets.push({
-                        x: p.x + p.w / 2 - 3,
-                        y: p.y,
-                        w: 6,
-                        h: 14,
-                        speed: 10,
-                        ownerId: p.id,
-                        color: p.color
-                    });
+                // 진화 단계별 공격 속도: 5단계부터 발사 간격이 짧아짐(공속 증가)
+                let fireInterval = p.evolution >= 5 ? 100 : 180;
+                if (!p.dead && now - p.lastShot > fireInterval) {
+                    // 진화 단계별 레이저 개수: 1단계 2개, 2단계 3개, 3단계 4개, 4단계 5개(5단계는 개수 유지하고 공속만 증가)
+                    let laserCount = Math.min(1 + p.evolution, 5);
+                    let spacing = 9;
+                    let startX = p.x + p.w / 2 - 3 - ((laserCount - 1) * spacing) / 2;
+                    for (let li = 0; li < laserCount; li++) {
+                        spaceBullets.push({
+                            x: startX + li * spacing,
+                            y: p.y,
+                            w: 6,
+                            h: 14,
+                            speed: 10,
+                            ownerId: p.id,
+                            color: p.color
+                        });
+                    }
                     p.lastShot = now;
                 }
             });
@@ -2731,6 +2929,17 @@
                         if (e.hp <= 0) {
                             let shooter = spacePlayers.find(p => p.id === b.ownerId);
                             if (shooter) shooter.score += e.isBoss ? 300 : 100;
+                            // 처치 시 5% 확률로 진화 에너지 드롭
+                            if (Math.random() < 0.05) {
+                                spaceEnergies.push({
+                                    x: e.x + e.w / 2 - 9,
+                                    y: e.y + e.h / 2 - 9,
+                                    w: 18,
+                                    h: 18,
+                                    speed: 1.8,
+                                    pulse: Math.random() * Math.PI * 2
+                                });
+                            }
                             spaceEnemies.splice(i, 1);
                             break;
                         }
@@ -2758,6 +2967,28 @@
                 }
             }
 
+            // 진화 에너지 이동/획득 처리
+            for (let i = spaceEnergies.length - 1; i >= 0; i--) {
+                let en = spaceEnergies[i];
+                en.y += en.speed;
+                en.pulse += 0.15;
+
+                let collected = false;
+                for (let p of spacePlayers) {
+                    if (!p.dead &&
+                        p.x < en.x + en.w && p.x + p.w > en.x &&
+                        p.y < en.y + en.h && p.y + p.h > en.y) {
+                        if (p.evolution < 5) p.evolution++;
+                        collected = true;
+                        break;
+                    }
+                }
+
+                if (collected || en.y > canvas.height) {
+                    spaceEnergies.splice(i, 1);
+                }
+            }
+
             if (spacePlayers.every(p => p.dead)) {
                 endSpaceWarGame();
                 return;
@@ -2778,41 +3009,13 @@
                 ctx.fillRect(b.x, b.y, b.w, b.h);
             });
 
-            spaceEnemies.forEach(e => {
-                ctx.fillStyle = e.color;
-                ctx.beginPath();
-                if (e.isBoss) {
-                    ctx.moveTo(e.x + e.w / 2, e.y + e.h);
-                    ctx.lineTo(e.x + e.w, e.y);
-                    ctx.lineTo(e.x, e.y);
-                } else {
-                    ctx.arc(e.x + e.w / 2, e.y + e.h / 2, e.w / 2, 0, Math.PI * 2);
-                }
-                ctx.fill();
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(e.x + e.w / 4, e.y + e.h / 3, e.w / 2, 4);
-            });
+            spaceEnemies.forEach(e => drawSpaceEnemyShip(e));
+
+            spaceEnergies.forEach(en => drawSpaceEnergy(en));
 
             spacePlayers.forEach(p => {
                 if (p.dead) return;
-                ctx.fillStyle = p.color;
-                ctx.beginPath();
-                ctx.moveTo(p.x + p.w / 2, p.y);
-                ctx.lineTo(p.x + p.w, p.y + p.h);
-                ctx.lineTo(p.x + p.w / 2, p.y + p.h - 8);
-                ctx.lineTo(p.x, p.y + p.h);
-                ctx.closePath();
-                ctx.fill();
-
-                ctx.fillStyle = '#f97316';
-                ctx.beginPath();
-                ctx.arc(p.x + p.w / 2, p.y + p.h + 4, 5, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 11px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(`P${p.id}`, p.x + p.w / 2, p.y + p.h / 2 + 4);
+                drawPlayerShip(p);
             });
 
             ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
@@ -2826,17 +3029,18 @@
             if (spaceWarMode === 1) {
                 let p1 = spacePlayers[0];
                 let hearts = '❤️'.repeat(Math.max(0, p1.hp));
+                let evoTxt = p1.evolution > 0 ? ` ⚡Lv.${p1.evolution}` : '';
                 ctx.fillStyle = '#38bdf8';
                 ctx.textAlign = 'left';
-                ctx.fillText(`1P ${hearts}`, 20, 37);
+                ctx.fillText(`1P ${hearts}${evoTxt}`, 20, 37);
                 ctx.fillStyle = '#fbbf24';
                 ctx.textAlign = 'right';
                 ctx.fillText(`점수: ${p1.score}`, canvas.width - 20, 37);
             } else {
                 let p1 = spacePlayers[0];
                 let p2 = spacePlayers[1];
-                let h1 = p1.dead ? '💀' : '❤️'.repeat(Math.max(0, p1.hp));
-                let h2 = p2.dead ? '💀' : '❤️'.repeat(Math.max(0, p2.hp));
+                let h1 = p1.dead ? '💀' : '❤️'.repeat(Math.max(0, p1.hp)) + (p1.evolution > 0 ? ` ⚡Lv.${p1.evolution}` : '');
+                let h2 = p2.dead ? '💀' : '❤️'.repeat(Math.max(0, p2.hp)) + (p2.evolution > 0 ? ` ⚡Lv.${p2.evolution}` : '');
                 
                 ctx.fillStyle = '#38bdf8';
                 ctx.textAlign = 'left';
