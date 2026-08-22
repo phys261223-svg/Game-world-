@@ -204,15 +204,73 @@
             margin-bottom: 30px;
             color: #94a3b8;
         }
+
+        /* ===== 업데이트 알림 토스트 ===== */
+        #update-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%) translateY(20px);
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border: 1px solid #3b82f6;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 0 1px rgba(59,130,246,0.15);
+            border-radius: 14px;
+            padding: 16px 20px;
+            max-width: 360px;
+            width: calc(100% - 32px);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+        #update-toast.show {
+            display: block;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        #update-toast .ut-title {
+            font-size: 1.05rem;
+            font-weight: bold;
+            color: #60a5fa;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        #update-toast .ut-desc {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            white-space: pre-line;
+        }
+        #update-toast .ut-close {
+            padding: 8px 18px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: linear-gradient(145deg, #3b82f6, #2563eb);
+            color: white;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
+
+    <div id="update-toast">
+        <div class="ut-title">✨ 사이트가 업데이트됐어요</div>
+        <div class="ut-desc" id="update-toast-desc"></div>
+        <button class="ut-close" onclick="dismissUpdateToast()">확인</button>
+    </div>
 
     <div id="screen-main" class="screen active">
         <h1>game world</h1>
         <div class="btn-group">
             <button class="game-card" onclick="selectGame('go')">
                 <span class="game-title">바둑 (Go)</span>
+
                 <div class="game-icon">
                     <svg width="55" height="55" viewBox="0 0 60 60">
                         <rect x="5" y="5" width="50" height="50" fill="#deb887" rx="5" stroke="#5c4033" stroke-width="2"/>
@@ -308,6 +366,14 @@
         <button class="btn-secondary" onclick="showScreen('screen-main')">메인으로</button>
     </div>
 
+    <div id="screen-spacewar-charselect" class="screen">
+        <h2>서브 모델(캐릭터) 선택</h2>
+        <p style="color:#94a3b8; margin-bottom: 20px; max-width: 500px;">첫 서브 모델을 선택하세요. Stage 10/15/20/25 보스를 처치할 때마다 새로운 서브 모델을 하나씩 더 선택할 수 있습니다.</p>
+        <div id="spacewar-charselect-list" class="btn-group" style="max-width: 720px;"></div>
+        <br>
+        <button class="btn-secondary" onclick="showScreen('screen-spacewar-mode')">뒤로 가기</button>
+    </div>
+
     <div id="screen-spacewar-game" class="screen">
         <div style="width: 500px; max-width: 95vw; display: flex; justify-content: flex-end; margin-bottom: 10px;">
             <button class="btn-secondary" onclick="closeUploadedSpaceWar()">메인으로</button>
@@ -327,6 +393,7 @@
 
     <div id="screen-diff" class="screen">
         <h2>AI 난이도 선택</h2>
+        <div id="diff-learning-info" style="max-width:520px;font-size:0.95rem;color:#cbd5e1;margin-bottom:1.2rem;line-height:1.6;"></div>
         <div class="btn-group">
             <button onclick="selectDiff('low')">하</button>
             <button onclick="selectDiff('mid')">중</button>
@@ -359,6 +426,12 @@
             <div class="timer-box" id="timer">05:00</div>
         </div>
         <canvas id="boardCanvas"></canvas>
+
+        <div id="spacewar-submodel-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.92); backdrop-filter: blur(5px); flex-direction: column; justify-content: center; align-items: center; z-index: 60; border-radius: 12px; text-align: center; padding: 20px;">
+            <h2 style="color:#fbbf24; margin-bottom: 8px;">🎉 보스 격파!</h2>
+            <p style="color:#e2e8f0; margin-bottom: 18px;">새로운 서브 모델을 선택하세요</p>
+            <div id="spacewar-submodel-overlay-list" style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; max-width: 480px;"></div>
+        </div>
 
         <div id="stairs-rank-badge" style="display: none; position: absolute; top: 15px; right: 15px; z-index: 40; background: rgba(0,0,0,0.6); border: 1px solid rgba(245,158,11,0.6); border-radius: 10px; padding: 10px 16px; text-align: right;">
             <div style="font-size: 0.8rem; color: #94a3b8;">최근 랭킹 등록</div>
@@ -511,6 +584,39 @@
         }
 
         let config = { game: '', mode: '', difficulty: 'mid', time: 0 };
+
+        // ===================================================================
+        // ===== 사이트 업데이트 알림 (버전 비교 + localStorage) =====
+        // 새 기능을 배포할 때마다 아래 SITE_VERSION 값을 새 문자열로 바꾸고,
+        // UPDATE_NOTES에 이번 업데이트 내용을 적어두면, 사용자가 그 버전을
+        // 처음 접속(또는 새로고침)했을 때 화면 하단에 알림이 한 번 뜨고,
+        // 이후에는 다시 뜨지 않는다 (localStorage에 마지막으로 본 버전을 저장).
+        // ===================================================================
+        const SITE_VERSION = "2024-08-22-1";
+        const UPDATE_NOTES = "· 오목/바둑/체스 AI가 이 기기에서 대국할수록 똑똑해지는 로컬 학습 기능 추가\n· 스페이스워 2번째 보스 탄막량 완화 + 새 패턴 추가\n· 개틀링건 데미지 밸런스 조정";
+        const UPDATE_VERSION_KEY = 'site_last_seen_version';
+
+        function checkSiteUpdateNotice() {
+            try {
+                let lastSeen = localStorage.getItem(UPDATE_VERSION_KEY);
+                if (lastSeen === SITE_VERSION) return; // 이미 이 버전 알림을 본 사용자
+                if (lastSeen === null) {
+                    // 처음 방문하는 사용자에게는 "업데이트 알림"을 띄우지 않고 조용히 현재 버전만 기록
+                    localStorage.setItem(UPDATE_VERSION_KEY, SITE_VERSION);
+                    return;
+                }
+                document.getElementById('update-toast-desc').innerText = UPDATE_NOTES;
+                let toast = document.getElementById('update-toast');
+                setTimeout(() => { toast.classList.add('show'); }, 400);
+            } catch (e) {}
+        }
+
+        function dismissUpdateToast() {
+            document.getElementById('update-toast').classList.remove('show');
+            try { localStorage.setItem(UPDATE_VERSION_KEY, SITE_VERSION); } catch (e) {}
+        }
+
+        window.addEventListener('DOMContentLoaded', checkSiteUpdateNotice);
         let boardSize = 15; 
         let board = [];
         let canvas, ctx;
@@ -527,9 +633,156 @@
         let chessSelected = null;
 
         let gomokuWinLine = null;
+        let lastAIMove = null; // AI가 마지막으로 둔 위치 저장
 
         let isCheck = false;
         let checkKingPos = null;
+
+        // ===================================================================
+        // ===== AI 로컬 학습 시스템 (LocalLearning) =====
+        // 브라우저의 localStorage에 오목/바둑/체스 AI의 대국 기록과 "학습된 가중치"를
+        // 영구 저장한다. 사람에게 질 때마다(=AI가 패배할 때마다) 그 원인이 된 평가 항목의
+        // 가중치를 조금씩 올리고(같은 실수를 줄이도록), 이길 때는 소폭만 강화해서
+        // 과적합을 막는다. 대국 수가 쌓일수록 탐색 폭/깊이도 단계적으로 넓어져서,
+        // "많이 둘수록 더 똑똑해지는" AI가 된다. 새로고침/재접속해도 이 기기에는
+        // 학습 데이터가 그대로 남아있다 (진짜 신경망 학습은 아니지만, 같은 원리인
+        // "결과 기반 가중치 보정 + 탐색량 증가"를 구현한 로컬 강화학습이다).
+        // ===================================================================
+        const LocalAI = (function() {
+            const STORAGE_KEY = 'boardgame_ai_local_learning_v1';
+
+            function defaultData() {
+                return {
+                    gomoku: {
+                        gamesPlayed: 0, wins: 0, losses: 0, draws: 0,
+                        // 각 패턴의 기본 점수에 곱해지는 학습 가중치 (1.0 = 기본)
+                        weights: { five: 1.0, four: 1.0, openFour: 1.0, openThree: 1.0, semiThree: 1.0, openTwo: 1.0, two: 1.0, defense: 1.0 }
+                    },
+                    go: {
+                        gamesPlayed: 0, wins: 0, losses: 0, draws: 0,
+                        weights: { capture: 1.0, liberty: 1.0, atariRisk: 1.0, territory: 1.0, contact: 1.0 }
+                    },
+                    chess: {
+                        gamesPlayed: 0, wins: 0, losses: 0, draws: 0,
+                        weights: { material: 1.0, mobility: 1.0, kingSafety: 1.0, center: 1.0, aggression: 1.0 }
+                    }
+                };
+            }
+
+            let data = null;
+
+            function load() {
+                if (data) return data;
+                try {
+                    let raw = localStorage.getItem(STORAGE_KEY);
+                    if (raw) {
+                        let parsed = JSON.parse(raw);
+                        let def = defaultData();
+                        // 예전 버전 저장 데이터와 병합 (누락된 필드 보완)
+                        data = def;
+                        for (let g of ['gomoku', 'go', 'chess']) {
+                            if (parsed[g]) {
+                                Object.assign(data[g], parsed[g]);
+                                if (parsed[g].weights) Object.assign(data[g].weights, parsed[g].weights);
+                            }
+                        }
+                    } else {
+                        data = defaultData();
+                    }
+                } catch (e) {
+                    data = defaultData();
+                }
+                return data;
+            }
+
+            function save() {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+            }
+
+            function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+            // 대국 수에 따라 탐색 강도(후보 폭/깊이)를 단계적으로 늘려주는 보정치 (0~3)
+            function trainingTier(game) {
+                let d = load()[game];
+                let n = d.gamesPlayed;
+                if (n >= 60) return 3;
+                if (n >= 25) return 2;
+                if (n >= 8) return 1;
+                return 0;
+            }
+
+            // 사람(플레이어)과의 대국이 끝났을 때 호출: 결과에 따라 가중치를 미세 조정하고 저장한다.
+            // outcome: 'aiWin' | 'aiLoss' | 'draw'
+            function recordResult(game, outcome) {
+                let d = load()[game];
+                if (!d) return;
+                d.gamesPlayed++;
+                if (outcome === 'aiWin') d.wins++;
+                else if (outcome === 'aiLoss') d.losses++;
+                else d.draws++;
+
+                let w = d.weights;
+                let keys = Object.keys(w);
+                if (outcome === 'aiLoss') {
+                    // 패배 원인이 되기 쉬운 항목(공격/위협 탐지, 방어)을 좀 더 크게 강화
+                    let boostKeys = game === 'gomoku' ? ['four', 'openFour', 'openThree', 'defense']
+                                  : game === 'go' ? ['atariRisk', 'liberty', 'territory']
+                                  : ['kingSafety', 'mobility', 'material'];
+                    boostKeys.forEach(k => { if (w[k] !== undefined) w[k] = clamp(w[k] * 1.05, 0.5, 1.8); });
+                } else if (outcome === 'aiWin') {
+                    // 승리 시엔 과적합 방지를 위해 아주 소폭만 강화
+                    keys.forEach(k => { w[k] = clamp(w[k] * 1.01, 0.5, 1.8); });
+                }
+                // 모든 가중치를 아주 살짝 1.0 쪽으로 되돌려서(감쇠) 극단적으로 치우치는 것을 방지
+                keys.forEach(k => { w[k] = clamp(w[k] + (1.0 - w[k]) * 0.03, 0.5, 1.8); });
+
+                save();
+            }
+
+            function getWeights(game) { return load()[game].weights; }
+            function getStats(game) { return load()[game]; }
+
+            function resetGame(game) {
+                let def = defaultData();
+                load()[game] = def[game];
+                save();
+            }
+
+            return { load, recordResult, getWeights, getStats, trainingTier, resetGame };
+        })();
+
+        // endGame()의 title 문자열로부터 사람 vs AI 대국의 승패를 판정해 LocalAI에 기록한다.
+        function recordLocalLearningFromResult(title) {
+            if (config.mode !== 'ai') return;
+            if (config.game !== 'gomoku' && config.game !== 'go' && config.game !== 'chess') return;
+            // 실제 승패/무승부가 아닌 종료(예: 둘 곳 없어 패스 등)는 학습 기록에서 제외
+            if (title.indexOf('승리') === -1 && title.indexOf('무승부') === -1) return;
+            let outcome;
+            if (title.indexOf('무승부') !== -1) {
+                outcome = 'draw';
+            } else if (config.game === 'chess') {
+                // 체스는 백(플레이어)/흑(AI) 승리 문구로 판정
+                outcome = title.indexOf('흑') !== -1 ? 'aiWin' : 'aiLoss';
+            } else {
+                // 오목/바둑은 흑=플레이어(1), 백=AI(2)
+                outcome = title.indexOf('백') !== -1 ? 'aiWin' : 'aiLoss';
+            }
+            LocalAI.recordResult(config.game, outcome);
+        }
+
+        // 난이도 선택 화면에 진입할 때, 해당 게임 AI의 로컬 학습 현황을 보여준다.
+        function updateDiffScreenLearningInfo() {
+            let el = document.getElementById('diff-learning-info');
+            if (!el) return;
+            if (config.game !== 'gomoku' && config.game !== 'go' && config.game !== 'chess') {
+                el.innerHTML = '';
+                return;
+            }
+            let s = LocalAI.getStats(config.game);
+            let tier = LocalAI.trainingTier(config.game);
+            let tierLabel = ['초급 학습', '중급 학습', '고급 학습', '숙련 학습'][tier];
+            el.innerHTML = `이 기기에서 AI가 학습한 대국 수: <b>${s.gamesPlayed}</b>판 (${s.wins}승 ${s.losses}패 ${s.draws}무) · 현재 학습 단계: <b>${tierLabel}</b><br><span style="font-size:0.85rem;opacity:0.7;">둘수록 이 기기에서 AI가 더 강해집니다.</span>`;
+        }
 
         let snakeAnimId = null;
         let snakeWorld = { width: 3000, height: 3000 };
@@ -1351,6 +1604,65 @@
         let spaceStars = [];
         let spaceKeys = {};
         let spaceEnergies = []; // 적 처치 시 5% 확률로 드롭되는 진화 에너지
+        let spaceFx = []; // 1인용 전용 메인 무기 진화 이펙트(폭발/파동포 섬광) 표시용
+        // ▼ 1인용 전용 30스테이지 시스템 (2인용 모드에는 영향 없음) ▼
+        let spaceEnemyBullets = []; // 1인용 전용: 적의 원거리 공격 탄
+        let spaceStage = 1; // 현재 스테이지 (1~30)
+        let spaceStageEnemiesTotal = 0; // 이번 스테이지에 등장할 총 적 수
+        let spaceStageEnemiesSpawned = 0; // 지금까지 스폰된 적 수
+        let spaceStageClearing = false; // 스테이지 클리어 연출/전환 중인지 여부(중복 트리거 방지)
+        let spaceStageLastSpawn = 0; // 마지막 적 스폰 시각
+        // ▲ 1인용 전용 30스테이지 시스템 끝 ▲
+
+        // ▼ 1인용 전용: 5대 관문 보스 시스템 (Stage 10/15/20/25/30) ▼
+        let spaceBoss = null; // 현재 등장 중인 관문 보스 객체 (없으면 null)
+        let spaceBossBullets = []; // 보스 전용 탄막(패턴탄) 리스트
+        let spaceBossMinions = []; // 보스가 소환하는 쫄몹 드론(Stage25) / 무한 잡몹(Stage30 P3) 리스트
+        let spaceBossIntroTimer = 0; // 보스 등장 연출 타이머
+        let spaceBossDefeated = false; // 보스 처치 연출 중 중복 트리거 방지
+        const BOSS_STAGES = { 10: 'titan_carnox', 15: 'neo_sphera', 20: 'chronos_leviathan', 25: 'arc_angel', 30: 'omega_genesis' };
+        const BOSS_NAMES = {
+            titan_carnox: '중형 전함 「타이탄 카노에」',
+            neo_sphera: '플라즈마 코어 「네오 스페라」',
+            chronos_leviathan: '차원 생체 괴수 「크로노스 리바이어던」',
+            arc_angel: '사이버네틱 함선 「아크 엔젤」',
+            omega_genesis: '종말 요새 「오메가 제네시스」'
+        };
+        // ▲ 5대 관문 보스 시스템 변수 끝 ▲
+
+        // ▼ 1인용 전용: 6종 서브 모듈 시스템 (D/M/B/G/T/V, 각 최대 Lv.3) ▼
+        let spaceSubItems = []; // 적 처치 시 드롭되는 서브 모듈 아이템(캡슐)
+        let spaceSubBullets = []; // 서브 모듈이 발사하는 탄(드론탄/미사일/개틀링탄/파편탄)
+        let spaceSubBeams = []; // 관통 빔(B) 전용 표시/판정 리스트 (프레임마다 갱신)
+        let spaceSubChains = []; // 체인 테슬라(T) 전기줄기 연출 리스트 (프레임마다 갱신)
+        let spaceSubBlackholes = []; // 중력장 블랙홀(V) 리스트
+        let spaceDroneAngle = 0; // 드론 수호(D) Lv.3 회전각
+        let spaceActiveDrones = []; // 드론 수호(D) Lv.4~5 전용: 실제로 화면을 날아다니는 드론 실체 리스트
+        const SUB_MODULE_INFO = {
+            D: { name: '드론 수호', color: '#00FF7F' },
+            M: { name: '유도 미사일', color: '#FF8C00' },
+            B: { name: '관통 빔', color: '#00FFFF' },
+            G: { name: '개틀링 속사', color: '#FFD700' },
+            T: { name: '체인 테슬라', color: '#9400D3' },
+            V: { name: '중력장 블랙홀', color: '#8B0000' }
+        };
+        const SUB_MODULE_DROP_TABLE = [
+            ['D', 0.25], ['M', 0.25], ['G', 0.20], ['B', 0.15], ['T', 0.10], ['V', 0.05]
+        ];
+        const SUB_MODULE_DESC = {
+            D: '기체 주변을 도는 수호 드론이 자동으로 사격',
+            M: '가장 가까운 적을 추적하는 유도 미사일 발사',
+            B: '전방을 관통하는 빔을 지속적으로 발사',
+            G: '빠른 속사로 다수의 탄을 연속 발사',
+            T: '적들 사이를 잇는 전기 줄기로 연쇄 피해',
+            V: '중력장 블랙홀로 주변 적을 끌어들여 피해'
+        };
+        // ▼ 1인용 전용: 서브 모델(캐릭터) 선택 시스템 — 선택된 키만 드롭/사용 가능 ▼
+        let spaceUnlockedSubModules = []; // 현재 선택되어 사용 가능한 서브 모듈 키 목록 (초기 1개 + 보스(10/15/20/25) 처치마다 1개씩 추가)
+        let spaceInitialSubModuleKey = null; // 1인용 시작 전 캐릭터 선택 화면에서 고른 초기 서브 모델
+        const SUB_MODULE_PICK_STAGES = [10, 15, 20, 25]; // 이 스테이지의 보스를 처치하면 서브 모델을 하나 더 선택
+        // ▲ 서브 모델 선택 시스템 변수 끝 ▲
+        // ▲ 6종 서브 모듈 시스템 변수 끝 ▲
 
         const chessChars = {
             1: '♙', 2: '♖', 3: '♘', 4: '♗', 5: '♕', 6: '♔',
@@ -1384,8 +1696,68 @@
             // 1인용: 우주선 1대(WASD 조작), 화면 폭이 좁고, 적 스폰 확률도 더 낮음.
             // 2인용: 우주선 2대(1P WASD / 2P 화살표), 화면 폭이 더 넓고, 적 스폰 확률도 더 높음.
             // (분기 로직은 initSpaceWarGame / spaceWarLoop 안의 spaceWarMode 체크에 있음)
+            if (spaceWarMode === 1) {
+                // 1인용은 게임 시작 전에 서브 모델(캐릭터) 선택 화면을 먼저 보여줌
+                openSpaceWarCharSelect();
+                return;
+            }
             startGame(0);
         }
+
+        // ▼▼▼ 1인용 전용: 서브 모델(캐릭터) 선택 UI ▼▼▼
+        function buildSubModuleCard(key, onPick) {
+            let info = SUB_MODULE_INFO[key];
+            let card = document.createElement('button');
+            card.style.cssText = `background: linear-gradient(145deg, ${info.color}, #1e293b); display:flex; flex-direction:column; align-items:center; gap:6px; min-width:170px; max-width:200px; padding: 16px; font-size: 1rem;`;
+            card.innerHTML = `<span style="font-size:1.05rem;font-weight:bold;">${info.name}</span><span style="font-size:0.8rem; color:#f1f5f9; font-weight:normal; line-height:1.4;">${SUB_MODULE_DESC[key]}</span>`;
+            card.onclick = onPick;
+            return card;
+        }
+
+        function openSpaceWarCharSelect() {
+            spaceUnlockedSubModules = [];
+            spaceInitialSubModuleKey = null;
+            let list = document.getElementById('spacewar-charselect-list');
+            list.innerHTML = '';
+            Object.keys(SUB_MODULE_INFO).forEach(key => {
+                list.appendChild(buildSubModuleCard(key, () => {
+                    spaceInitialSubModuleKey = key;
+                    startGame(0);
+                }));
+            });
+            showScreen('screen-spacewar-charselect');
+        }
+
+        // 보스(Stage 10/15/20/25) 처치 후: 아직 선택하지 않은 서브 모델 중 하나를 선택
+        function openPostBossSubModuleSelect() {
+            let candidates = Object.keys(SUB_MODULE_INFO).filter(key => !spaceUnlockedSubModules.includes(key));
+            if (candidates.length === 0) {
+                resumeAfterSubModulePick();
+                return;
+            }
+            let overlay = document.getElementById('spacewar-submodel-overlay');
+            let list = document.getElementById('spacewar-submodel-overlay-list');
+            list.innerHTML = '';
+            candidates.forEach(key => {
+                list.appendChild(buildSubModuleCard(key, () => {
+                    spaceUnlockedSubModules.push(key);
+                    let p1 = spacePlayers[0];
+                    if (p1 && p1.subModules) p1.subModules[key] = Math.max(p1.subModules[key], 1);
+                    resumeAfterSubModulePick();
+                }));
+            });
+            overlay.style.display = 'flex';
+        }
+
+        // 서브 모델 선택 완료 후: 다음 스테이지로 넘어가며 게임을 연달아 이어감
+        function resumeAfterSubModulePick() {
+            document.getElementById('spacewar-submodel-overlay').style.display = 'none';
+            if (!gameActive || config.game !== 'spacewar') return;
+            spaceStage++;
+            startSpaceStage();
+            if (!spaceWarAnimId) spaceWarAnimId = requestAnimationFrame(spaceWarLoop);
+        }
+        // ▲▲▲ 서브 모델 선택 UI 끝 ▲▲▲
 
         // ▼▼▼ 업로드된 "space war 게임 수정 필요.html" 게임을 iframe으로 재생하기 위한 코드 ▼▼▼
         function openUploadedSpaceWar() {
@@ -1409,6 +1781,7 @@
         function selectMode(mode) {
             config.mode = mode;
             if (mode === 'ai') {
+                updateDiffScreenLearningInfo();
                 showScreen('screen-diff');
             } else {
                 checkTimeSelect();
@@ -1439,8 +1812,12 @@
             whiteCaptures = 0;
             chessSelected = null;
             gomokuWinLine = null;
+            lastAIMove = null;
             isCheck = false;
             checkKingPos = null;
+
+            // "다시하기" 버튼으로 재시작할 때 결과창(result-modal)이 안 닫혀서 화면을 계속 가리던 버그 수정
+            document.getElementById('result-modal').style.display = 'none';
 
             if (snakeAnimId) { cancelAnimationFrame(snakeAnimId); snakeAnimId = null; }
             if (stairsAnimId) { cancelAnimationFrame(stairsAnimId); stairsAnimId = null; }
@@ -1520,6 +1897,8 @@
             window.removeEventListener('keyup', spaceWarKeyUpHandler);
             
             document.getElementById('stairs-menu-overlay').style.display = 'none';
+            let subModelOverlay = document.getElementById('spacewar-submodel-overlay');
+            if (subModelOverlay) subModelOverlay.style.display = 'none';
             document.getElementById('result-modal').style.display = 'none';
             document.getElementById('result-modal').style.background = "rgba(0,0,0,0.8)";
             document.querySelector('.modal-content').style.boxShadow = "0 25px 50px rgba(0,0,0,0.5)";
@@ -1662,6 +2041,26 @@
                         drawStone(x, y, board[y][x]);
                     }
                 }
+            }
+
+            if (config.game === 'gomoku' && lastAIMove) {
+                // AI가 마지막으로 둔 수 표시
+                let ax = cellSize / 2 + lastAIMove.x * cellSize;
+                let ay = cellSize / 2 + lastAIMove.y * cellSize;
+                ctx.save();
+                ctx.strokeStyle = '#4a90e2';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(ax, ay, cellSize * 0.52, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // 작은 별 표시
+                ctx.fillStyle = '#4a90e2';
+                ctx.font = 'bold 20px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('★', ax, ay - cellSize * 0.65);
+                ctx.restore();
             }
 
             if (config.game === 'gomoku' && gomokuWinLine) {
@@ -1978,7 +2377,7 @@
                 while (nx >= 0 && nx < boardSize && ny >= 0 && ny < boardSize && board[ny][nx] === player) {
                     count++; startX = nx; startY = ny; nx -= dx; ny -= dy;
                 }
-                if (count >= 5) {
+                if (count === 5) {
                     gomokuWinLine = { x1: startX, y1: startY, x2: endX, y2: endY };
                     return true;
                 }
@@ -2044,6 +2443,7 @@
         }
 
         function getGomokuScore(x, y, p) {
+            let w = LocalAI.getWeights('gomoku');
             board[y][x] = p;
             let totalScore = 0;
             const dirs = [[1,0],[0,1],[1,1],[1,-1]];
@@ -2057,10 +2457,10 @@
                 while(nx>=0 && nx<boardSize && ny>=0 && ny<boardSize && board[ny][nx]===p){ count++; nx-=dx; ny-=dy; }
                 if(nx>=0 && nx<boardSize && ny>=0 && ny<boardSize && board[ny][nx]===0) open++;
                 
-                if(count >= 5) totalScore += 1000000;
-                else if(count === 4) totalScore += (open > 0 ? 100000 : 5000);
-                else if(count === 3) totalScore += (open === 2 ? 10000 : (open === 1 ? 100 : 0));
-                else if(count === 2) totalScore += (open === 2 ? 100 : 5);
+                if(count >= 5) totalScore += 1000000 * w.five;
+                else if(count === 4) totalScore += (open > 0 ? 100000 * w.openFour : 5000 * w.four);
+                else if(count === 3) totalScore += (open === 2 ? 10000 * w.openThree : (open === 1 ? 100 * w.semiThree : 0));
+                else if(count === 2) totalScore += (open === 2 ? 100 * w.openTwo : 5 * w.two);
             }
             board[y][x] = 0;
             let centerBias = (boardSize/2 - Math.abs(x-boardSize/2)) + (boardSize/2 - Math.abs(y-boardSize/2));
@@ -2096,41 +2496,64 @@
         }
 
         function makeGomokuAI(diff) {
+            let w = LocalAI.getWeights('gomoku');
+            let tier = LocalAI.trainingTier('gomoku');
+
             if (diff === 'high' || diff === 'pro') {
                 let cells = gomokuNearEmptyCells(2);
                 let candidates = cells.map(c => ({x: c.x, y: c.y, score: getGomokuScore(c.x, c.y, 2) + getGomokuScore(c.x, c.y, 1)}));
                 candidates.sort((a, b) => b.score - a.score);
-                let topN = diff === 'pro' ? 14 : 10;
+                // 이 기기에서 대국 경험(학습 단계)이 쌓일수록 더 넓은 후보를 탐색한다
+                let baseTopN = diff === 'pro' ? 14 : 10;
+                let topN = baseTopN + tier * (diff === 'pro' ? 5 : 3);
                 candidates = candidates.slice(0, topN);
 
                 // 즉시 승리 수 확인
                 for (let c of candidates) {
-                    if (getGomokuScore(c.x, c.y, 2) >= 1000000) { placeStone(c.x, c.y); return; }
+                    if (getGomokuScore(c.x, c.y, 2) >= 1000000) { lastAIMove = {x: c.x, y: c.y}; placeStone(c.x, c.y); return; }
                 }
                 // 즉시 방어 수 확인 (상대가 다음 수에 이기는 것을 막음)
                 for (let c of candidates) {
-                    if (getGomokuScore(c.x, c.y, 1) >= 1000000) { placeStone(c.x, c.y); return; }
+                    if (getGomokuScore(c.x, c.y, 1) >= 1000000) { lastAIMove = {x: c.x, y: c.y}; placeStone(c.x, c.y); return; }
                 }
+
+                // 학습이 어느 정도 진행된 '프로' 난이도는 3수 앞(내 수 → 상대 최선 응수 → 내 최선 대응)까지 내다본다
+                let deepLookahead = diff === 'pro' && tier >= 1;
 
                 let bestScore = -Infinity, bestMoves = [];
                 for (let c of candidates) {
                     board[c.y][c.x] = 2;
                     let replyCells = gomokuNearEmptyCells(2);
-                    let oppBest = 0;
+                    let oppBest = 0, oppBestPos = null;
                     for (let rc of replyCells) {
                         if (rc.x === c.x && rc.y === c.y) continue;
                         let s = getGomokuScore(rc.x, rc.y, 1);
-                        if (s > oppBest) oppBest = s;
+                        if (s > oppBest) { oppBest = s; oppBestPos = rc; }
                     }
+
+                    let followUpBonus = 0;
+                    if (deepLookahead && oppBestPos && oppBest < 1000000) {
+                        board[oppBestPos.y][oppBestPos.x] = 1;
+                        let myReplyCells = gomokuNearEmptyCells(2);
+                        let myBest = 0;
+                        for (let mc of myReplyCells) {
+                            let s2 = getGomokuScore(mc.x, mc.y, 2);
+                            if (s2 > myBest) myBest = s2;
+                        }
+                        board[oppBestPos.y][oppBestPos.x] = 0;
+                        followUpBonus = myBest * 0.35;
+                    }
+
                     board[c.y][c.x] = 0;
 
-                    let finalScore = c.score - oppBest * (diff === 'pro' ? 0.9 : 0.65);
+                    let finalScore = c.score - oppBest * (diff === 'pro' ? 0.9 : 0.65) * w.defense + followUpBonus;
                     if (finalScore > bestScore) { bestScore = finalScore; bestMoves = [c]; }
                     else if (finalScore === bestScore) bestMoves.push(c);
                 }
 
                 if (bestMoves.length > 0) {
                     let m = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+                    lastAIMove = {x: m.x, y: m.y};
                     placeStone(m.x, m.y);
                 } else endGame("무승부", "AI가 착수할 곳이 없습니다.");
                 return;
@@ -2151,6 +2574,7 @@
             }
             if (moves.length > 0) {
                 let m = moves[Math.floor(Math.random() * moves.length)];
+                lastAIMove = {x: m.x, y: m.y};
                 placeStone(m.x, m.y);
             } else endGame("무승부", "AI가 착수할 곳이 없습니다.");
         }
@@ -2172,6 +2596,8 @@
 
         function makeGoAI(diff) {
             if (!gameActive) return;
+            let w = LocalAI.getWeights('go');
+            let tier = LocalAI.trainingTier('go');
 
             let validMoves = [];
             for (let y = 0; y < boardSize; y++) {
@@ -2205,12 +2631,12 @@
             for (let m of validMoves) {
                 let score = 0;
 
-                score += m.cap * 2000;
+                score += m.cap * 2000 * w.capture;
 
                 if (m.cap === 0 && m.libs === 1) {
-                    score -= 800;
+                    score -= 800 * w.atariRisk;
                 } else {
-                    score += m.libs * 15;
+                    score += m.libs * 15 * w.liberty;
                 }
 
                 const dirs = [[0,1], [1,0], [0,-1], [-1,0]];
@@ -2220,20 +2646,30 @@
                         let neighbor = board[ny][nx];
                         if (neighbor === 1) { 
                             let oppLibs = getLiberties(nx, ny).liberties.length;
-                            if (oppLibs === 2) score += 600; 
-                            else if (oppLibs === 1) score += 1200; 
-                            score += 30;
+                            if (oppLibs === 2) score += 600 * w.contact; 
+                            else if (oppLibs === 1) score += 1200 * w.contact; 
+                            score += 30 * w.contact;
                         } else if (neighbor === 2) { 
                             let myLibs = getLiberties(nx, ny).liberties.length;
-                            if (myLibs === 1) score += 1500; 
-                            score += 50; 
+                            if (myLibs === 1) score += 1500 * w.atariRisk; 
+                            score += 50 * w.contact; 
                         }
                     }
                 }
 
                 let distFromEdge = Math.min(m.x, boardSize - 1 - m.x, m.y, boardSize - 1 - m.y);
-                if (distFromEdge === 0) score -= 120;
-                else if (distFromEdge === 2 || distFromEdge === 3) score += 180;
+                if (distFromEdge === 0) score -= 120 * w.territory;
+                else if (distFromEdge === 2 || distFromEdge === 3) score += 180 * w.territory;
+
+                // 주변 빈 공간의 넓이로 대략적인 세력(영역)을 어림잡아 반영 (학습 가중치로 보정됨)
+                let openSpace = 0;
+                for (let dy2 = -2; dy2 <= 2; dy2++) {
+                    for (let dx2 = -2; dx2 <= 2; dx2++) {
+                        let nx2 = m.x + dx2, ny2 = m.y + dy2;
+                        if (nx2 >= 0 && nx2 < boardSize && ny2 >= 0 && ny2 < boardSize && board[ny2][nx2] === 0) openSpace++;
+                    }
+                }
+                score += openSpace * 2 * w.territory;
 
                 if (diff === 'mid') score += Math.random() * 100;
                 if (diff === 'high' || diff === 'pro') score += Math.random() * 20;
@@ -2247,7 +2683,9 @@
 
             if (diff === 'high' || diff === 'pro') {
                 // 상위 후보들에 대해 착수 직후 자신의 돌이 단수(atari)에 몰리는지 한 수 더 내다보고 재평가
-                let topN = diff === 'pro' ? 12 : 8;
+                // 이 기기에서의 학습 단계(tier)가 오를수록 더 많은 후보를 검토한다
+                let baseTopN = diff === 'pro' ? 12 : 8;
+                let topN = baseTopN + tier * (diff === 'pro' ? 4 : 2);
                 let candidates = scoredMoves.slice(0, topN);
                 let bestFinal = -Infinity, bestList = [];
 
@@ -2258,7 +2696,26 @@
                     board[y][x] = 2;
                     captureStones(x, y, 2, true);
                     let riskStones = goCountAtariRisk(2);
-                    let finalScore = c.score - riskStones * 250;
+                    let finalScore = c.score - riskStones * 250 * w.atariRisk;
+
+                    // 학습 단계가 높은 '프로'는 착수 이후 상대의 최선 응수까지 한 수 더 내다본다
+                    if (diff === 'pro' && tier >= 1) {
+                        // 성능을 위해 기존 돌 근처의 빈 칸만 상대 응수 후보로 검토한다
+                        let oppReplyCells = gomokuNearEmptyCells(2);
+                        let oppReplyBest = -Infinity;
+                        for (let oc of oppReplyCells) {
+                            let ox = oc.x, oy = oc.y;
+                            if (board[oy][ox] !== 0) continue;
+                            board[oy][ox] = 1;
+                            let oppCap = captureStones(ox, oy, 1, false);
+                            let oppLibs = getLiberties(ox, oy).liberties.length;
+                            board[oy][ox] = 0;
+                            if (oppCap === 0 && oppLibs === 0) continue;
+                            let oppScore = oppCap * 2000 * w.capture + oppLibs * 10;
+                            if (oppScore > oppReplyBest) oppReplyBest = oppScore;
+                        }
+                        if (oppReplyBest > -Infinity) finalScore -= oppReplyBest * 0.25;
+                    }
 
                     board = backup;
 
@@ -2316,21 +2773,40 @@
         }
 
         function chessEval(tempBoard) {
+           let w = LocalAI.getWeights('chess');
            let score = 0;
            const pieceVals = {1:10, 2:50, 3:30, 4:30, 5:90, 6:9000};
+           let whiteKing = null, blackKing = null;
            for(let y=0; y<8; y++){
               for(let x=0; x<8; x++){
                  let p = tempBoard[y][x];
                  if(p===0) continue;
-                 let val = pieceVals[p%10] + ((3.5 - Math.abs(x-3.5)) + (3.5 - Math.abs(y-3.5)));
-                 if(p<10) score -= val; 
-                 else score += val;     
+                 let type = p % 10;
+                 let val = pieceVals[type] * w.material + ((3.5 - Math.abs(x-3.5)) + (3.5 - Math.abs(y-3.5))) * w.center;
+                 if(p<10) { score -= val; if (type === 6) whiteKing = {x, y}; }
+                 else { score += val; if (type === 6) blackKing = {x, y}; }
               }
            }
+           // 킹 주변 방패(아군 폰/기물 밀집도)로 킹 안전도를 대략 평가한다
+           function shieldCount(kingPos) {
+               if (!kingPos) return 0;
+               let count = 0;
+               for (let dx = -1; dx <= 1; dx++) {
+                   for (let dy = -1; dy <= 1; dy++) {
+                       if (dx === 0 && dy === 0) continue;
+                       let nx = kingPos.x + dx, ny = kingPos.y + dy;
+                       if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8 && tempBoard[ny][nx] !== 0) count++;
+                   }
+               }
+               return count;
+           }
+           score += (3 - shieldCount(whiteKing)) * 5 * w.kingSafety;   // 백 킹이 허술할수록 AI(흑)에게 유리
+           score -= (3 - shieldCount(blackKing)) * 5 * w.kingSafety;   // 흑 킹이 허술할수록 AI에게 불리
            return score;
         }
 
         function evaluateChessMove(move, depth, alpha, beta, isMax) {
+            let w = LocalAI.getWeights('chess');
             let tempTarget = board[move.dy][move.dx];
             board[move.dy][move.dx] = board[move.sy][move.sx];
             board[move.sy][move.sx] = 0;
@@ -2338,11 +2814,19 @@
             let score;
             if (tempTarget === 6) score = 99999; 
             else if (tempTarget === 16) score = -99999;
-            else if (depth <= 1) score = chessEval(board);
+            else if (depth <= 1) {
+                score = chessEval(board);
+                // 상대에게 체크를 거는 수는 소폭 가산 (공격성 가중치)
+                let mover = board[move.dy][move.dx] < 10 ? 1 : 2;
+                let opp = mover === 1 ? 2 : 1;
+                if (isKingInCheck(opp, board)) score += (mover === 2 ? 1 : -1) * 14 * w.aggression;
+            }
             else {
                 let nextMoves = getAllChessMoves(isMax ? 2 : 1);
                 nextMoves = orderChessMoves(nextMoves);
                 let cap = chessBranchCap(depth);
+                // 상대 이동 가능 수(기동력)를 가산점으로 반영 - 이미 생성한 목록을 재사용해 추가 비용 없음
+                let mobilityScore = (isMax ? 1 : -1) * Math.min(nextMoves.length, 24) * 0.8 * w.mobility;
                 if (nextMoves.length > cap) nextMoves = nextMoves.slice(0, cap);
                 if (isMax) {
                     let maxEval = -Infinity;
@@ -2352,7 +2836,7 @@
                         alpha = Math.max(alpha, ev);
                         if (beta <= alpha) break;
                     }
-                    score = maxEval === -Infinity ? chessEval(board) : maxEval;
+                    score = (maxEval === -Infinity ? chessEval(board) : maxEval) + mobilityScore;
                 } else {
                     let minEval = Infinity;
                     for(let m of nextMoves) {
@@ -2361,7 +2845,7 @@
                         beta = Math.min(beta, ev);
                         if (beta <= alpha) break;
                     }
-                    score = minEval === Infinity ? chessEval(board) : minEval;
+                    score = (minEval === Infinity ? chessEval(board) : minEval) + mobilityScore;
                 }
             }
             
@@ -2382,8 +2866,11 @@
             if (diff === 'low') {
                 bestMove = moves[Math.floor(Math.random()*moves.length)];
             } else {
+                let tier = LocalAI.trainingTier('chess');
                 let bestScore = -Infinity;
-                let depth = diff === 'pro' ? 4 : (diff === 'high' ? 3 : 2);
+                // 이 기기에서의 학습 단계(대국 경험)가 쌓일수록 한두 수 더 깊이 내다본다
+                let depth = diff === 'pro' ? (4 + (tier >= 2 ? 1 : 0))
+                          : (diff === 'high' ? (3 + (tier >= 3 ? 1 : 0)) : 2);
                 
                 moves = orderChessMoves(moves);
                 let rootCap = diff === 'pro' ? 14 : (diff === 'high' ? 18 : moves.length);
@@ -2488,6 +2975,7 @@
         }
 
         function endGame(title, desc, isSpaceWar = false) {
+            recordLocalLearningFromResult(title);
             gameActive = false;
             stairsPlaying = false;
             stairsFalling = false;
@@ -2554,7 +3042,7 @@
                     canvas.height = window.innerHeight * 0.85;
                     if (config.game === 'stairs') renderStairsFrame();
                 } else if (config.game === 'spacewar') {
-                    canvas.width = spaceWarMode === 2 ? Math.min(window.innerWidth * 0.9, 760) : Math.min(window.innerWidth * 0.9, 480);
+                    canvas.width = spaceWarMode === 2 ? Math.min(window.innerWidth * 0.9, 760) : Math.min(window.innerWidth * 0.9, 520);
                     canvas.height = Math.min(window.innerHeight * 0.85, 750);
                 } else {
                     initCanvas();
@@ -2569,7 +3057,7 @@
             
             let screenWidth = window.innerWidth;
             let screenHeight = window.innerHeight;
-            canvas.width = spaceWarMode === 2 ? Math.min(screenWidth * 0.9, 760) : Math.min(screenWidth * 0.9, 480);
+            canvas.width = spaceWarMode === 2 ? Math.min(screenWidth * 0.9, 760) : Math.min(screenWidth * 0.9, 520);
             canvas.height = Math.min(screenHeight * 0.85, 750);
 
             spacePlayers = [];
@@ -2585,9 +3073,19 @@
                     score: 0,
                     color: '#38bdf8',
                     lastShot: 0,
+                    lastCrescent: 0, // 1인용 전용 Lv.7 초승달 파동포 쿨다운
                     dead: false,
-                    evolution: 0 // 진화 단계 (0~5)
+                    evolution: 0, // 진화 단계 (0~6, 1인용은 메인 무기 Lv.1~Lv.7)
+                    subModules: { D: 0, M: 0, B: 0, G: 0, T: 0, V: 0 }, // 6종 서브 모듈 레벨(0~5)
+                    lastSubD: 0, lastSubM: 0, lastSubB: 0, lastSubG: 0, lastSubT: 0, lastSubV: 0, // 서브 모듈별 발사/작동 쿨다운
+                    droneCount: 0, // 드론 수호(D) Lv.5 전용: 현재 보유한 수호 드론 수(실드 역할, 최대 5)
+                    droneAngleOffsets: [] // 드론 수호(D) Lv.4~5 전용: 드론별 개별 회전/이동 상태
                 });
+                // 캐릭터 선택 화면에서 고른 초기 서브 모델을 Lv.1로 즉시 장착 + 드롭 가능 목록에 등록
+                spaceUnlockedSubModules = spaceInitialSubModuleKey ? [spaceInitialSubModuleKey] : [];
+                if (spaceInitialSubModuleKey) {
+                    spacePlayers[0].subModules[spaceInitialSubModuleKey] = 1;
+                }
             } else {
                 spacePlayers.push({
                     id: 1,
@@ -2624,6 +3122,27 @@
             spaceStars = [];
             spaceKeys = {};
             spaceEnergies = [];
+            spaceActiveDrones = []; // 드론 수호(D) Lv.4~5 실체 드론 초기화
+            spaceFx = []; // 1인용 진화 이펙트 초기화
+            spaceEnemyBullets = []; // 1인용 적 원거리 공격탄 초기화
+            spaceBoss = null; // 관문 보스 초기화
+            spaceBossBullets = [];
+            spaceBossMinions = [];
+            spaceBossIntroTimer = 0;
+            spaceBossDefeated = false;
+            spaceSubItems = []; // 서브 모듈 아이템 초기화
+            spaceSubBullets = [];
+            spaceSubBeams = [];
+            spaceSubChains = [];
+            spaceSubBlackholes = [];
+            spaceDroneAngle = 0;
+
+            if (spaceWarMode === 1) {
+                // 1인용 전용 30스테이지 시스템 초기화 (2인용은 기존 방식 그대로 유지)
+                spaceStage = 1;
+                spaceStageLastSpawn = 0;
+                startSpaceStage();
+            }
 
             for (let i = 0; i < 60; i++) {
                 spaceStars.push({
@@ -2721,6 +3240,21 @@
                 ctx.moveTo(w * 0.12, -h * 0.48);
                 ctx.lineTo(w * 0.16, -h * 0.66);
                 ctx.stroke();
+            }
+
+            // 체력 게이지 (1인용 스테이지 시스템의 적 전용, maxHp가 있을 때만 표시) — 맞을 때마다 줄어드는 걸 보여줌
+            if (e.maxHp) {
+                let barW = w * 0.95;
+                let barH = 5;
+                let bx = -barW / 2;
+                let by = -h / 2 - 11;
+                let ratio = Math.max(0, e.hp / e.maxHp);
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+                ctx.fillStyle = ratio > 0.5 ? '#4ade80' : (ratio > 0.25 ? '#fbbf24' : '#f87171');
+                ctx.fillRect(bx, by, barW * ratio, barH);
+                ctx.restore();
             }
 
             ctx.restore();
@@ -2843,6 +3377,1679 @@
             ctx.fillText(`P${p.id}`, cx, p.y + p.h / 2 + 4);
         }
 
+        // ▼▼▼ 1인용 전용: 메인 무기 7단계 진화 시스템 (evolution 0~6 = Lv.1~Lv.7) ▼▼▼
+        // 2인용 모드는 위쪽의 기존 발사 로직을 그대로 사용하며 이 함수의 영향을 받지 않음.
+        function fireEvolvedWeapon(p, now) {
+            let lvl = p.evolution; // 0~6
+            let cx = p.x + p.w / 2;
+            let topY = p.y;
+            let baseSpeed = 10;
+
+            function spawnEvoBullet(offsetX, vx, vySpeed, type, size) {
+                let s = size || 6;
+                spaceBullets.push({
+                    x: cx + offsetX - s / 2,
+                    y: topY,
+                    w: s,
+                    h: s,
+                    speed: vySpeed,
+                    vx: vx,
+                    ownerId: p.id,
+                    color: type === 'plasma' ? '#c084fc' : (type === 'wave' ? '#5eead4' : p.color),
+                    type: type
+                });
+            }
+
+            // Lv.7(MAX) 전용: 화면 전체 폭 초승달 파동포 — 즉사기였던 것을 고정 대미지로 너프하고 쿨다운도 늘림
+            if (lvl >= 6 && now - (p.lastCrescent || 0) > 4500) {
+                p.lastCrescent = now;
+                spaceBullets.push({
+                    x: 0,
+                    y: p.y - 10,
+                    w: canvas.width,
+                    h: 20,
+                    speed: 13,
+                    vx: 0,
+                    ownerId: p.id,
+                    color: '#fde68a',
+                    type: 'crescent'
+                });
+                spaceFx.push({ type: 'crescentFlash', y: p.y, life: 14, maxLife: 14 });
+            }
+
+            // 진화 단계별 발사 간격 (레벨이 높을수록 빠른 공속) — 전체적으로 추가 너프
+            let fireInterval = lvl >= 4 ? 230 : (lvl >= 2 ? 270 : 300);
+            if (now - p.lastShot <= fireInterval) return;
+            p.lastShot = now;
+
+            if (lvl === 0) {
+                // Lv.1: 파란색 기본 단발
+                spawnEvoBullet(0, 0, baseSpeed, 'normal', 6);
+            } else if (lvl === 1) {
+                // Lv.2: 양옆 2발 평행 발사(트윈 샷)
+                spawnEvoBullet(-9, 0, baseSpeed, 'normal', 6);
+                spawnEvoBullet(9, 0, baseSpeed, 'normal', 6);
+            } else if (lvl === 2) {
+                // Lv.3: 전방 부채꼴 3발 확산 발사 — 퍼짐 각도를 더욱 좁혀 범위를 줄임
+                spawnEvoBullet(0, 0, baseSpeed, 'normal', 6);
+                spawnEvoBullet(0, -0.55, baseSpeed * 0.98, 'normal', 6);
+                spawnEvoBullet(0, 0.55, baseSpeed * 0.98, 'normal', 6);
+            } else if (lvl === 3) {
+                // Lv.4: 플라즈마 구체 3발 발사 (명중 시 범위 폭발 대미지) — 1발은 너무 약해서 3발로 강화
+                spawnEvoBullet(-12, 0, baseSpeed * 0.85, 'plasma', 15);
+                spawnEvoBullet(0, 0, baseSpeed * 0.85, 'plasma', 15);
+                spawnEvoBullet(12, 0, baseSpeed * 0.85, 'plasma', 15);
+            } else if (lvl === 4) {
+                // Lv.5: 5방향 대형 플라즈마 구체 탄막
+                fireFiveWayPlasma(p, cx, topY, baseSpeed);
+            } else if (lvl === 5) {
+                // Lv.6: 5방향 플라즈마 + 적의 일반 총알을 지우는 에너지 파동탄 추가
+                fireFiveWayPlasma(p, cx, topY, baseSpeed);
+                spawnEvoBullet(0, 0, baseSpeed * 0.75, 'wave', 10);
+            } else {
+                // Lv.7(MAX): 5방향 플라즈마 + 파동탄을 유지하며, 초승달 파동포는 위쪽 쿨다운 로직에서 별도 발사
+                fireFiveWayPlasma(p, cx, topY, baseSpeed);
+                spawnEvoBullet(0, 0, baseSpeed * 0.75, 'wave', 10);
+            }
+        }
+
+        function fireFiveWayPlasma(p, cx, topY, baseSpeed) {
+            let angles = [-0.2, -0.1, 0, 0.1, 0.2]; // 퍼짐 각도를 한 번 더 좁혀 부채꼴 폭을 줄임
+            angles.forEach(a => {
+                let vx = Math.sin(a) * baseSpeed * 0.6;
+                let vy = Math.cos(a) * baseSpeed * 0.8;
+                spaceBullets.push({
+                    x: cx - 6,
+                    y: topY,
+                    w: 12,
+                    h: 12,
+                    speed: vy,
+                    vx: vx,
+                    ownerId: p.id,
+                    color: '#c084fc',
+                    type: 'plasma'
+                });
+            });
+        }
+        // ▲▲▲ 1인용 전용 메인 무기 진화 시스템 끝 ▲▲▲
+
+        // ▼▼▼ 1인용 전용: 30스테이지 시스템 (적 스폰/이동 패턴/원거리 공격/스테이지 클리어) ▼▼▼
+        // 2인용 모드는 이 블록의 함수들을 전혀 호출하지 않으며 기존 로직을 그대로 사용함.
+
+        // 스테이지 시스템 적 종류 정의: 종류별 색상/크기/체력배율/동시발사수/이동속도배율/사격빈도배율/탄속배율
+        // 노랑(normal): 1발 조준 / 빨강(elite): 체력 많고 2발 / 보라(heavy): 3방향 부채꼴 / 하늘색(sniper): 빠른 단발
+        // 주황(bomber): 매우 단단하고 4방향 탄막 / 연두(swarm): 약하지만 빠르고 쉴 새 없이 쏨
+        const STAGE_ENEMY_TYPES = {
+            normal: { color: '#f59e0b', size: 32, hpMul: 1,   shots: 1, speedMul: 1,    shotIntervalMul: 1,    bulletSpeedMul: 1 },
+            elite:  { color: '#ef4444', size: 42, hpMul: 2.6, shots: 2, speedMul: 0.85, shotIntervalMul: 0.85, bulletSpeedMul: 1 },
+            heavy:  { color: '#8b5cf6', size: 48, hpMul: 4.5, shots: 3, speedMul: 0.6,  shotIntervalMul: 1.15, bulletSpeedMul: 1 },
+            sniper: { color: '#22d3ee', size: 26, hpMul: 1.8, shots: 1, speedMul: 1.3,  shotIntervalMul: 0.55, bulletSpeedMul: 2.1 },
+            bomber: { color: '#f97316', size: 56, hpMul: 6.5, shots: 4, speedMul: 0.5,  shotIntervalMul: 1.35, bulletSpeedMul: 0.95 },
+            swarm:  { color: '#34d399', size: 24, hpMul: 0.7, shots: 1, speedMul: 1.6,  shotIntervalMul: 0.4,  bulletSpeedMul: 1.2 }
+        };
+
+        // 스테이지가 오를수록 등장하는 적 종류가 계속 늘어남 (1~3스테이지도 다른 스테이지와 동일한 난이도 곡선 적용)
+        function pickStageEnemyType(stage) {
+            let pool = ['normal', 'normal', 'elite'];
+            if (stage >= 6) pool.push('heavy');
+            if (stage >= 10) pool.push('bomber');
+            if (stage >= 14) pool.push('sniper');
+            if (stage >= 18) pool.push('swarm', 'swarm');
+            if (stage >= 22) pool.push('elite', 'heavy');
+            if (stage >= 26) pool.push('bomber', 'sniper');
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        // 적 처치 시 점수: 강한 종류일수록 더 높은 점수 (2인용의 기존 isBoss 방식과도 호환)
+        function stageEnemyScoreValue(e) {
+            if (e.type === 'bomber') return 500;
+            if (e.type === 'heavy') return 400;
+            if (e.type === 'sniper') return 250;
+            if (e.type === 'elite') return 300;
+            if (e.type === 'swarm') return 80;
+            if (e.isBoss) return 300;
+            return 100;
+        }
+
+        // 새 스테이지 시작: 이번 스테이지에 등장할 총 적 수를 정하고 연출 텍스트를 띄움
+        function startSpaceStage() {
+            spaceStageClearing = false;
+            spaceStageEnemiesSpawned = 0;
+            spaceBoss = null;
+            spaceBossBullets = [];
+            spaceBossMinions = [];
+            spaceBossDefeated = false;
+
+            if (BOSS_STAGES[spaceStage]) {
+                // ▼ 관문 보스 스테이지: 일반 잡몹 없이 보스만 등장 ▼
+                spaceStageEnemiesTotal = 0;
+                spaceFx.push({ type: 'bossIntroText', life: 110, maxLife: 110, stage: spaceStage, bossType: BOSS_STAGES[spaceStage] });
+                spaceBossIntroTimer = 110; // 연출이 끝난 뒤 보스 스폰
+                return;
+            }
+
+            // 스테이지가 오를수록 적의 총 수가 크게 늘어남 (1스테이지부터 동일한 커브 적용, 30스테이지 약 65마리)
+            spaceStageEnemiesTotal = 9 + Math.round(spaceStage * 1.85);
+            spaceFx.push({ type: 'stageIntroText', life: 90, maxLife: 90, stage: spaceStage });
+        }
+
+        // 매 프레임 호출: 스테이지 진행 상황에 맞춰 적을 트리클 방식으로 스폰
+        function updateSpaceStageSpawning(now) {
+            if (spaceStageClearing) return;
+            if (spaceStageEnemiesSpawned >= spaceStageEnemiesTotal) return;
+
+            // 스테이지가 오를수록 동시에 등장 가능한 적 수가 늘어남 (1스테이지부터 동일한 커브 적용)
+            let maxConcurrent = Math.min(4 + Math.floor(spaceStage / 4), 11);
+            if (spaceEnemies.length >= maxConcurrent) return;
+
+            // 스테이지가 오를수록 스폰 간격이 짧아짐 (최소 320ms, 1스테이지부터 동일하게 적용)
+            let spawnInterval = Math.max(1100 - spaceStage * 22, 320);
+            if (now - spaceStageLastSpawn < spawnInterval) return;
+            spaceStageLastSpawn = now;
+
+            spawnStageEnemy(now);
+        }
+
+        // 패턴형 적 1기 생성 (돌진이 아니라 정해진 위치로 진입하며, 진입 중에도 바로 공격을 시작함)
+        function spawnStageEnemy(now) {
+            spaceStageEnemiesSpawned++;
+
+            let type = pickStageEnemyType(spaceStage);
+            let info = STAGE_ENEMY_TYPES[type];
+
+            // 스테이지가 오를수록 기본 체력이 크게 늘어남 (+ 종류별 체력 배율 적용) — 1스테이지부터 동일하게 적용
+            let baseHp = 2 + Math.floor(spaceStage / 2);
+            let hp = Math.max(1, Math.ceil(baseHp * info.hpMul));
+            let w = info.size;
+            let spawnX = Math.random() * (canvas.width - w);
+            let patterns = ['hover', 'sine', 'zigzag'];
+            let pattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+            // 스테이지가 오를수록 사격 간격이 짧아짐 (최소 450ms) + 종류별 배율 — 1스테이지부터 동일하게 적용
+            let shotIntervalBase = Math.max(1500 - spaceStage * 20, 450);
+            let shotInterval = shotIntervalBase * info.shotIntervalMul;
+
+            spaceEnemies.push({
+                x: spawnX,
+                y: -40,
+                w: w,
+                h: w,
+                speed: (1.6 + Math.random() * 0.6) * info.speedMul, // 화면 진입 속도
+                hp: hp,
+                maxHp: hp, // 체력 게이지 표시용 최대 체력
+                isBoss: (type === 'elite' || type === 'heavy' || type === 'bomber'), // 스파이크 안테나 등 강화형 외형용
+                type: type,
+                shots: info.shots, // 동시 발사 탄 수
+                bulletSpeedMul: info.bulletSpeedMul,
+                color: info.color,
+                state: 'enter', // 'enter' → 정해진 위치까지 진입, 'pattern' → 규칙적인 패턴 이동+사격 (사격은 진입 중에도 가능)
+                targetY: 55 + Math.random() * (canvas.height * 0.38),
+                pattern: pattern,
+                baseX: spawnX,
+                phase: Math.random() * Math.PI * 2,
+                patternStart: 0,
+                // 등장하자마자 얼마 지나지 않아 곧바로 첫 공격을 하도록 설정 (완전 대기 없이 빠르게 반응)
+                lastShot: now - shotInterval + 350,
+                shotInterval: shotInterval
+            });
+        }
+
+        // 패턴형 적의 이동 처리: 화면 상단부로 진입한 뒤, 정해진 규칙(호버/사인파/지그재그)으로만 움직임
+        // (진입 중에도 stageEnemyTryFire가 별도로 호출되어 공격은 이미 진행됨)
+        function updateStageEnemyMovement(e, now) {
+            // 체인 테슬라(T) Lv.3 이상의 감전 슬로우 효과가 만료되면 원래 속도로 복구
+            if (e._slowUntil && now > e._slowUntil) {
+                if (typeof e._baseSpeed === 'number') e.speed = e._baseSpeed;
+                e._slowUntil = null;
+            }
+            if (e.state === 'enter') {
+                e.y += e.speed;
+                if (e.y >= e.targetY) {
+                    e.y = e.targetY;
+                    e.state = 'pattern';
+                    e.patternStart = now;
+                }
+                return;
+            }
+            let slowFactor = (e._slowUntil && now <= e._slowUntil) ? 0.4 : 1;
+            let t = (now - e.patternStart) / 1000 * slowFactor;
+            if (e.pattern === 'sine') {
+                e.x = e.baseX + Math.sin(t * 1.2 + e.phase) * 70;
+            } else if (e.pattern === 'zigzag') {
+                let dir = Math.floor(t / 1.2) % 2 === 0 ? 1 : -1;
+                e.x = e.baseX + dir * 55;
+            } else {
+                // hover: 제자리에서 작게 흔들리며 대기
+                e.x = e.baseX + Math.sin(t * 0.6 + e.phase) * 18;
+            }
+            e.x = Math.max(0, Math.min(canvas.width - e.w, e.x));
+        }
+
+        // 패턴형 적의 원거리 공격: 화면에 등장한 직후(진입 중)부터 바로 플레이어를 조준해 사격을 시작함
+        // 종류별 동시 발사 수(e.shots)에 따라 공격 패턴이 달라짐: 1발(노랑/하늘) / 2발(빨강, 나란히) / 3발(보라, 부채꼴) / 4발(주황, 넓은 부채꼴)
+        function stageEnemyTryFire(e, now) {
+            if (now - e.lastShot < e.shotInterval) return;
+            e.lastShot = now;
+
+            let player = spacePlayers.find(p => !p.dead);
+            if (!player) return;
+
+            let cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+            let dx = (player.x + player.w / 2) - cx;
+            let dy = (player.y + player.h / 2) - cy;
+            let baseAngle = Math.atan2(dy, dx);
+            let bulletSpeed = (4 + Math.min(spaceStage * 0.04, 2.5)) * (e.bulletSpeedMul || 1);
+
+            function fireAt(angle, offX, offY) {
+                spaceEnemyBullets.push({
+                    x: cx + (offX || 0) - 4,
+                    y: cy + (offY || 0) - 4,
+                    w: 8,
+                    h: 8,
+                    vx: Math.cos(angle) * bulletSpeed,
+                    vy: Math.sin(angle) * bulletSpeed,
+                    color: '#ff0055'
+                });
+            }
+
+            let shots = e.shots || 1;
+            if (shots >= 4) {
+                // 주황(bomber): 넓은 4방향 탄막
+                fireAt(baseAngle - 0.4); fireAt(baseAngle - 0.13); fireAt(baseAngle + 0.13); fireAt(baseAngle + 0.4);
+            } else if (shots === 3) {
+                // 강화형(보라): 3방향 부채꼴 조준 사격
+                fireAt(baseAngle - 0.26); fireAt(baseAngle); fireAt(baseAngle + 0.26);
+            } else if (shots === 2) {
+                // 정예(빨강): 좌우로 나란히 벌어진 2발 동시 사격
+                let perpX = -Math.sin(baseAngle) * 9, perpY = Math.cos(baseAngle) * 9;
+                fireAt(baseAngle, perpX, perpY);
+                fireAt(baseAngle, -perpX, -perpY);
+            } else {
+                // 일반(노랑/하늘/연두): 플레이어를 조준하는 단발 사격
+                fireAt(baseAngle);
+            }
+        }
+
+        // 스테이지의 모든 적을 처치했는지 확인하고, 클리어 연출 후 다음 스테이지(또는 최종 클리어)로 진행
+        function checkSpaceStageClear() {
+            if (spaceStageClearing) return;
+            if (BOSS_STAGES[spaceStage]) {
+                // 관문 보스 스테이지는 보스가 처치되었을 때만(별도 함수에서) 클리어 처리됨
+                return;
+            }
+            if (spaceStageEnemiesSpawned < spaceStageEnemiesTotal) return;
+            if (spaceEnemies.length > 0) return;
+
+            spaceStageClearing = true;
+            let isFinal = spaceStage >= 30;
+
+            // 스테이지 1개를 깰 때마다 하트(체력) 1개 회복 (상한 5개, 최종 클리어 시에는 회복 불필요)
+            let healedHp = false;
+            let player = spacePlayers[0];
+            let maxHeartHp = 5;
+            if (!isFinal && player && !player.dead && player.hp < maxHeartHp) {
+                player.hp++;
+                healedHp = true;
+            }
+
+            spaceFx.push({ type: 'stageClearText', life: 100, maxLife: 100, stage: spaceStage, isFinal: isFinal, healedHp: healedHp });
+
+            setTimeout(() => {
+                if (!gameActive || config.game !== 'spacewar') return;
+                if (isFinal) {
+                    let score = spacePlayers[0] ? spacePlayers[0].score : 0;
+                    endGame("🎉 GAME CLEAR!", `30개 스테이지를 모두 클리어했습니다!<br>최종 점수: ${score}점`, true);
+                } else {
+                    spaceStage++;
+                    startSpaceStage();
+                }
+            }, 1800);
+        }
+        // ▲▲▲ 1인용 전용 30스테이지 시스템 끝 ▲▲▲
+
+        // ▼▼▼ 1인용 전용: 6종 서브 모듈 아이템 드롭/뽑기 헬퍼 ▼▼▼
+        // 가중치 확률 테이블(SUB_MODULE_DROP_TABLE)에 따라, 현재 "선택되어 사용 가능한" 서브 모듈 키 중 하나를 뽑음
+        function rollSubModuleKey() {
+            let pool = SUB_MODULE_DROP_TABLE.filter(([key]) => spaceUnlockedSubModules.includes(key));
+            if (pool.length === 0) return null;
+            let total = pool.reduce((sum, [, weight]) => sum + weight, 0);
+            let r = Math.random() * total;
+            let acc = 0;
+            for (let [key, weight] of pool) {
+                acc += weight;
+                if (r < acc) return key;
+            }
+            return pool[pool.length - 1][0];
+        }
+
+        // 적 처치 지점에 서브 모듈 아이템 캡슐을 드롭 (10% 확률로 드롭 이벤트 발생 → 그 안에서 선택된 서브 모델만 가중치 뽑기)
+        function maybeDropSubModuleItem(x, y) {
+            if (spaceWarMode !== 1) return;
+            if (spaceUnlockedSubModules.length === 0) return;
+            if (Math.random() < 0.10) {
+                let key = rollSubModuleKey();
+                if (!key) return;
+                spaceSubItems.push({
+                    x: x - 10, y: y - 10, w: 20, h: 20,
+                    speed: 1.6, pulse: Math.random() * Math.PI * 2,
+                    key: key
+                });
+            }
+        }
+        // ▲▲▲ 6종 서브 모듈 아이템 드롭/뽑기 헬퍼 끝 ▲▲▲
+
+        // ▼▼▼ 1인용 전용: 6종 서브 모듈 발사/작동 로직 (매 프레임 fireSubModules(p, now) 호출) ▼▼▼
+
+        // 가장 가까운 살아있는 적 하나를 찾는 공용 헬퍼 (서브 모듈 전용 - 관문 보스도 타깃에 포함)
+        function findNearestEnemy(x, y, excludeSet) {
+            let best = null, bestDist = Infinity;
+            spaceEnemies.forEach(e => {
+                if (excludeSet && excludeSet.has(e)) return;
+                let dx = (e.x + e.w / 2) - x, dy = (e.y + e.h / 2) - y;
+                let d = dx * dx + dy * dy;
+                if (d < bestDist) { bestDist = d; best = e; }
+            });
+            if (spaceBoss && spaceBoss.state === 'idle' && (!excludeSet || !excludeSet.has(spaceBoss))) {
+                let dx = (spaceBoss.x + spaceBoss.w / 2) - x, dy = (spaceBoss.y + spaceBoss.h / 2) - y;
+                let d = dx * dx + dy * dy;
+                if (d < bestDist) { bestDist = d; best = spaceBoss; }
+            }
+            return best;
+        }
+
+        // N개의 가장 가까운 적을 정렬해서 반환 (체인 테슬라 전용)
+        function findNearestEnemies(x, y, count) {
+            let list = spaceEnemies.slice();
+            if (spaceBoss && spaceBoss.state === 'idle') list.push(spaceBoss);
+            list.sort((a, b) => {
+                let da = Math.pow((a.x + a.w / 2) - x, 2) + Math.pow((a.y + a.h / 2) - y, 2);
+                let db = Math.pow((b.x + b.w / 2) - x, 2) + Math.pow((b.y + b.h / 2) - y, 2);
+                return da - db;
+            });
+            return list.slice(0, count);
+        }
+
+        // 드론 수호(D) Lv.5 실드 판정: 플레이어가 피격당할 때 드론이 남아있으면(최소 1대는 항상 유지) 대신 드론 1대가 터지고 hp를 보존
+        // 사용법: takeSpaceHit(p, dmgAmount)를 player.hp-- 대신 호출. 드론이 대신 막으면 true를, hp가 실제로 깎이면 false를 반환
+        function takeSpaceHit(p, dmgAmount) {
+            dmgAmount = dmgAmount || 1;
+            // 개틀링 속사(G) Lv.5: 받는 데미지가 절반으로 감소(장갑 강화 효과)
+            if (p.subModules && p.subModules.G >= 5) {
+                dmgAmount = dmgAmount / 2;
+            }
+            if (p.subModules && p.subModules.D >= 5) {
+                let myDrones = spaceActiveDrones.filter(d => d.ownerId === p.id);
+                // 드론이 2대 이상 남아있을 때만 대신 터짐 (최소 1대는 항상 보존)
+                if (myDrones.length > 1) {
+                    let idx = spaceActiveDrones.indexOf(myDrones[0]);
+                    if (idx >= 0) {
+                        spaceFx.push({ type: 'explosion', x: myDrones[0].x, y: myDrones[0].y, life: 14, maxLife: 14 });
+                        spaceActiveDrones.splice(idx, 1);
+                    }
+                    if (typeof p.droneCount === 'number' && p.droneCount > 1) p.droneCount--;
+                    return true; // 드론이 대신 피격 흡수 → 플레이어 hp 보존
+                }
+            }
+            p.hp -= dmgAmount;
+            if (p.hp <= 0) p.dead = true;
+            return false;
+        }
+
+        // 대상(적/보스)에게 서브 모듈 대미지를 입히고, 처치 시 점수 지급 + 진화에너지/아이템 드롭까지 처리
+        function applySubModuleDamage(target, dmg, ownerId) {
+            if (!target) return;
+            target.hp -= dmg;
+            if (target === spaceBoss) {
+                if (target.hp <= 0 && !spaceBossDefeated) {
+                    spaceBossDefeated = true;
+                    let shooter = spacePlayers.find(p => p.id === ownerId);
+                    if (shooter) shooter.score += 5000 + spaceStage * 100;
+                    triggerBossDefeatExplosion(target);
+                }
+                return;
+            }
+            if (target.hp <= 0) {
+                let idx = spaceEnemies.indexOf(target);
+                if (idx >= 0) {
+                    let shooter = spacePlayers.find(p => p.id === ownerId);
+                    if (shooter) shooter.score += stageEnemyScoreValue(target);
+                    // 서브 모듈로 처치했을 때도 일반 전투기 진화 에너지가 드롭되도록 추가 (기존엔 메인 무기 킬에서만 드롭되던 버그)
+                    if (Math.random() < 0.05) {
+                        spaceEnergies.push({
+                            x: target.x + target.w / 2 - 9,
+                            y: target.y + target.h / 2 - 9,
+                            w: 18,
+                            h: 18,
+                            speed: 1.8,
+                            pulse: Math.random() * Math.PI * 2
+                        });
+                    }
+                    maybeDropSubModuleItem(target.x + target.w / 2, target.y + target.h / 2);
+                    spaceEnemies.splice(idx, 1);
+                }
+            }
+        }
+
+        // 매 프레임 호출: 플레이어가 보유한 6종 서브 모듈을 각자의 레벨/쿨다운에 맞춰 자동 발사/작동
+        function fireSubModules(p, now) {
+            let sm = p.subModules;
+            if (!sm) return;
+            let cx = p.x + p.w / 2, cy = p.y + p.h / 2;
+
+            // ── 1) 드론 수호 (D / #00FF7F) ── Lv.1~3은 기존과 동일, Lv.4는 드론이 직접 날아다니며 적을 공격, Lv.5는 드론이 실드 역할(대신 피격)
+            if (sm.D >= 1 && sm.D <= 3) {
+                let droneInterval = sm.D >= 2 ? 260 : 380;
+                if (now - p.lastSubD > droneInterval) {
+                    p.lastSubD = now;
+                    if (sm.D === 1) {
+                        // Lv.1: 좌측 드론 1대, 정면 사격
+                        spaceSubBullets.push({ x: p.x - 14, y: p.y + p.h * 0.3, w: 5, h: 10, vx: 0, vy: -9, color: SUB_MODULE_INFO.D.color, dmg: 1, sub: 'D' });
+                    } else if (sm.D === 2) {
+                        // Lv.2: 양옆 드론 2대, 정면 사격(연사 속도 증가는 interval로 반영됨)
+                        spaceSubBullets.push({ x: p.x - 16, y: p.y + p.h * 0.3, w: 5, h: 10, vx: 0, vy: -9, color: SUB_MODULE_INFO.D.color, dmg: 1, sub: 'D' });
+                        spaceSubBullets.push({ x: p.x + p.w + 11, y: p.y + p.h * 0.3, w: 5, h: 10, vx: 0, vy: -9, color: SUB_MODULE_INFO.D.color, dmg: 1, sub: 'D' });
+                    } else {
+                        // Lv.3: 드론 4대가 원형 회전하며 360도 전방위 사격
+                        for (let i = 0; i < 4; i++) {
+                            let a = spaceDroneAngle + (Math.PI / 2) * i;
+                            spaceSubBullets.push({ x: cx + Math.cos(a) * 34, y: cy + Math.sin(a) * 34, w: 6, h: 6, vx: Math.cos(a) * 6, vy: Math.sin(a) * 6, color: SUB_MODULE_INFO.D.color, dmg: 1, sub: 'D', round: true });
+                        }
+                    }
+                }
+            } else if (sm.D >= 4) {
+                // Lv.4~5 진입 시 드론 실체(spaceActiveDrones)를 최초 1회 생성(최대 5대, 보유 대수는 droneCount로 관리)
+                if (typeof p.droneCount !== 'number' || p.droneCount < 1) p.droneCount = 3;
+                let existing = spaceActiveDrones.filter(d => d.ownerId === p.id).length;
+                while (existing < p.droneCount) {
+                    spaceActiveDrones.push({
+                        ownerId: p.id, x: cx + (Math.random() - 0.5) * 40, y: cy - 30,
+                        angle: Math.random() * Math.PI * 2, lastFire: 0
+                    });
+                    existing++;
+                }
+                // Lv.4~5: 드론이 직접 가장 가까운 적을 향해 날아가며 근접 사격
+                let droneFireInterval = 420;
+                spaceActiveDrones.forEach(d => {
+                    if (d.ownerId !== p.id) return;
+                    let target = findNearestEnemy(d.x, d.y);
+                    if (target) {
+                        let tx = target.x + target.w / 2, ty = target.y + target.h / 2;
+                        let dx = tx - d.x, dy = ty - d.y;
+                        let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                        let orbitDist = 60;
+                        if (dist > orbitDist) {
+                            d.x += (dx / dist) * 3.2;
+                            d.y += (dy / dist) * 3.2;
+                        } else {
+                            d.angle += 0.08;
+                            d.x = tx + Math.cos(d.angle) * orbitDist;
+                            d.y = ty + Math.sin(d.angle) * orbitDist;
+                        }
+                        if (now - d.lastFire > droneFireInterval) {
+                            d.lastFire = now;
+                            let fdx = tx - d.x, fdy = ty - d.y;
+                            let fdist = Math.max(1, Math.sqrt(fdx * fdx + fdy * fdy));
+                            spaceSubBullets.push({ x: d.x, y: d.y, w: 5, h: 5, vx: (fdx / fdist) * 7, vy: (fdy / fdist) * 7, color: SUB_MODULE_INFO.D.color, dmg: 1, sub: 'D', round: true });
+                        }
+                    } else {
+                        // 공격할 적이 없으면 플레이어 주변을 맴돌며 대기
+                        d.angle += 0.05;
+                        d.x = cx + Math.cos(d.angle) * 40;
+                        d.y = cy + Math.sin(d.angle) * 40 - 20;
+                    }
+                });
+            }
+
+            // ── 2) 유도 미사일 (M / #FF8C00) ── Lv.1 비유도 그대로, Lv.2 유도(1회 명중 후 소멸), Lv.3 유도(2회 명중 후 소멸), Lv.4 미사일 2개, Lv.5 미사일 3개
+            if (sm.M >= 1) {
+                let missileInterval = 900;
+                if (now - p.lastSubM > missileInterval) {
+                    p.lastSubM = now;
+                    if (sm.M === 1) {
+                        spaceSubBullets.push({ x: cx - 3, y: p.y, w: 6, h: 14, vx: 0, vy: -8, color: SUB_MODULE_INFO.M.color, dmg: 2, sub: 'M', missile: true, homing: false, explode: true, hitsLeft: 1 });
+                    } else {
+                        // Lv.2: 미사일 1개 / Lv.3: 1개(2회 타격) / Lv.4: 2개 / Lv.5: 3개
+                        let count = sm.M >= 5 ? 3 : (sm.M >= 4 ? 2 : 1);
+                        let hitsLeft = sm.M >= 3 ? 2 : 1; // Lv.3 이상은 두 번 공격 후 소멸
+                        for (let i = 0; i < count; i++) {
+                            let target = findNearestEnemy(cx, cy);
+                            spaceSubBullets.push({
+                                x: cx - 3 + (i - (count - 1) / 2) * 10, y: p.y, w: 6, h: 14,
+                                vx: (Math.random() - 0.5) * 2, vy: -6, color: SUB_MODULE_INFO.M.color, dmg: 2, sub: 'M',
+                                missile: true, homing: true, homingSpeed: 5.5, target: target, explode: true,
+                                hitsLeft: hitsLeft
+                            });
+                        }
+                    }
+                }
+            }
+
+            // ── 3) 관통 빔 (B / #00FFFF): Lv.1 30초 / Lv.2 20초 / Lv.3 10초마다 한 번씩 관통 레이저 발사 ──
+            // ── 3) 관통 빔 (B / #00FFFF): 중앙 1줄기 관통 레이저. Lv.1 20초 / Lv.2 15초 / Lv.3 10초 / Lv.4 8초(범위 내 적탄 소멸) / Lv.5 5초(적탄 소멸) ──
+            if (sm.B >= 1) {
+                let bInterval = sm.B === 1 ? 20000 : (sm.B === 2 ? 15000 : (sm.B === 3 ? 10000 : (sm.B === 4 ? 8000 : 5000)));
+                if (now - p.lastSubB > bInterval) {
+                    p.lastSubB = now;
+                    let beamLife = 22; // 약 0.35초간 유지되는 관통 레이저 섬광
+                    let dmg = sm.B === 1 ? 6 : (sm.B === 2 ? 8 : (sm.B === 3 ? 10 : (sm.B === 4 ? 12 : 16)));
+                    let clearsBullets = sm.B >= 4; // Lv.4 이상: 범위 내 적 탄막 소멸
+                    spaceSubBeams.push({ owner: p.id, x: cx - 3, y: 0, w: 6, h: p.y, color: SUB_MODULE_INFO.B.color, dmg: dmg, mega: clearsBullets, life: beamLife, maxLife: beamLife });
+                }
+            }
+
+            // ── 4) 개틀링 속사 (G / #FFD700): Lv.1~3 동일, Lv.4는 더 빽빽한 탄막, Lv.5는 Lv.4 탄막 유지 + 피격 데미지 절반(방어 효과) ──
+            if (sm.G >= 1) {
+                let gInterval = sm.G >= 4 ? 35 : (sm.G >= 3 ? 50 : (sm.G >= 2 ? 70 : 110));
+                if (now - p.lastSubG > gInterval) {
+                    p.lastSubG = now;
+                    if (sm.G === 1) {
+                        spaceSubBullets.push({ x: cx - 2, y: p.y, w: 4, h: 12, vx: 0, vy: -14, color: SUB_MODULE_INFO.G.color, dmg: 0.45, sub: 'G' });
+                    } else if (sm.G === 2) {
+                        [-0.24, -0.08, 0.08, 0.24].forEach(spread => {
+                            spaceSubBullets.push({ x: cx - 2, y: p.y, w: 4, h: 12, vx: Math.sin(spread) * 8, vy: -14 * Math.cos(spread), color: SUB_MODULE_INFO.G.color, dmg: 0.45, sub: 'G' });
+                        });
+                    } else if (sm.G >= 4) {
+                        // Lv.4~5: 5way, 더 빽빽한 초고속 탄막
+                        [-0.28, -0.14, 0, 0.14, 0.28].forEach(spread => {
+                            spaceSubBullets.push({ x: cx - 2, y: p.y, w: 4, h: 12, vx: Math.sin(spread) * 8, vy: -16 * Math.cos(spread), color: SUB_MODULE_INFO.G.color, dmg: 0.45, sub: 'G' });
+                        });
+                    } else {
+                        // Lv.3: 초당 60발 수준의 빽빽한 탄막(짧은 간격의 3way)
+                        [-0.14, 0, 0.14].forEach(spread => {
+                            spaceSubBullets.push({ x: cx - 2, y: p.y, w: 4, h: 12, vx: Math.sin(spread) * 8, vy: -15 * Math.cos(spread), color: SUB_MODULE_INFO.G.color, dmg: 0.45, sub: 'G' });
+                        });
+                    }
+                }
+            }
+
+            // ── 5) 체인 테슬라 (T / #9400D3): Lv.1 1명 / Lv.2 최대 2명 / Lv.3 최대 4명 / Lv.4 최대 5명 / Lv.5 최대 6명. Lv.3부터는 감전된 적의 이동 속도 저하 ──
+            if (sm.T >= 1) {
+                let tInterval = 700;
+                if (now - p.lastSubT > tInterval) {
+                    p.lastSubT = now;
+                    let chainCount = sm.T === 1 ? 1 : (sm.T === 2 ? 2 : (sm.T === 3 ? 4 : (sm.T === 4 ? 5 : 6)));
+                    let targets = findNearestEnemies(cx, cy, chainCount);
+                    if (targets.length > 0) {
+                        let prevX = cx, prevY = cy;
+                        targets.forEach(t => {
+                            let tx = t.x + t.w / 2, ty = t.y + t.h / 2;
+                            spaceSubChains.push({ x1: prevX, y1: prevY, x2: tx, y2: ty, life: 14, maxLife: 14 });
+                            applySubModuleDamage(t, sm.T >= 2 ? 2 : 3, p.id);
+                            if (sm.T >= 3 && t && t !== spaceBoss) {
+                                // Lv.3 이상: 감전된 적의 이동 속도를 2초간 40%로 저하
+                                if (typeof t._baseSpeed !== 'number') t._baseSpeed = t.speed;
+                                t.speed = t._baseSpeed * 0.4;
+                                t._slowUntil = now + 2000;
+                            }
+                            prevX = tx; prevY = ty;
+                        });
+                    }
+                }
+            }
+
+            // ── 6) 중력장 블랙홀 (V / #8B0000): Lv.1~3 동일, Lv.4는 블랙홀 크기 증가, Lv.5는 블랙홀 데미지 증가 ──
+            if (sm.V >= 1) {
+                let vInterval = 3000;
+                if (now - p.lastSubV > vInterval) {
+                    p.lastSubV = now;
+                    let radius = sm.V === 1 ? 46 : (sm.V === 2 ? 66 : (sm.V === 3 ? 92 : (sm.V === 4 ? 130 : 130)));
+                    let pull = sm.V === 1 ? 0.6 : (sm.V === 2 ? 1.1 : 1.8);
+                    let dot = sm.V >= 3 ? (sm.V >= 5 ? 0.9 : 0.4) : 0;
+                    spaceSubBlackholes.push({
+                        x: cx, y: Math.max(60, p.y - 140), radius: radius, pull: pull,
+                        life: sm.V === 1 ? 1600 : (sm.V === 2 ? 2200 : 3000), bornAt: now,
+                        absorbBullets: sm.V >= 2, dot: dot, ownerId: p.id
+                    });
+                }
+            }
+        }
+
+        // 매 프레임 호출: 서브 모듈 탄(spaceSubBullets) 이동 + 충돌 + 폭발/분열 처리
+        function updateSubBullets(now) {
+            for (let i = spaceSubBullets.length - 1; i >= 0; i--) {
+                let b = spaceSubBullets[i];
+
+                if (b.homing && b.target) {
+                    let alive = spaceEnemies.includes(b.target) || b.target === spaceBoss;
+                    if (!alive) b.target = findNearestEnemy(b.x, b.y);
+                }
+                if (b.homing && b.target) {
+                    let tx = b.target.x + b.target.w / 2, ty = b.target.y + b.target.h / 2;
+                    let dx = tx - b.x, dy = ty - b.y;
+                    let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                    let sp = b.homingSpeed || 5;
+                    b.vx += (dx / dist) * 0.6;
+                    b.vy += (dy / dist) * 0.6;
+                    let curSp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+                    if (curSp > sp) { b.vx = (b.vx / curSp) * sp; b.vy = (b.vy / curSp) * sp; }
+                }
+
+                b.x += b.vx; b.y += b.vy;
+
+                if (b.y < -30 || b.y > canvas.height + 30 || b.x < -30 || b.x > canvas.width + 30) {
+                    spaceSubBullets.splice(i, 1);
+                    continue;
+                }
+
+                let hit = null;
+                for (let e of spaceEnemies) {
+                    if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
+                        if (b.missile && e === b._lastHitTarget) continue; // 유도 미사일이 방금 맞춘 대상은 같은 프레임에 재판정하지 않음
+                        hit = e; break;
+                    }
+                }
+                if (!hit && spaceBoss && spaceBoss.state === 'idle') {
+                    let bo = spaceBoss;
+                    if (b.x < bo.x + bo.w && b.x + b.w > bo.x && b.y < bo.y + bo.h && b.y + b.h > bo.y) hit = bo;
+                }
+
+                if (hit) {
+                    let owner = spacePlayers[0] ? spacePlayers[0].id : 1;
+                    applySubModuleDamage(hit, b.dmg, owner);
+
+                    if (b.missile && b.explode) {
+                        // 유도 미사일: 명중 시 소형 폭발 범위 대미지
+                        spaceFx.push({ type: 'explosion', x: b.x, y: b.y, life: 14, maxLife: 14 });
+                        let explodeR = 30;
+                        [...spaceEnemies].forEach(e2 => {
+                            if (e2 === hit) return;
+                            let dx = (e2.x + e2.w / 2) - b.x, dy = (e2.y + e2.h / 2) - b.y;
+                            if (Math.sqrt(dx * dx + dy * dy) < explodeR) applySubModuleDamage(e2, 1, owner);
+                        });
+                    }
+
+                    if (b.missile) {
+                        // 유도 미사일: hitsLeft가 남아있으면 소멸하지 않고 다음 목표를 찾아 계속 비행(Lv.3 이상은 2회 명중 후 소멸)
+                        let hitsLeft = (typeof b.hitsLeft === 'number' ? b.hitsLeft : 1) - 1;
+                        if (hitsLeft > 0 && hit !== spaceBoss) {
+                            b.hitsLeft = hitsLeft;
+                            b._lastHitTarget = hit;
+                            b.target = findNearestEnemy(b.x, b.y, new Set([hit]));
+                            if (!b.target) b.homing = false;
+                            continue;
+                        }
+                    }
+                    spaceSubBullets.splice(i, 1);
+                }
+            }
+        }
+
+        // 매 프레임 호출: 관통 빔(B) 판정 - 경로상 모든 적을 관통 타격, Lv.3 메가빔은 적 탄막도 소멸시킴, life 소진 시 소멸
+        function updateSubBeams(now) {
+            for (let i = spaceSubBeams.length - 1; i >= 0; i--) {
+                let bm = spaceSubBeams[i];
+                spaceEnemies.forEach(e => {
+                    if (bm.x < e.x + e.w && bm.x + bm.w > e.x && bm.y < e.y + e.h && bm.y + bm.h > e.y) {
+                        applySubModuleDamage(e, bm.dmg, bm.owner);
+                    }
+                });
+                if (spaceBoss && spaceBoss.state === 'idle') {
+                    let bo = spaceBoss;
+                    if (bm.x < bo.x + bo.w && bm.x + bm.w > bo.x && bm.y < bo.y + bo.h && bm.y + bm.h > bo.y) {
+                        applySubModuleDamage(bo, bm.dmg, bm.owner);
+                    }
+                }
+                if (bm.mega) {
+                    // Lv.3 메가빔: 빔 범위 내 적의 일반 탄막(적 원거리 공격탄) 소멸
+                    for (let j = spaceEnemyBullets.length - 1; j >= 0; j--) {
+                        let eb = spaceEnemyBullets[j];
+                        if (bm.x < eb.x + eb.w && bm.x + bm.w > eb.x && bm.y < eb.y + eb.h && bm.y + bm.h > eb.y) {
+                            spaceEnemyBullets.splice(j, 1);
+                        }
+                    }
+                    for (let j = spaceBossBullets.length - 1; j >= 0; j--) {
+                        let eb = spaceBossBullets[j];
+                        if (eb.isBeam || eb.isCrossBeam) continue;
+                        if (bm.x < eb.x + eb.w && bm.x + bm.w > eb.x && bm.y < eb.y + eb.h && bm.y + bm.h > eb.y) {
+                            spaceBossBullets.splice(j, 1);
+                        }
+                    }
+                }
+                bm.life--;
+                if (bm.life <= 0) spaceSubBeams.splice(i, 1);
+            }
+        }
+
+        // 매 프레임 호출: 중력장 블랙홀(V) 흡인/도트 대미지/탄막 흡수 + 수명 처리
+        function updateSubBlackholes(now) {
+            for (let i = spaceSubBlackholes.length - 1; i >= 0; i--) {
+                let bh = spaceSubBlackholes[i];
+                if (now - bh.bornAt > bh.life) { spaceSubBlackholes.splice(i, 1); continue; }
+
+                spaceEnemies.forEach(e => {
+                    let ex = e.x + e.w / 2, ey = e.y + e.h / 2;
+                    let dx = bh.x - ex, dy = bh.y - ey;
+                    let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                    if (dist < bh.radius * 2.4) {
+                        e.x += (dx / dist) * bh.pull;
+                        e.y += (dy / dist) * bh.pull;
+                    }
+                    if (bh.dot > 0 && dist < bh.radius) {
+                        e.hp -= bh.dot;
+                        if (e.hp <= 0) applySubModuleDamage(e, 0, bh.ownerId);
+                    }
+                });
+
+                if (bh.absorbBullets) {
+                    // Lv.2 이상: 블랙홀 영역에 닿은 적의 일반 탄막을 흡수 소멸
+                    for (let j = spaceEnemyBullets.length - 1; j >= 0; j--) {
+                        let eb = spaceEnemyBullets[j];
+                        let dx = bh.x - eb.x, dy = bh.y - eb.y;
+                        if (Math.sqrt(dx * dx + dy * dy) < bh.radius) spaceEnemyBullets.splice(j, 1);
+                    }
+                    for (let j = spaceBossBullets.length - 1; j >= 0; j--) {
+                        let eb = spaceBossBullets[j];
+                        if (eb.isBeam || eb.isCrossBeam) continue;
+                        let dx = bh.x - eb.x, dy = bh.y - eb.y;
+                        if (Math.sqrt(dx * dx + dy * dy) < bh.radius) spaceBossBullets.splice(j, 1);
+                    }
+                }
+            }
+        }
+
+        // 매 프레임 호출: 서브 모듈 아이템(캡슐) 낙하 이동 + 플레이어 획득 처리
+        function updateSubItems() {
+            for (let i = spaceSubItems.length - 1; i >= 0; i--) {
+                let it = spaceSubItems[i];
+                it.y += it.speed;
+                it.pulse += 0.15;
+
+                let collected = false;
+                for (let p of spacePlayers) {
+                    if (!p.dead && p.subModules &&
+                        p.x < it.x + it.w && p.x + p.w > it.x &&
+                        p.y < it.y + it.h && p.y + p.h > it.y) {
+                        if (p.subModules[it.key] < 5) p.subModules[it.key]++;
+                        collected = true;
+                        break;
+                    }
+                }
+                if (collected || it.y > canvas.height) spaceSubItems.splice(i, 1);
+            }
+        }
+
+        // 서브 모듈 탄(드론탄/미사일/개틀링탄) 그리기
+        function drawSubBullets() {
+            spaceSubBullets.forEach(b => {
+                ctx.save();
+                ctx.shadowColor = b.color; ctx.shadowBlur = b.sub === 'M' ? 10 : 6;
+                ctx.fillStyle = b.color;
+                if (b.round) {
+                    ctx.beginPath(); ctx.arc(b.x, b.y, b.w / 2, 0, Math.PI * 2); ctx.fill();
+                } else if (b.missile) {
+                    ctx.save();
+                    ctx.translate(b.x, b.y);
+                    let ang = Math.atan2(b.vy, b.vx) + Math.PI / 2;
+                    ctx.rotate(ang);
+                    ctx.beginPath();
+                    ctx.moveTo(0, -8); ctx.lineTo(4, 6); ctx.lineTo(-4, 6); ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                } else {
+                    ctx.fillRect(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h);
+                }
+                ctx.restore();
+            });
+        }
+
+        // 관통 빔(B) 그리기 - life에 따라 밝게 번쩍였다가 페이드아웃
+        function drawSubBeams() {
+            spaceSubBeams.forEach(bm => {
+                let t = bm.maxLife ? bm.life / bm.maxLife : 1;
+                ctx.save();
+                ctx.globalAlpha = (bm.mega ? 0.75 : 0.9) * Math.max(0, t);
+                ctx.shadowColor = bm.color; ctx.shadowBlur = bm.mega ? 28 : 16;
+                ctx.fillStyle = bm.color;
+                ctx.fillRect(bm.x, bm.y, bm.w, bm.h);
+                ctx.restore();
+            });
+        }
+
+        // 드론(D) 자체 외형 그리기 (탄이 아니라 드론 본체를 플레이어 주변에 별도로 그림)
+        function drawDrones(p, now) {
+            let sm = p.subModules;
+            if (!sm || sm.D < 1) return;
+            let cx = p.x + p.w / 2, cy = p.y + p.h / 2;
+            ctx.save();
+            ctx.fillStyle = SUB_MODULE_INFO.D.color;
+            ctx.shadowColor = SUB_MODULE_INFO.D.color; ctx.shadowBlur = 8;
+            if (sm.D === 1) {
+                ctx.beginPath(); ctx.arc(p.x - 14, p.y + p.h * 0.3, 6, 0, Math.PI * 2); ctx.fill();
+            } else if (sm.D === 2) {
+                ctx.beginPath(); ctx.arc(p.x - 16, p.y + p.h * 0.3, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(p.x + p.w + 16, p.y + p.h * 0.3, 6, 0, Math.PI * 2); ctx.fill();
+            } else if (sm.D === 3) {
+                for (let i = 0; i < 4; i++) {
+                    let a = spaceDroneAngle + (Math.PI / 2) * i;
+                    let dx = cx + Math.cos(a) * 34, dy = cy + Math.sin(a) * 34;
+                    ctx.beginPath(); ctx.arc(dx, dy, 7, 0, Math.PI * 2); ctx.fill();
+                }
+            } else if (sm.D >= 4) {
+                // Lv.4~5: 실제로 화면을 날아다니는 드론 실체(spaceActiveDrones)를 그림
+                spaceActiveDrones.forEach(d => {
+                    if (d.ownerId !== p.id) return;
+                    ctx.beginPath(); ctx.arc(d.x, d.y, 7, 0, Math.PI * 2); ctx.fill();
+                });
+            }
+            ctx.restore();
+        }
+
+        // 체인 테슬라(T) 전기줄기 그리기 + 수명 처리
+        function drawAndUpdateChains() {
+            for (let i = spaceSubChains.length - 1; i >= 0; i--) {
+                let c = spaceSubChains[i];
+                let t = c.life / c.maxLife;
+                ctx.save();
+                ctx.globalAlpha = t;
+                ctx.strokeStyle = SUB_MODULE_INFO.T.color;
+                ctx.shadowColor = SUB_MODULE_INFO.T.color; ctx.shadowBlur = 10;
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(c.x1, c.y1);
+                let midX = (c.x1 + c.x2) / 2 + (Math.random() - 0.5) * 14;
+                let midY = (c.y1 + c.y2) / 2 + (Math.random() - 0.5) * 14;
+                ctx.lineTo(midX, midY);
+                ctx.lineTo(c.x2, c.y2);
+                ctx.stroke();
+                ctx.restore();
+                c.life--;
+                if (c.life <= 0) spaceSubChains.splice(i, 1);
+            }
+        }
+
+        // 중력장 블랙홀(V) 그리기
+        function drawBlackholes() {
+            spaceSubBlackholes.forEach(bh => {
+                ctx.save();
+                ctx.shadowColor = SUB_MODULE_INFO.V.color; ctx.shadowBlur = 20;
+                let grad = ctx.createRadialGradient(bh.x, bh.y, 0, bh.x, bh.y, bh.radius);
+                grad.addColorStop(0, '#000'); grad.addColorStop(0.6, 'rgba(139,0,0,0.75)'); grad.addColorStop(1, 'rgba(139,0,0,0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(bh.x, bh.y, bh.radius, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        // 서브 모듈 아이템(캡슐) 그리기
+        function drawSubItems() {
+            spaceSubItems.forEach(it => {
+                let info = SUB_MODULE_INFO[it.key];
+                let cx = it.x + it.w / 2, cy = it.y + it.h / 2;
+                let pulseR = it.w / 2 + Math.sin(it.pulse) * 1.5;
+                ctx.save();
+                ctx.shadowColor = info.color; ctx.shadowBlur = 12;
+                ctx.fillStyle = info.color;
+                ctx.beginPath();
+                ctx.roundRect(cx - pulseR, cy - pulseR, pulseR * 2, pulseR * 2, 5);
+                ctx.fill();
+                ctx.fillStyle = '#0a0a1a';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(it.key, cx, cy + 1);
+                ctx.restore();
+            });
+        }
+
+        // 상단 HUD: 6종 서브 모듈 레벨 상태 텍스트 표시 ([D:Lv.X] [M:Lv.X] [B:Lv.X] [G:Lv.X] [T:Lv.X] [V:Lv.X])
+        // yOffset: 보스 HUD 등 다른 상단 요소와 겹치지 않도록 세로 위치를 밀어주는 값
+        function drawSubModuleHud(p, yOffset) {
+            if (!p.subModules) return;
+            let sm = p.subModules;
+            let order = ['D', 'M', 'B', 'G', 'T', 'V'];
+            ctx.save();
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            let y = 55 + (yOffset || 0);
+            ctx.fillStyle = 'rgba(0,0,0,0.55)';
+            ctx.beginPath();
+            ctx.roundRect(10, y - 13, canvas.width - 20, 20, 6);
+            ctx.fill();
+
+            let totalWidth = canvas.width - 20;
+            let segW = totalWidth / order.length;
+            order.forEach((key, idx) => {
+                let lvl = sm[key];
+                let info = SUB_MODULE_INFO[key];
+                let segX = 10 + segW * idx + segW / 2;
+                ctx.fillStyle = lvl > 0 ? info.color : 'rgba(255,255,255,0.3)';
+                ctx.fillText(`[${key}:Lv.${lvl}]`, segX, y + 2);
+            });
+            ctx.restore();
+        }
+        // ▲▲▲ 6종 서브 모듈 발사/작동 로직 끝 ▲▲▲
+
+        // ▼▼▼ 1인용 전용: 5대 관문 보스 시스템 (Stage 10/15/20/25/30) ▼▼▼
+
+        // 보스 타입별 기본 스탯 (스테이지가 오를수록 강해짐)
+        function getBossBaseStats(bossType) {
+            switch (bossType) {
+                case 'titan_carnox':      return { hp: 1000, w: 150, h: 125, color: '#4b5563' };
+                case 'neo_sphera':        return { hp: 1500, w: 138, h: 138, color: '#38bdf8' };
+                case 'chronos_leviathan': return { hp: 2200, w: 165, h: 140, color: '#7f1d1d' };
+                case 'arc_angel':         return { hp: 3000, w: 175, h: 125, color: '#f8fafc' };
+                case 'omega_genesis':     return { hp: 5500, w: 260, h: 155, color: '#334155' };
+            }
+            return { hp: 1200, w: 140, h: 125, color: '#ef4444' };
+        }
+
+        // 보스 등장: 화면 상단에서 서서히 진입
+        function spawnSpaceBoss(bossType) {
+            let stats = getBossBaseStats(bossType);
+            spaceBoss = {
+                type: bossType,
+                name: BOSS_NAMES[bossType],
+                x: canvas.width / 2 - stats.w / 2,
+                y: -stats.h,
+                w: stats.w,
+                h: stats.h,
+                targetY: 60,
+                hp: stats.hp,
+                maxHp: stats.hp,
+                color: stats.color,
+                state: 'enter', // enter → idle(패턴 전투)
+                phase: 1,
+                phaseAngry: false, // Phase2/3 진입 시 붉은 분노 연출 여부
+                spawnTime: Date.now(),
+                lastPattern: Date.now(),
+                patternIndex: 0,
+                lastMinionSpawn: 0,
+                lastHomingWave: Date.now(), // Stage15(네오 스페라) 호밍 오브 패턴 타이머
+                gravityPullUntil: 0, // Stage20/30 중력장 흡인 지속 시간
+                blackHole: null // Stage30 P2 블랙홀 { x, y, life }
+            };
+        }
+
+        // 매 프레임: 보스 등장 연출 카운트다운 처리
+        function updateSpaceBossIntro() {
+            if (spaceBossIntroTimer > 0) {
+                spaceBossIntroTimer--;
+                if (spaceBossIntroTimer === 0 && !spaceBoss) {
+                    spawnSpaceBoss(BOSS_STAGES[spaceStage]);
+                }
+            }
+        }
+
+        // 보스 탄막 1발 생성 헬퍼
+        function fireBossBullet(angle, speed, x, y, color, size) {
+            spaceBossBullets.push({
+                x: x, y: y,
+                w: size || 9, h: size || 9,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                color: color || '#ff0055',
+                reflect: false
+            });
+        }
+
+        // 보스별 페이즈 패턴 처리 (매 프레임 호출)
+        function updateSpaceBossPatterns(now) {
+            let b = spaceBoss;
+            if (!b) return;
+
+            // 진입 연출
+            if (b.state === 'enter') {
+                b.y += 1.6;
+                if (b.y >= b.targetY) { b.y = b.targetY; b.state = 'idle'; b.lastPattern = now; }
+                return;
+            }
+
+            // 좌우로 은은하게 떠다님
+            let cx = b.x + b.w / 2;
+            let cy = b.y + b.h / 2;
+            let hoverX = canvas.width / 2 + Math.sin(now / 1400) * (canvas.width * 0.22);
+            b.x += (hoverX - b.w / 2 - b.x) * 0.02;
+            b.x = Math.max(4, Math.min(canvas.width - b.w - 4, b.x));
+
+            let player = spacePlayers.find(p => !p.dead);
+            let ratio = b.hp / b.maxHp;
+
+            if (b.type === 'titan_carnox') {
+                // ── Stage10: 5방향 플라즈마탄 + 차징 메가 빔 ──
+                if (now - b.lastPattern > 700) {
+                    b.lastPattern = now;
+                    let baseAngle = Math.PI / 2;
+                    for (let i = -2; i <= 2; i++) {
+                        fireBossBullet(baseAngle + i * 0.26, 4.2, cx, cy + b.h * 0.3, '#a3e635', 10);
+                    }
+                    b.patternIndex++;
+                    if (b.patternIndex % 3 === 0) {
+                        // 차징 메가 빔 예고 후 발사
+                        spaceFx.push({ type: 'bossChargeWarn', life: 55, maxLife: 55, x: cx, y: cy, w: b.w * 0.8 });
+                        setTimeout(() => {
+                            if (!spaceBoss || spaceBoss !== b) return;
+                            spaceBossBullets.push({
+                                x: cx - b.w * 0.4, y: cy, w: b.w * 0.8, h: canvas.height,
+                                vx: 0, vy: 0, color: '#bef264', color2: '#365314',
+                                isBeam: true, life: 26
+                            });
+                        }, 900);
+                    }
+                }
+            } else if (b.type === 'neo_sphera') {
+                // ── Stage15: 나선 회오리 탄막 + 좌우벽 반사 링 탄환 + 호밍 플라즈마 오브 (3가지 패턴) ──
+                // 탄막량이 너무 많다는 피드백을 반영해 나선탄 발사 간격/회전 증분과 링 탄환 수를 소폭 완화
+                if (now - b.lastPattern > 60) {
+                    b.lastPattern = now;
+                    b.patternIndex += 15;
+                    let a = (b.patternIndex * Math.PI) / 180;
+                    fireBossBullet(a, 3.4, cx, cy, '#38bdf8', 8);
+                    fireBossBullet(a + Math.PI, 3.4, cx, cy, '#38bdf8', 8);
+                }
+                if (now - b.spawnTime > 0 && Math.floor((now - b.spawnTime) / 2100) !== b._ringWave) {
+                    b._ringWave = Math.floor((now - b.spawnTime) / 2100);
+                    for (let i = 0; i < 8; i++) {
+                        let a = (Math.PI * 2 * i) / 8;
+                        spaceBossBullets.push({
+                            x: cx, y: cy, w: 9, h: 9,
+                            vx: Math.cos(a) * 3, vy: Math.sin(a) * 3,
+                            color: '#7dd3fc', reflect: true, bounces: 2
+                        });
+                    }
+                }
+                // ── 신규 패턴: 호밍 플라즈마 오브 3연발 (플레이어를 서서히 추적) ──
+                if (now - b.lastHomingWave > 2600) {
+                    b.lastHomingWave = now;
+                    spaceFx.push({ type: 'bossChargeWarn', life: 30, maxLife: 30, x: cx, y: cy, w: b.w * 0.5 });
+                    setTimeout(() => {
+                        if (!spaceBoss || spaceBoss !== b) return;
+                        for (let i = 0; i < 3; i++) {
+                            spaceBossBullets.push({
+                                x: cx + (i - 1) * 22, y: cy + b.h * 0.3, w: 11, h: 11,
+                                vx: 0, vy: 1.4, color: '#bae6fd', homing: true, homingSpeed: 2.2
+                            });
+                        }
+                    }, 500);
+                }
+            } else if (b.type === 'chronos_leviathan') {
+                // ── Stage20: Phase1(추적 유도 구체 + 3연장 가속탄) / Phase2(중력장 흡인 + 360도 확산탄) ──
+                let newPhase = ratio <= 0.5 ? 2 : 1;
+                if (newPhase !== b.phase) {
+                    b.phase = newPhase;
+                    b.phaseAngry = true;
+                    spaceFx.push({ type: 'bossPhaseText', life: 70, maxLife: 70, text: 'PHASE 2 - 광폭화!' });
+                }
+
+                if (b.phase === 1) {
+                    if (now - b.lastPattern > 950) {
+                        b.lastPattern = now;
+                        // 추적 유도 구체 3개
+                        for (let i = 0; i < 3; i++) {
+                            spaceBossBullets.push({
+                                x: cx + (i - 1) * 26, y: cy, w: 12, h: 12,
+                                vx: 0, vy: 1.2, color: '#c084fc', homing: true, homingSpeed: 2.4
+                            });
+                        }
+                        // 3연장 가속탄 (속도 점점 빨라짐)
+                        if (player) {
+                            let dx = (player.x + player.w / 2) - cx, dy = (player.y + player.h / 2) - cy;
+                            let ang = Math.atan2(dy, dx);
+                            [0, 260, 520].forEach((delay, idx) => {
+                                setTimeout(() => {
+                                    if (!spaceBoss || spaceBoss !== b) return;
+                                    fireBossBullet(ang, 3 + idx * 1.4, cx, cy, '#ef4444', 9);
+                                }, delay);
+                            });
+                        }
+                    }
+                } else {
+                    // Phase2: 중력장 흡인 + 360도 확산탄
+                    if (now - b.lastPattern > 1500) {
+                        b.lastPattern = now;
+                        b.gravityPullUntil = now + 1400;
+                        spaceFx.push({ type: 'bossGravityWarn', life: 40, maxLife: 40 });
+                        setTimeout(() => {
+                            if (!spaceBoss || spaceBoss !== b) return;
+                            for (let i = 0; i < 24; i++) {
+                                let a = (Math.PI * 2 * i) / 24;
+                                fireBossBullet(a, 3.6, cx, cy, '#f87171', 9);
+                            }
+                        }, 1400);
+                    }
+                    if (now < b.gravityPullUntil && player) {
+                        let dx = cx - (player.x + player.w / 2), dy = cy - (player.y + player.h / 2);
+                        let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                        player.x += (dx / dist) * 2.2;
+                        player.y += (dy / dist) * 2.2;
+                        player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
+                        player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
+                    }
+                }
+            } else if (b.type === 'arc_angel') {
+                // ── Stage25: 교차 십자 레이저 + 자폭 쫄몹 드론 지속 소환 ──
+                if (now - b.lastPattern > 1100) {
+                    b.lastPattern = now;
+                    spaceFx.push({ type: 'bossCrossWarn', life: 40, maxLife: 40, x: cx, y: cy });
+                    setTimeout(() => {
+                        if (!spaceBoss || spaceBoss !== b) return;
+                        spaceBossBullets.push({ x: 0, y: cy - 7, w: canvas.width, h: 14, vx: 0, vy: 0, color: '#fde68a', isCrossBeam: true, axis: 'h', life: 30 });
+                        spaceBossBullets.push({ x: cx - 7, y: 0, w: 14, h: canvas.height, vx: 0, vy: 0, color: '#fde68a', isCrossBeam: true, axis: 'v', life: 30 });
+                    }, 700);
+                }
+                if (now - b.lastMinionSpawn > 1900 && spaceBossMinions.length < 5) {
+                    b.lastMinionSpawn = now;
+                    spaceBossMinions.push({
+                        x: b.x + Math.random() * b.w, y: b.y + b.h * 0.6,
+                        w: 20, h: 20, speed: 2.4, hp: 1, kamikaze: true, color: '#fbbf24'
+                    });
+                }
+            } else if (b.type === 'omega_genesis') {
+                // ── Stage30 최종보스: 3페이즈 ──
+                let newPhase = ratio <= 0.3 ? 3 : (ratio <= 0.7 ? 2 : 1);
+                if (newPhase !== b.phase) {
+                    b.phase = newPhase;
+                    b.phaseAngry = newPhase >= 2;
+                    spaceFx.push({ type: 'bossPhaseText', life: 70, maxLife: 70, text: newPhase === 2 ? 'PHASE 2 - 블랙홀 경보!' : 'PHASE 3 - 최종 광폭화!' });
+                }
+                // 화면 상단 절반을 가리는 거대 요새 → 항상 상단 고정
+                b.x = canvas.width / 2 - b.w / 2;
+                b.y = 6;
+
+                if (b.phase === 1) {
+                    // 전화면 메가 탄막(대형 링 탄막, 미세한 틈만 존재)
+                    if (now - b.lastPattern > 1200) {
+                        b.lastPattern = now;
+                        let gapIndex = Math.floor(Math.random() * 16);
+                        for (let i = 0; i < 16; i++) {
+                            if (i === gapIndex || i === (gapIndex + 8) % 16) continue;
+                            let a = (Math.PI * 2 * i) / 16;
+                            fireBossBullet(a, 3.2, cx, cy + b.h * 0.3, '#94a3b8', 11);
+                        }
+                    }
+                } else if (b.phase === 2) {
+                    // 블랙홀 생성(총알 흡수) + 유도 미사일 난사
+                    if (!b.blackHole && now - b.lastPattern > 1600) {
+                        b.lastPattern = now;
+                        b.blackHole = { x: cx, y: canvas.height * 0.45, life: 4200, bornAt: now };
+                    }
+                    if (now - b.lastMinionSpawn > 800) {
+                        b.lastMinionSpawn = now;
+                        if (player) {
+                            let dx = (player.x + player.w / 2) - cx, dy = (player.y + player.h / 2) - cy;
+                            let ang = Math.atan2(dy, dx);
+                            fireBossBullet(ang, 3.6, cx, cy + b.h * 0.3, '#fb7185', 10);
+                        }
+                    }
+                    if (b.blackHole && now - b.blackHole.bornAt > b.blackHole.life) b.blackHole = null;
+                } else {
+                    // Phase3: 화면 전체 광폭화 빔 + 쫄몹 무한 생성
+                    if (now - b.lastPattern > 800) {
+                        b.lastPattern = now;
+                        let laneCount = 5;
+                        let gap = canvas.width / laneCount;
+                        for (let i = 0; i < laneCount; i++) {
+                            if (Math.random() < 0.35) continue;
+                            spaceBossBullets.push({
+                                x: gap * i + gap * 0.5 - 12, y: b.y + b.h,
+                                w: 24, h: canvas.height, vx: 0, vy: 0,
+                                color: '#f87171', color2: '#7f1d1d', isBeam: true, life: 22
+                            });
+                        }
+                    }
+                    if (now - b.lastMinionSpawn > 650 && spaceBossMinions.length < 7) {
+                        b.lastMinionSpawn = now;
+                        spaceBossMinions.push({
+                            x: Math.random() * (canvas.width - 26), y: b.y + b.h,
+                            w: 22, h: 22, speed: 2.2 + Math.random(), hp: 1, kamikaze: false, color: '#f87171'
+                        });
+                    }
+                }
+            }
+        }
+
+        // 보스 탄막 이동 + 플레이어 피격 + 파동탄 상쇄 + 반사 처리 (매 프레임 호출)
+        function updateSpaceBossBullets(now) {
+            let player = spacePlayers.find(p => !p.dead);
+            for (let i = spaceBossBullets.length - 1; i >= 0; i--) {
+                let eb = spaceBossBullets[i];
+
+                if (eb.isBeam || eb.isCrossBeam) {
+                    eb.life--;
+                    if (eb.life <= 0) { spaceBossBullets.splice(i, 1); continue; }
+                } else {
+                    if (eb.homing && player) {
+                        let dx = (player.x + player.w / 2) - eb.x, dy = (player.y + player.h / 2) - eb.y;
+                        let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                        eb.vx += (dx / dist) * 0.14;
+                        eb.vy += (dy / dist) * 0.14;
+                        let sp = Math.sqrt(eb.vx * eb.vx + eb.vy * eb.vy);
+                        let maxSp = eb.homingSpeed || 2.4;
+                        if (sp > maxSp) { eb.vx = (eb.vx / sp) * maxSp; eb.vy = (eb.vy / sp) * maxSp; }
+                    }
+                    eb.x += eb.vx;
+                    eb.y += eb.vy;
+
+                    if (eb.reflect) {
+                        if (eb.x < 0 || eb.x > canvas.width) {
+                            eb.vx *= -1;
+                            eb.x = Math.max(0, Math.min(canvas.width, eb.x));
+                            eb.bounces = (eb.bounces || 1) - 1;
+                        }
+                        if (eb.y < 0 && eb.bounces > 0) { eb.vy *= -1; }
+                    }
+
+                    // 블랙홀에 흡수되는지 체크 (Stage30 P2)
+                    if (spaceBoss && spaceBoss.blackHole) {
+                        let bh = spaceBoss.blackHole;
+                        let ddx = bh.x - eb.x, ddy = bh.y - eb.y;
+                        if (Math.sqrt(ddx * ddx + ddy * ddy) < 46) {
+                            spaceBossBullets.splice(i, 1);
+                            continue;
+                        }
+                    }
+
+                    if (eb.y > canvas.height + 30 || eb.y < -30 || eb.x < -30 || eb.x > canvas.width + 30 || (eb.reflect && eb.bounces <= 0 && eb.y < 0)) {
+                        spaceBossBullets.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                // 플레이어의 파동탄(Lv.6+)에 의한 상쇄 (일반 적탄과 동일 처리, 빔은 상쇄 불가)
+                if (!eb.isBeam && !eb.isCrossBeam) {
+                    let cleared = false;
+                    for (let j = 0; j < spaceBullets.length; j++) {
+                        let b2 = spaceBullets[j];
+                        if (b2.type !== 'wave') continue;
+                        let ddx = b2.x - eb.x, ddy = b2.y - eb.y;
+                        if (Math.sqrt(ddx * ddx + ddy * ddy) < (b2.w / 2) + 14) { cleared = true; break; }
+                    }
+                    if (cleared) { spaceBossBullets.splice(i, 1); continue; }
+                }
+
+                // 플레이어 피격 판정
+                if (player) {
+                    let hit = false;
+                    if (eb.isBeam) {
+                        hit = player.x < eb.x + eb.w && player.x + player.w > eb.x;
+                    } else if (eb.isCrossBeam) {
+                        hit = player.x < eb.x + eb.w && player.x + player.w > eb.x && player.y < eb.y + eb.h && player.y + player.h > eb.y;
+                    } else {
+                        hit = eb.x < player.x + player.w && eb.x + eb.w > player.x && eb.y < player.y + player.h && eb.y + eb.h > player.y;
+                    }
+                    if (hit) {
+                        if (!eb.isBeam || !eb._hitCooldown || now - eb._hitCooldown > 500) {
+                            takeSpaceHit(player, 1);
+                            eb._hitCooldown = now;
+                        }
+                        if (!eb.isBeam && !eb.isCrossBeam) { spaceBossBullets.splice(i, 1); continue; }
+                    }
+                }
+            }
+        }
+
+        // 보스 쫄몹(드론) 이동 + 자폭/충돌 처리
+        function updateSpaceBossMinions(now) {
+            let player = spacePlayers.find(p => !p.dead);
+            for (let i = spaceBossMinions.length - 1; i >= 0; i--) {
+                let m = spaceBossMinions[i];
+                if (m.kamikaze && player) {
+                    let dx = (player.x + player.w / 2) - (m.x + m.w / 2), dy = (player.y + player.h / 2) - (m.y + m.h / 2);
+                    let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                    m.x += (dx / dist) * m.speed;
+                    m.y += (dy / dist) * m.speed;
+                } else {
+                    m.y += m.speed;
+                }
+
+                for (let j = spaceBullets.length - 1; j >= 0; j--) {
+                    let b = spaceBullets[j];
+                    if (b.x < m.x + m.w && b.x + b.w > m.x && b.y < m.y + m.h && b.y + b.h > m.y) {
+                        if (b.type !== 'crescent') spaceBullets.splice(j, 1);
+                        m.hp--;
+                        if (m.hp <= 0) {
+                            spaceFx.push({ type: 'explosion', x: m.x + m.w / 2, y: m.y + m.h / 2, life: 14, maxLife: 14 });
+                            maybeDropSubModuleItem(m.x + m.w / 2, m.y + m.h / 2);
+                            spaceBossMinions.splice(i, 1);
+                        }
+                        break;
+                    }
+                }
+                if (m.hp <= 0) continue;
+
+                if (player && m.x < player.x + player.w && m.x + m.w > player.x && m.y < player.y + player.h && m.y + m.h > player.y) {
+                    spaceFx.push({ type: 'explosion', x: m.x + m.w / 2, y: m.y + m.h / 2, life: 14, maxLife: 14 });
+                    spaceBossMinions.splice(i, 1);
+                    takeSpaceHit(player, 1);
+                    continue;
+                }
+
+                if (m.y > canvas.height + 30) spaceBossMinions.splice(i, 1);
+            }
+        }
+
+        // 플레이어 탄환과 보스 본체의 충돌 판정 (보스 체력 감소 + 처치 시 클리어 처리)
+        function updateSpaceBossHit(now) {
+            let b = spaceBoss;
+            if (!b || b.state !== 'idle' || spaceBossDefeated) return;
+
+            for (let j = spaceBullets.length - 1; j >= 0; j--) {
+                let bullet = spaceBullets[j];
+                if (bullet.x < b.x + b.w && bullet.x + bullet.w > b.x && bullet.y < b.y + b.h && bullet.y + bullet.h > b.y) {
+                    let dmg = bullet.type === 'crescent' ? 4 : 1;
+                    b.hp -= dmg;
+                    if (bullet.type !== 'crescent') spaceBullets.splice(j, 1);
+
+                    let shooter = spacePlayers.find(p => p.id === bullet.ownerId);
+
+                    if (b.hp <= 0) {
+                        spaceBossDefeated = true;
+                        if (shooter) shooter.score += 5000 + spaceStage * 100;
+                        triggerBossDefeatExplosion(b);
+                        return;
+                    }
+                }
+            }
+
+            // 보스 본체와 플레이어 충돌 시 플레이어 피격
+            for (let p of spacePlayers) {
+                if (!p.dead && p.x < b.x + b.w && p.x + p.w > b.x && p.y < b.y + b.h && p.y + p.h > b.y) {
+                    takeSpaceHit(p, 1);
+                }
+            }
+        }
+
+        // 보스 처치 대폭발 연출 후 다음 스테이지 진행
+        function triggerBossDefeatExplosion(b) {
+            let cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+            for (let i = 0; i < 14; i++) {
+                setTimeout(() => {
+                    spaceFx.push({
+                        type: 'explosion',
+                        x: cx + (Math.random() - 0.5) * b.w,
+                        y: cy + (Math.random() - 0.5) * b.h,
+                        life: 26, maxLife: 26, big: true
+                    });
+                }, i * 90);
+            }
+            spaceBossBullets = [];
+            spaceBossMinions = [];
+            spaceStageClearing = true;
+
+            let isFinal = spaceStage >= 30;
+            let player = spacePlayers[0];
+            let maxHeartHp = 5;
+            let healedHp = false;
+            if (!isFinal && player && !player.dead && player.hp < maxHeartHp) {
+                player.hp++;
+                healedHp = true;
+            }
+
+            setTimeout(() => {
+                spaceBoss = null;
+                spaceFx.push({ type: 'stageClearText', life: 100, maxLife: 100, stage: spaceStage, isFinal: isFinal, healedHp: healedHp, bossClear: true });
+                setTimeout(() => {
+                    if (!gameActive || config.game !== 'spacewar') return;
+                    if (isFinal) {
+                        let score = spacePlayers[0] ? spacePlayers[0].score : 0;
+                        endGame("🎉 GAME CLEAR!", `종말 요새 「오메가 제네시스」를 격파하고 전 30개 스테이지를 모두 클리어했습니다!<br>최종 점수: ${score}점`, true);
+                    } else if (SUB_MODULE_PICK_STAGES.includes(spaceStage)) {
+                        // Stage 10/15/20/25 보스 처치 보상: 새 서브 모델을 고른 뒤 게임이 연달아 이어짐
+                        if (spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
+                        openPostBossSubModuleSelect();
+                    } else {
+                        spaceStage++;
+                        startSpaceStage();
+                    }
+                }, 1800);
+            }, 1300);
+        }
+
+        // 보스 그리기: 5대 관문 보스 각각의 고유 외형 렌더링
+        function drawSpaceBoss(b, now) {
+            let cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            // 공통 위압감 연출: 모든 보스 공통으로 어둡게 맥동하는 붉은 오라 + 진동하는 경고 테두리
+            let auraPulse = 0.3 + Math.sin(now / 220) * 0.16;
+            ctx.save();
+            ctx.globalAlpha = auraPulse;
+            ctx.shadowColor = '#dc2626';
+            ctx.shadowBlur = 46;
+            ctx.fillStyle = 'rgba(127,29,29,0.28)';
+            ctx.beginPath();
+            ctx.ellipse(0, 0, b.w * 0.66, b.h * 0.66, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            ctx.save();
+            let jitterX = Math.sin(now / 55) * 1.4;
+            let jitterY = Math.cos(now / 63) * 1.2;
+            ctx.translate(jitterX, jitterY);
+            ctx.strokeStyle = `rgba(248,113,113,${0.35 + Math.sin(now / 180) * 0.2})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, b.w * 0.58, b.h * 0.58, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            if (b.type === 'titan_carnox') {
+                // 중형 전함: 짙은 회색 금속 장갑 + 양옆 대형 미사일 해치 + 중앙 마그마 코어
+                ctx.fillStyle = '#3f3f46';
+                ctx.beginPath();
+                ctx.moveTo(-b.w * 0.5, -b.h * 0.15);
+                ctx.lineTo(-b.w * 0.32, -b.h * 0.5);
+                ctx.lineTo(b.w * 0.32, -b.h * 0.5);
+                ctx.lineTo(b.w * 0.5, -b.h * 0.15);
+                ctx.lineTo(b.w * 0.4, b.h * 0.5);
+                ctx.lineTo(-b.w * 0.4, b.h * 0.5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#71717a'; ctx.lineWidth = 3; ctx.stroke();
+                // 미사일 해치 (양옆)
+                ctx.fillStyle = '#18181b';
+                ctx.fillRect(-b.w * 0.48, -b.h * 0.1, b.w * 0.14, b.h * 0.3);
+                ctx.fillRect(b.w * 0.34, -b.h * 0.1, b.w * 0.14, b.h * 0.3);
+                // 중앙 마그마 코어
+                let pulse = 0.6 + Math.sin(now / 180) * 0.15;
+                ctx.save();
+                ctx.shadowColor = '#f97316'; ctx.shadowBlur = 20;
+                let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, b.w * 0.2);
+                grad.addColorStop(0, '#fef08a'); grad.addColorStop(0.5, '#f97316'); grad.addColorStop(1, '#7c2d12');
+                ctx.fillStyle = grad;
+                ctx.globalAlpha = pulse;
+                ctx.beginPath(); ctx.arc(0, 0, b.w * 0.16, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            } else if (b.type === 'neo_sphera') {
+                // 플라즈마 코어: 푸른 에너지 구체 + 회전하는 4개 링 서포터
+                let coreR = b.w * 0.3;
+                ctx.save();
+                ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 24;
+                let grad = ctx.createRadialGradient(0, 0, 0, 0, 0, coreR);
+                grad.addColorStop(0, '#ffffff'); grad.addColorStop(0.4, '#38bdf8'); grad.addColorStop(1, '#0369a1');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(0, 0, coreR, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+                // 회전 링 서포터 4개
+                for (let i = 0; i < 4; i++) {
+                    let a = (now / 700) + (Math.PI / 2) * i;
+                    let rx = Math.cos(a) * b.w * 0.42, ry = Math.sin(a) * b.h * 0.42;
+                    ctx.save();
+                    ctx.translate(rx, ry);
+                    ctx.strokeStyle = '#7dd3fc'; ctx.lineWidth = 4;
+                    ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.stroke();
+                    ctx.restore();
+                }
+            } else if (b.type === 'chronos_leviathan') {
+                // 차원 생체 괴수: 검붉은 유기체 촉수 + 발광 보라색 눈 3개 (Phase2 붉은 분노)
+                let angry = b.phaseAngry;
+                ctx.fillStyle = angry ? '#7f1d1d' : '#450a0a';
+                for (let i = 0; i < 6; i++) {
+                    let a = (Math.PI * 2 * i) / 6 + Math.sin(now / 400 + i) * 0.3;
+                    let len = b.w * 0.55 + Math.sin(now / 260 + i) * 8;
+                    ctx.save();
+                    ctx.rotate(a);
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(len * 0.5, 10, len, 0);
+                    ctx.quadraticCurveTo(len * 0.5, -10, 0, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+                ctx.fillStyle = angry ? '#991b1b' : '#7c2d12';
+                ctx.beginPath(); ctx.arc(0, 0, b.w * 0.32, 0, Math.PI * 2); ctx.fill();
+                // 발광하는 보라색 눈 3개
+                ctx.save();
+                ctx.shadowColor = '#c084fc'; ctx.shadowBlur = 14;
+                ctx.fillStyle = '#e9d5ff';
+                [-14, 0, 14].forEach(ox => {
+                    ctx.beginPath(); ctx.arc(ox, -4, 5, 0, Math.PI * 2); ctx.fill();
+                });
+                ctx.restore();
+            } else if (b.type === 'arc_angel') {
+                // 사이버네틱 함선: 백색+황금색 장갑, 천사 날개형 유도 패널 6개
+                ctx.fillStyle = '#f8fafc';
+                ctx.beginPath();
+                ctx.moveTo(0, -b.h * 0.5);
+                ctx.lineTo(b.w * 0.22, b.h * 0.2);
+                ctx.lineTo(0, b.h * 0.5);
+                ctx.lineTo(-b.w * 0.22, b.h * 0.2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5; ctx.stroke();
+                // 날개형 유도 패널 6개 (좌우 3개씩)
+                for (let side = -1; side <= 1; side += 2) {
+                    for (let i = 0; i < 3; i++) {
+                        let a = now / 900 + i * 0.5;
+                        let wx = side * (b.w * 0.32 + i * b.w * 0.15);
+                        let wy = -b.h * 0.15 + Math.sin(a) * 8 + i * b.h * 0.13;
+                        ctx.save();
+                        ctx.translate(wx, wy);
+                        ctx.rotate(side * 0.5);
+                        ctx.fillStyle = '#fde68a';
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0); ctx.lineTo(side * 22, -8); ctx.lineTo(side * 22, 8); ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                }
+            } else if (b.type === 'omega_genesis') {
+                // 종말 요새: 화면 상단 절반을 가리는 기계-생체 융합 거대 요새
+                let angry = b.phaseAngry;
+                ctx.fillStyle = angry ? '#1c1917' : '#1e293b';
+                ctx.fillRect(-b.w * 0.5, -b.h * 0.5, b.w, b.h);
+                ctx.strokeStyle = angry ? '#f87171' : '#64748b';
+                ctx.lineWidth = 4;
+                ctx.strokeRect(-b.w * 0.5, -b.h * 0.5, b.w, b.h);
+                // 생체 조직 융합 느낌의 맥동 라인
+                ctx.strokeStyle = angry ? 'rgba(248,113,113,0.7)' : 'rgba(139,92,246,0.6)';
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 5; i++) {
+                    let yy = -b.h * 0.4 + i * b.h * 0.2 + Math.sin(now / 300 + i) * 5;
+                    ctx.beginPath();
+                    ctx.moveTo(-b.w * 0.5, yy);
+                    for (let xx = -b.w * 0.5; xx <= b.w * 0.5; xx += 14) {
+                        ctx.lineTo(xx, yy + Math.sin(xx / 20 + now / 260) * 4);
+                    }
+                    ctx.stroke();
+                }
+                // 중앙 코어 포대
+                ctx.save();
+                ctx.shadowColor = angry ? '#ef4444' : '#8b5cf6'; ctx.shadowBlur = 22;
+                let grad = ctx.createRadialGradient(0, b.h * 0.1, 0, 0, b.h * 0.1, b.w * 0.14);
+                grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, angry ? '#ef4444' : '#8b5cf6'); grad.addColorStop(1, '#1e1b4b');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(0, b.h * 0.1, b.w * 0.11, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+
+            ctx.restore();
+
+            // 블랙홀(Stage30 Phase2) 별도 그리기 (보스 중심 좌표계 밖)
+            if (b.blackHole) {
+                let bh = b.blackHole;
+                ctx.save();
+                ctx.shadowColor = '#000'; ctx.shadowBlur = 30;
+                let grad = ctx.createRadialGradient(bh.x, bh.y, 0, bh.x, bh.y, 46);
+                grad.addColorStop(0, '#000'); grad.addColorStop(0.6, 'rgba(88,28,135,0.85)'); grad.addColorStop(1, 'rgba(88,28,135,0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(bh.x, bh.y, 46, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 보스 탄막(빔 포함) 그리기
+        function drawSpaceBossBullets() {
+            spaceBossBullets.forEach(eb => {
+                ctx.save();
+                if (eb.isBeam) {
+                    ctx.globalAlpha = 0.85;
+                    let grad = ctx.createLinearGradient(eb.x, 0, eb.x + eb.w, 0);
+                    grad.addColorStop(0, eb.color2 || eb.color);
+                    grad.addColorStop(0.5, eb.color);
+                    grad.addColorStop(1, eb.color2 || eb.color);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(eb.x, eb.y, eb.w, eb.h);
+                } else if (eb.isCrossBeam) {
+                    ctx.globalAlpha = 0.85;
+                    ctx.fillStyle = eb.color;
+                    ctx.shadowColor = eb.color; ctx.shadowBlur = 12;
+                    ctx.fillRect(eb.x, eb.y, eb.w, eb.h);
+                } else {
+                    ctx.shadowColor = eb.color; ctx.shadowBlur = 8;
+                    ctx.fillStyle = eb.color;
+                    ctx.beginPath();
+                    ctx.arc(eb.x, eb.y, eb.w / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+        }
+
+        // 보스 쫄몹(드론) 그리기
+        function drawSpaceBossMinions() {
+            spaceBossMinions.forEach(m => {
+                ctx.save();
+                ctx.shadowColor = m.color; ctx.shadowBlur = 8;
+                ctx.fillStyle = m.color;
+                let cx = m.x + m.w / 2, cy = m.y + m.h / 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, m.y);
+                ctx.lineTo(m.x + m.w, m.y + m.h);
+                ctx.lineTo(m.x, m.y + m.h);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        // 보스 HUD: 화면 상단에 [BOSS: 이름]과 대형 HP바 표시 (하트 HUD와 겹치지 않도록 그 아래에 배치)
+        function drawSpaceBossHud(b) {
+            let barW = canvas.width - 40;
+            let barX = 20;
+            let barY = 62; // 상단 하트/점수 HUD(높이 45+여백) 바로 아래
+            let barH = 20;
+
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.font = 'bold 15px Arial';
+            ctx.fillStyle = '#fca5a5';
+            ctx.shadowColor = '#000'; ctx.shadowBlur = 6;
+            ctx.fillText(`[BOSS: ${b.name}]`, canvas.width / 2, barY - 6);
+
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.beginPath();
+            ctx.roundRect(barX - 2, barY, barW + 4, barH + 4, 6);
+            ctx.fill();
+
+            let ratio = Math.max(0, b.hp / b.maxHp);
+            let hpColor = ratio > 0.5 ? '#4ade80' : (ratio > 0.25 ? '#fbbf24' : '#f87171');
+            ctx.fillStyle = hpColor;
+            ctx.shadowColor = hpColor; ctx.shadowBlur = 8;
+            ctx.fillRect(barX, barY + 2, barW * ratio, barH);
+
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(barX, barY + 2, barW, barH);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText(`${Math.max(0, Math.ceil(b.hp))} / ${b.maxHp}`, canvas.width / 2, barY + barH - 3);
+            ctx.restore();
+        }
+        // ▲▲▲ 5대 관문 보스 시스템 끝 ▲▲▲
+
         function spaceWarLoop() {
             if (!gameActive || config.game !== 'spacewar') return;
             spaceWarAnimId = requestAnimationFrame(spaceWarLoop);
@@ -2869,25 +5076,33 @@
 
             let now = Date.now();
             spacePlayers.forEach(p => {
-                // 진화 단계별 공격 속도: 5단계부터 발사 간격이 짧아짐(공속 증가)
-                let fireInterval = p.evolution >= 5 ? 100 : 180;
-                if (!p.dead && now - p.lastShot > fireInterval) {
-                    // 진화 단계별 레이저 개수: 1단계 2개, 2단계 3개, 3단계 4개, 4단계 5개(5단계는 개수 유지하고 공속만 증가)
-                    let laserCount = Math.min(1 + p.evolution, 5);
-                    let spacing = 9;
-                    let startX = p.x + p.w / 2 - 3 - ((laserCount - 1) * spacing) / 2;
-                    for (let li = 0; li < laserCount; li++) {
-                        spaceBullets.push({
-                            x: startX + li * spacing,
-                            y: p.y,
-                            w: 6,
-                            h: 14,
-                            speed: 10,
-                            ownerId: p.id,
-                            color: p.color
-                        });
+                if (p.dead) return;
+                if (spaceWarMode === 1) {
+                    // ▼ 1인용 전용: 메인 무기 7단계 진화 발사 로직 (기존 2인용 로직은 아래 else에서 그대로 유지) ▼
+                    fireEvolvedWeapon(p, now);
+                    // ▼ 1인용 전용: 6종 서브 모듈 자동 발사/작동 (메인 무기와 독립적으로 동시 작동) ▼
+                    fireSubModules(p, now);
+                } else {
+                    // 진화 단계별 공격 속도: 5단계부터 발사 간격이 짧아짐(공속 증가)
+                    let fireInterval = p.evolution >= 5 ? 100 : 180;
+                    if (now - p.lastShot > fireInterval) {
+                        // 진화 단계별 레이저 개수: 1단계 2개, 2단계 3개, 3단계 4개, 4단계 5개(5단계는 개수 유지하고 공속만 증가)
+                        let laserCount = Math.min(1 + p.evolution, 5);
+                        let spacing = 9;
+                        let startX = p.x + p.w / 2 - 3 - ((laserCount - 1) * spacing) / 2;
+                        for (let li = 0; li < laserCount; li++) {
+                            spaceBullets.push({
+                                x: startX + li * spacing,
+                                y: p.y,
+                                w: 6,
+                                h: 14,
+                                speed: 10,
+                                ownerId: p.id,
+                                color: p.color
+                            });
+                        }
+                        p.lastShot = now;
                     }
-                    p.lastShot = now;
                 }
             });
 
@@ -2899,37 +5114,63 @@
             for (let i = spaceBullets.length - 1; i >= 0; i--) {
                 let b = spaceBullets[i];
                 b.y -= b.speed;
-                if (b.y < -20) spaceBullets.splice(i, 1);
+                if (b.vx) b.x += b.vx; // 1인용 진화 무기(부채꼴/5방향 탄)의 좌우 이동 처리
+                if (b.y < -20 || b.x < -40 || b.x > canvas.width + 40) spaceBullets.splice(i, 1);
             }
 
-            let spawnRate = spaceWarMode === 2 ? 0.11 : 0.035;
-            if (Math.random() < spawnRate) {
-                let isBoss = Math.random() < 0.15;
-                spaceEnemies.push({
-                    x: Math.random() * (canvas.width - 35),
-                    y: -40,
-                    w: isBoss ? 45 : 32,
-                    h: isBoss ? 45 : 32,
-                    speed: isBoss ? 2 : Math.random() * 2 + 2,
-                    hp: isBoss ? 3 : 1,
-                    isBoss: isBoss,
-                    color: isBoss ? '#ef4444' : '#f59e0b'
-                });
+            if (spaceWarMode === 1) {
+                if (BOSS_STAGES[spaceStage]) {
+                    // 1인용 전용: 관문 보스 스테이지 (일반 잡몹 스폰 없음, 보스 등장/패턴만 진행)
+                    updateSpaceBossIntro();
+                    updateSpaceBossPatterns(now);
+                } else {
+                    // 1인용 전용: 30스테이지 시스템에 따른 트리클 스폰 (돌진형이 아닌 패턴형 적)
+                    updateSpaceStageSpawning(now);
+                }
+            } else {
+                // 2인용 기존 로직 그대로 유지
+                let spawnRate = 0.11;
+                if (Math.random() < spawnRate) {
+                    let isBoss = Math.random() < 0.15;
+                    spaceEnemies.push({
+                        x: Math.random() * (canvas.width - 35),
+                        y: -40,
+                        w: isBoss ? 45 : 32,
+                        h: isBoss ? 45 : 32,
+                        speed: isBoss ? 2 : Math.random() * 2 + 2,
+                        hp: isBoss ? 3 : 1,
+                        isBoss: isBoss,
+                        color: isBoss ? '#ef4444' : '#f59e0b'
+                    });
+                }
             }
+
+            let pendingEvoExplosions = []; // 1인용 전용 플라즈마 범위 폭발 대기열(기존 로직 종료 후 별도 처리)
 
             for (let i = spaceEnemies.length - 1; i >= 0; i--) {
                 let e = spaceEnemies[i];
-                e.y += e.speed;
+                if (spaceWarMode === 1) {
+                    // 1인용 전용: 돌진이 아니라 정해진 위치까지 진입 후 규칙적인 패턴으로 이동 + 원거리 사격
+                    updateStageEnemyMovement(e, now);
+                    stageEnemyTryFire(e, now);
+                } else {
+                    // 2인용 기존 로직 그대로 유지: 화면 아래로 직진
+                    e.y += e.speed;
+                }
 
                 for (let j = spaceBullets.length - 1; j >= 0; j--) {
                     let b = spaceBullets[j];
                     if (b.x < e.x + e.w && b.x + b.w > e.x && b.y < e.y + e.h && b.y + b.h > e.y) {
-                        spaceBullets.splice(j, 1);
-                        e.hp--;
+                        if (b.type === 'crescent') {
+                            // 1인용 Lv.7 초승달 파동포: 예전엔 즉사기였으나 너프하여 고정 대미지(4)만 입힘 (탄 자체는 소멸시키지 않음)
+                            e.hp -= 4;
+                        } else {
+                            spaceBullets.splice(j, 1);
+                            e.hp--;
+                        }
                         if (e.hp <= 0) {
                             let shooter = spacePlayers.find(p => p.id === b.ownerId);
-                            if (shooter) shooter.score += e.isBoss ? 300 : 100;
-                            // 처치 시 5% 확률로 진화 에너지 드롭
+                            if (shooter) shooter.score += stageEnemyScoreValue(e);
                             if (Math.random() < 0.05) {
                                 spaceEnergies.push({
                                     x: e.x + e.w / 2 - 9,
@@ -2940,6 +5181,11 @@
                                     pulse: Math.random() * Math.PI * 2
                                 });
                             }
+                            if (b.type === 'plasma') {
+                                // 1인용 Lv.4+ 플라즈마: 명중 시 범위 폭발 대미지(주변 적 동반 처치)
+                                pendingEvoExplosions.push({ x: e.x + e.w / 2, y: e.y + e.h / 2, ownerId: b.ownerId });
+                            }
+                            maybeDropSubModuleItem(e.x + e.w / 2, e.y + e.h / 2);
                             spaceEnemies.splice(i, 1);
                             break;
                         }
@@ -2953,10 +5199,7 @@
                         if (p.x < e.x + e.w && p.x + p.w > e.x &&
                             p.y < e.y + e.h && p.y + p.h > e.y) {
                             spaceEnemies.splice(i, 1);
-                            p.hp--;
-                            if (p.hp <= 0) {
-                                p.dead = true;
-                            }
+                            takeSpaceHit(p, 1);
                             break;
                         }
                     }
@@ -2965,6 +5208,84 @@
                 if (e.y > canvas.height) {
                     spaceEnemies.splice(i, 1);
                 }
+            }
+
+            // 1인용 전용: 플라즈마 범위 폭발 처리 (기존 적 처치 루프와 분리하여 인덱스 충돌 방지)
+            pendingEvoExplosions.forEach(exp => {
+                spaceFx.push({ type: 'explosion', x: exp.x, y: exp.y, life: 16, maxLife: 16 });
+                for (let k = spaceEnemies.length - 1; k >= 0; k--) {
+                    let e2 = spaceEnemies[k];
+                    let dx = (e2.x + e2.w / 2) - exp.x;
+                    let dy = (e2.y + e2.h / 2) - exp.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 26) {
+                        let shooter = spacePlayers.find(p => p.id === exp.ownerId);
+                        if (shooter) shooter.score += stageEnemyScoreValue(e2);
+                        if (Math.random() < 0.05) {
+                            spaceEnergies.push({
+                                x: e2.x + e2.w / 2 - 9,
+                                y: e2.y + e2.h / 2 - 9,
+                                w: 18,
+                                h: 18,
+                                speed: 1.8,
+                                pulse: Math.random() * Math.PI * 2
+                            });
+                        }
+                        maybeDropSubModuleItem(e2.x + e2.w / 2, e2.y + e2.h / 2);
+                        spaceEnemies.splice(k, 1);
+                    }
+                }
+            });
+
+            if (spaceWarMode === 1) {
+                // 1인용 전용: 적의 원거리 공격탄 이동 + 파동탄(Lv.6+) 상쇄 + 플레이어 피격 처리
+                for (let i = spaceEnemyBullets.length - 1; i >= 0; i--) {
+                    let eb = spaceEnemyBullets[i];
+                    eb.x += eb.vx;
+                    eb.y += eb.vy;
+                    if (eb.y > canvas.height + 20 || eb.y < -20 || eb.x < -20 || eb.x > canvas.width + 20) {
+                        spaceEnemyBullets.splice(i, 1);
+                        continue;
+                    }
+
+                    let cleared = false;
+                    for (let j = 0; j < spaceBullets.length; j++) {
+                        let b = spaceBullets[j];
+                        if (b.type !== 'wave') continue;
+                        let ddx = b.x - eb.x, ddy = b.y - eb.y;
+                        if (Math.sqrt(ddx * ddx + ddy * ddy) < (b.w / 2) + 14) {
+                            cleared = true;
+                            break;
+                        }
+                    }
+                    if (cleared) {
+                        spaceEnemyBullets.splice(i, 1);
+                        continue;
+                    }
+
+                    let player = spacePlayers.find(p => !p.dead);
+                    if (player && eb.x < player.x + player.w && eb.x + eb.w > player.x &&
+                        eb.y < player.y + player.h && eb.y + eb.h > player.y) {
+                        spaceEnemyBullets.splice(i, 1);
+                        takeSpaceHit(player, 1);
+                    }
+                }
+
+                // 1인용 전용: 관문 보스 스테이지라면 보스 탄막/쫄몹/피격 처리
+                if (BOSS_STAGES[spaceStage]) {
+                    updateSpaceBossBullets(now);
+                    updateSpaceBossMinions(now);
+                    updateSpaceBossHit(now);
+                }
+
+                // 1인용 전용: 6종 서브 모듈 탄/빔/블랙홀/아이템 업데이트 (메인 시스템과 독립적으로 동작)
+                spaceDroneAngle += 0.06;
+                updateSubBullets(now);
+                updateSubBeams(now);
+                updateSubBlackholes(now);
+                updateSubItems();
+
+                // 1인용 전용: 스테이지의 모든 적을 처치했는지 확인 후 다음 스테이지/최종 클리어로 진행
+                checkSpaceStageClear();
             }
 
             // 진화 에너지 이동/획득 처리
@@ -2978,7 +5299,14 @@
                     if (!p.dead &&
                         p.x < en.x + en.w && p.x + p.w > en.x &&
                         p.y < en.y + en.h && p.y + p.h > en.y) {
-                        if (p.evolution < 5) p.evolution++;
+                        // 1인용은 메인 무기 Lv.1~Lv.7(evolution 0~6), 2인용은 기존과 동일하게 0~5 유지
+                        let maxEvo = spaceWarMode === 1 ? 6 : 5;
+                        if (p.evolution < maxEvo) p.evolution++;
+                        // 드론 수호(D) Lv.5 보유 중이면: 에너지를 먹을 때마다 수호 드론이 1대 재생성(최대 5대)
+                        if (p.subModules && p.subModules.D >= 5) {
+                            if (typeof p.droneCount !== 'number') p.droneCount = 0;
+                            if (p.droneCount < 5) p.droneCount++;
+                        }
                         collected = true;
                         break;
                     }
@@ -2992,6 +5320,12 @@
             if (spacePlayers.every(p => p.dead)) {
                 endSpaceWarGame();
                 return;
+            }
+
+            // 1인용 전용 이펙트(폭발/파동포 섬광) 수명 처리
+            for (let i = spaceFx.length - 1; i >= 0; i--) {
+                spaceFx[i].life--;
+                if (spaceFx[i].life <= 0) spaceFx.splice(i, 1);
             }
 
             ctx.fillStyle = '#0a0a1a';
@@ -3009,9 +5343,151 @@
                 ctx.fillRect(b.x, b.y, b.w, b.h);
             });
 
+            // 1인용 전용: 적의 원거리 공격탄 그리기
+            spaceEnemyBullets.forEach(eb => {
+                ctx.save();
+                ctx.shadowColor = eb.color;
+                ctx.shadowBlur = 6;
+                ctx.fillStyle = eb.color;
+                ctx.beginPath();
+                ctx.arc(eb.x + eb.w / 2, eb.y + eb.h / 2, eb.w / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
             spaceEnemies.forEach(e => drawSpaceEnemyShip(e));
 
+            // 1인용 전용: 관문 보스 / 보스 탄막 / 보스 쫄몹 그리기
+            if (spaceWarMode === 1 && spaceBoss) {
+                drawSpaceBossBullets();
+                drawSpaceBossMinions();
+                drawSpaceBoss(spaceBoss, now);
+            }
+
+            // 1인용 전용: 6종 서브 모듈 시각 연출 (관통 빔 → 블랙홀 → 체인 전기줄기 → 서브 탄 → 드론 순으로 레이어링)
+            if (spaceWarMode === 1) {
+                drawSubBeams();
+                drawBlackholes();
+                drawAndUpdateChains();
+                drawSubBullets();
+                drawSubItems();
+                spacePlayers.forEach(p => { if (!p.dead) drawDrones(p, now); });
+            }
+
             spaceEnergies.forEach(en => drawSpaceEnergy(en));
+
+            // 1인용 전용 이펙트 그리기 (플라즈마 폭발 / 초승달 파동포 섬광)
+            spaceFx.forEach(fx => {
+                let t = fx.life / fx.maxLife;
+                if (fx.type === 'explosion') {
+                    ctx.save();
+                    ctx.globalAlpha = t;
+                    ctx.strokeStyle = fx.big ? '#fbbf24' : '#c084fc';
+                    ctx.lineWidth = fx.big ? 5 : 3;
+                    if (fx.big) { ctx.shadowColor = '#f97316'; ctx.shadowBlur = 18; }
+                    ctx.beginPath();
+                    ctx.arc(fx.x, fx.y, (fx.big ? 46 : 26) * (1 - t) + 6, 0, Math.PI * 2);
+                    ctx.stroke();
+                    if (fx.big) {
+                        ctx.fillStyle = 'rgba(251,191,36,0.25)';
+                        ctx.beginPath();
+                        ctx.arc(fx.x, fx.y, (46 * (1 - t) + 6) * 0.7, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.restore();
+                } else if (fx.type === 'crescentFlash') {
+                    ctx.save();
+                    ctx.globalAlpha = t * 0.5;
+                    ctx.fillStyle = '#fde68a';
+                    ctx.fillRect(0, fx.y - 20, canvas.width, 40);
+                    ctx.restore();
+                } else if (fx.type === 'stageIntroText') {
+                    // 1인용 전용: 스테이지 시작 안내 텍스트
+                    ctx.save();
+                    ctx.globalAlpha = Math.min(1, t * 2);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#7dd3fc';
+                    ctx.font = 'bold 26px Arial';
+                    ctx.shadowColor = '#000';
+                    ctx.shadowBlur = 8;
+                    ctx.fillText(`STAGE ${fx.stage}`, canvas.width / 2, canvas.height / 2);
+                    ctx.restore();
+                } else if (fx.type === 'stageClearText') {
+                    // 1인용 전용: 스테이지 클리어 / 최종 클리어 안내 텍스트
+                    ctx.save();
+                    ctx.globalAlpha = Math.min(1, t * 2);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#fde047';
+                    ctx.font = 'bold 28px Arial';
+                    ctx.shadowColor = '#000';
+                    ctx.shadowBlur = 8;
+                    let clearText = fx.isFinal ? '🎉 ALL STAGE CLEAR!' : (fx.bossClear ? `🏆 BOSS DEFEATED! STAGE ${fx.stage} CLEAR!` : `STAGE ${fx.stage} CLEAR!`);
+                    ctx.fillText(clearText, canvas.width / 2, canvas.height / 2);
+                    if (fx.healedHp) {
+                        // 스테이지 클리어로 하트(체력) 1개를 회복했을 때 안내 문구 표시
+                        ctx.fillStyle = '#f87171';
+                        ctx.font = 'bold 18px Arial';
+                        ctx.fillText('❤️ 체력 +1 회복!', canvas.width / 2, canvas.height / 2 + 34);
+                    }
+                    ctx.restore();
+                } else if (fx.type === 'bossIntroText') {
+                    // 1인용 전용: 관문 보스 등장 연출 (경고 + 보스 이름)
+                    ctx.save();
+                    ctx.globalAlpha = Math.min(1, t * 2);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#f87171';
+                    ctx.font = 'bold 22px Arial';
+                    ctx.shadowColor = '#000';
+                    ctx.shadowBlur = 10;
+                    ctx.fillText('⚠ WARNING - BOSS APPROACHING ⚠', canvas.width / 2, canvas.height / 2 - 22);
+                    ctx.fillStyle = '#fde047';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.fillText(`STAGE ${fx.stage}`, canvas.width / 2, canvas.height / 2 + 12);
+                    ctx.fillStyle = '#fca5a5';
+                    ctx.font = 'bold 18px Arial';
+                    ctx.fillText(BOSS_NAMES[fx.bossType] || '', canvas.width / 2, canvas.height / 2 + 42);
+                    ctx.restore();
+                } else if (fx.type === 'bossPhaseText') {
+                    // 1인용 전용: 보스 페이즈 전환 안내 텍스트
+                    ctx.save();
+                    ctx.globalAlpha = Math.min(1, t * 2);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#f87171';
+                    ctx.font = 'bold 24px Arial';
+                    ctx.shadowColor = '#000';
+                    ctx.shadowBlur = 8;
+                    ctx.fillText(fx.text, canvas.width / 2, canvas.height / 2);
+                    ctx.restore();
+                } else if (fx.type === 'bossChargeWarn') {
+                    // Stage10: 차징 메가 빔 예고선
+                    ctx.save();
+                    ctx.globalAlpha = 0.35 + Math.sin(now / 60) * 0.15;
+                    ctx.fillStyle = '#bef264';
+                    ctx.fillRect(fx.x - fx.w / 2, 0, fx.w, canvas.height);
+                    ctx.restore();
+                } else if (fx.type === 'bossGravityWarn') {
+                    // Stage20 Phase2: 중력장 흡인 경고
+                    ctx.save();
+                    ctx.globalAlpha = Math.min(1, t * 2);
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = '#c084fc';
+                    ctx.font = 'bold 20px Arial';
+                    ctx.shadowColor = '#000'; ctx.shadowBlur = 8;
+                    ctx.fillText('⚠ 중력장 흡인!', canvas.width / 2, canvas.height / 2 - 60);
+                    ctx.restore();
+                } else if (fx.type === 'bossCrossWarn') {
+                    // Stage25: 십자 레이저 예고선
+                    ctx.save();
+                    ctx.globalAlpha = 0.3 + Math.sin(now / 50) * 0.15;
+                    ctx.strokeStyle = '#fde68a';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(0, fx.y); ctx.lineTo(canvas.width, fx.y);
+                    ctx.moveTo(fx.x, 0); ctx.lineTo(fx.x, canvas.height);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            });
 
             spacePlayers.forEach(p => {
                 if (p.dead) return;
@@ -3028,19 +5504,31 @@
             ctx.font = 'bold 15px Arial';
             if (spaceWarMode === 1) {
                 let p1 = spacePlayers[0];
-                let hearts = '❤️'.repeat(Math.max(0, p1.hp));
-                let evoTxt = p1.evolution > 0 ? ` ⚡Lv.${p1.evolution}` : '';
+                let hearts = '❤️'.repeat(Math.max(0, Math.ceil(p1.hp)));
                 ctx.fillStyle = '#38bdf8';
                 ctx.textAlign = 'left';
-                ctx.fillText(`1P ${hearts}${evoTxt}`, 20, 37);
+                ctx.fillText(`1P ${hearts}`, 20, 37);
+                // 1인용 전용: 현재 스테이지 / 남은 적 수 표시
+                ctx.fillStyle = '#7dd3fc';
+                ctx.textAlign = 'center';
+                ctx.font = 'bold 13px Arial';
+                let remaining = Math.max(0, spaceStageEnemiesTotal - spaceStageEnemiesSpawned) + spaceEnemies.length;
+                ctx.fillText(`STAGE ${spaceStage} / 30   (남은 적 ${remaining})`, canvas.width / 2, 37);
+                // 1인용 전용 메인 무기 Lv.1~Lv.7 표시 (evolution 0~6 → Lv.1~Lv.7): 오른쪽 상단으로 이동
+                let evoTxt = `⚡Lv.${p1.evolution + 1}${p1.evolution >= 6 ? ' MAX' : ''}`;
+                ctx.font = 'bold 14px Arial';
+                ctx.fillStyle = '#fde047';
+                ctx.textAlign = 'right';
+                ctx.fillText(evoTxt, canvas.width - 20, 26);
+                ctx.font = 'bold 15px Arial';
                 ctx.fillStyle = '#fbbf24';
                 ctx.textAlign = 'right';
-                ctx.fillText(`점수: ${p1.score}`, canvas.width - 20, 37);
+                ctx.fillText(`점수: ${p1.score}`, canvas.width - 20, 44);
             } else {
                 let p1 = spacePlayers[0];
                 let p2 = spacePlayers[1];
-                let h1 = p1.dead ? '💀' : '❤️'.repeat(Math.max(0, p1.hp)) + (p1.evolution > 0 ? ` ⚡Lv.${p1.evolution}` : '');
-                let h2 = p2.dead ? '💀' : '❤️'.repeat(Math.max(0, p2.hp)) + (p2.evolution > 0 ? ` ⚡Lv.${p2.evolution}` : '');
+                let h1 = p1.dead ? '💀' : '❤️'.repeat(Math.max(0, Math.ceil(p1.hp))) + (p1.evolution > 0 ? ` ⚡Lv.${p1.evolution}` : '');
+                let h2 = p2.dead ? '💀' : '❤️'.repeat(Math.max(0, Math.ceil(p2.hp))) + (p2.evolution > 0 ? ` ⚡Lv.${p2.evolution}` : '');
                 
                 ctx.fillStyle = '#38bdf8';
                 ctx.textAlign = 'left';
@@ -3049,6 +5537,17 @@
                 ctx.fillStyle = '#f43f5e';
                 ctx.textAlign = 'right';
                 ctx.fillText(`2P: ${h2} (${p2.score})`, canvas.width - 20, 37);
+            }
+
+            // 1인용 전용: 관문 보스 HUD (상단 하트/점수 바 아래, 겹치지 않게 배치)
+            let bossHudActive = spaceWarMode === 1 && spaceBoss && spaceBoss.state === 'idle';
+            if (bossHudActive) {
+                drawSpaceBossHud(spaceBoss);
+            }
+
+            // 1인용 전용: 6종 서브 모듈 레벨 HUD (보스 HUD가 떠 있으면 그 아래로 밀어서 겹치지 않게 배치)
+            if (spaceWarMode === 1 && spacePlayers[0] && !spacePlayers[0].dead) {
+                drawSubModuleHud(spacePlayers[0], bossHudActive ? 40 : 0);
             }
         }
 
