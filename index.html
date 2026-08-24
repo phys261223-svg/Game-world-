@@ -255,6 +255,94 @@
             color: white;
             box-shadow: none;
         }
+
+        .tekken-ctrl-btn {
+            padding: 14px 18px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: linear-gradient(145deg, #64748b, #475569);
+            color: white;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.35);
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .tekken-ctrl-btn:active {
+            transform: translateY(1px) scale(0.96);
+        }
+        .tekken-ctrl-btn.on-cooldown {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .tekken-skill-wrap {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .tekken-cd-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .tekken-cd-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #f87171, #fbbf24);
+            transition: width 0.08s linear;
+        }
+        .tekken-cd-fill.ult-fill {
+            background: linear-gradient(90deg, #6366f1, #facc15);
+        }
+        .tekken-cd-label {
+            font-size: 0.72rem;
+            color: #cbd5e1;
+            min-height: 14px;
+        }
+        .tekken-online-code-box {
+            font-size: 2.6rem;
+            font-weight: bold;
+            letter-spacing: 8px;
+            background: rgba(255,255,255,0.08);
+            border: 2px dashed #3b82f6;
+            border-radius: 14px;
+            padding: 18px 30px;
+            margin: 18px 0;
+            color: #93c5fd;
+        }
+        .tekken-online-input {
+            font-size: 1.6rem;
+            letter-spacing: 6px;
+            text-align: center;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: 2px solid #475569;
+            background: rgba(255,255,255,0.05);
+            color: white;
+            width: 240px;
+            font-family: inherit;
+        }
+        .tekken-online-status {
+            color: #94a3b8;
+            font-size: 1rem;
+            margin-top: 10px;
+        }
+        .tekken-spinner {
+            width: 22px; height: 22px;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            display: inline-block;
+            animation: tekken-spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes tekken-spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -347,6 +435,18 @@
                     </svg>
                 </div>
             </button>
+            <button class="game-card" onclick="openTekkenOnlineMenu()" style="background: linear-gradient(145deg, #b91c1c, #7f1d1d);">
+                <span class="game-title">철권 대전</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <line x1="10" y1="50" x2="34" y2="14" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round"/>
+                        <rect x="7" y="46" width="10" height="6" rx="2" fill="#78350f" transform="rotate(-35 12 49)"/>
+                        <circle cx="46" cy="36" r="9" fill="#fca5a5"/>
+                        <circle cx="46" cy="20" r="8" fill="#fca5a5"/>
+                        <path d="M 38 20 A 8 8 0 0 1 54 20" fill="none" stroke="#1e293b" stroke-width="3"/>
+                    </svg>
+                </div>
+            </button>
         </div>
     </div>
 
@@ -356,7 +456,7 @@
             <p style="font-size: 1.2rem; color: #fbbf24; font-weight: bold; margin-bottom: 12px;">🎮 조작법 안내</p>
             <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">1인용 : 우주선 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span>로 조종</p>
             <p style="font-size: 1.1rem; color: #f8fafc; margin-bottom: 8px;">2인용 : 1P 우주선 <span style="background: #3b82f6; padding: 2px 8px; border-radius: 4px; font-weight: bold;">WASD</span> / 2P 우주선 <span style="background: #ef4444; padding: 2px 8px; border-radius: 4px; font-weight: bold;">화살표 키 (↑, ↓, ←, →)</span>로 조종</p>
-            <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 10px;">* 공격은 자동으로 발사됩니다.</p>
+            <p style="font-size: 0.95rem; color: #94a3b8; margin-top: 10px;">* 공격은 자동으로 발사됩니다. 1인용과 동일한 30스테이지/보스/서브 모델 시스템이며, 2인용은 적이 더 많이 등장하고 보스 체력이 2.5배 강화됩니다.</p>
         </div>
         <div class="btn-group">
             <button onclick="startSpaceWar(1)">1인용</button>
@@ -367,8 +467,8 @@
     </div>
 
     <div id="screen-spacewar-charselect" class="screen">
-        <h2>서브 모델(캐릭터) 선택</h2>
-        <p style="color:#94a3b8; margin-bottom: 20px; max-width: 500px;">첫 서브 모델을 선택하세요. Stage 10/15/20/25 보스를 처치할 때마다 새로운 서브 모델을 하나씩 더 선택할 수 있습니다.</p>
+        <h2 id="spacewar-charselect-title">서브 모델(캐릭터) 선택</h2>
+        <p id="spacewar-charselect-desc" style="color:#94a3b8; margin-bottom: 20px; max-width: 500px;">첫 서브 모델을 선택하세요. Stage 10/15/20/25 보스를 처치할 때마다 새로운 서브 모델을 하나씩 더 선택할 수 있습니다.</p>
         <div id="spacewar-charselect-list" class="btn-group" style="max-width: 720px;"></div>
         <br>
         <button class="btn-secondary" onclick="showScreen('screen-spacewar-mode')">뒤로 가기</button>
@@ -380,6 +480,95 @@
         </div>
         <iframe id="spacewar-uploaded-frame" style="width: 500px; max-width: 95vw; height: 720px; max-height: 90vh; border: none; border-radius: 8px; background: #05050d;"></iframe>
     </div>
+
+    <!-- ▼▼▼ 철권 대전 (Tekken 스타일 대전 격투 게임 - 온라인 1대1) ▼▼▼ -->
+    <div id="screen-tekken-online" class="screen">
+        <h2>철권 대전 - 온라인 1대1</h2>
+        <p style="color:#94a3b8; margin-bottom: 10px; max-width: 500px;">방을 만들어 코드를 상대방에게 알려주거나, 받은 코드로 참가하세요. 서로 다른 두 기기에서 접속하면 실시간으로 대결할 수 있습니다.</p>
+
+        <div id="tekken-online-create-panel" style="display:flex; flex-direction:column; align-items:center; margin-top:10px;">
+            <button onclick="createTekkenRoom()">🎮 방 만들기</button>
+        </div>
+
+        <div id="tekken-online-code-panel" style="display:none; flex-direction:column; align-items:center;">
+            <p class="tekken-online-status">아래 코드를 상대방에게 알려주세요</p>
+            <div class="tekken-online-code-box" id="tekken-room-code-display">------</div>
+            <p class="tekken-online-status"><span class="tekken-spinner"></span>상대방 참가를 기다리는 중...</p>
+        </div>
+
+        <div style="margin:22px 0; color:#475569; font-size:0.9rem;">— 또는 —</div>
+
+        <div id="tekken-online-join-panel" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+            <input type="text" id="tekken-join-code-input" class="tekken-online-input" placeholder="코드 입력" maxlength="6" inputmode="numeric">
+            <button class="btn-secondary" onclick="joinTekkenRoomFromInput()">참가하기</button>
+            <p class="tekken-online-status" id="tekken-join-status"></p>
+        </div>
+
+        <br>
+        <button class="btn-secondary" onclick="leaveTekkenOnlineRoom(); showScreen('screen-main');">메인으로</button>
+    </div>
+
+    <div id="screen-tekken-charselect" class="screen">
+        <h2>캐릭터 선택</h2>
+        <p style="color:#94a3b8; margin-bottom: 10px; max-width: 500px;" id="tekken-charselect-desc">사용할 캐릭터를 선택하세요.</p>
+        <div class="btn-group" id="tekken-charselect-list" style="max-width: 640px;"></div>
+        <p class="tekken-online-status" id="tekken-charselect-wait" style="display:none; margin-top:18px;"><span class="tekken-spinner"></span>상대방의 선택을 기다리는 중...</p>
+        <br>
+        <button class="btn-secondary" onclick="leaveTekkenOnlineRoom(); showScreen('screen-main');">메인으로</button>
+    </div>
+
+    <div id="screen-tekken-game" class="screen" style="position: relative;">
+        <div style="width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 10px;">
+            <button class="btn-secondary" style="padding: 10px 20px; font-size: 1rem;" onclick="quitTekken()">포기/나가기</button>
+            <div id="tekken-round-timer" style="font-size:1.6rem; font-weight:bold; background: rgba(0,0,0,0.5); padding: 8px 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);">60</div>
+            <button class="btn-secondary" style="padding: 10px 20px; font-size: 1rem; visibility:hidden;">다시</button>
+        </div>
+        <canvas id="tekkenCanvas" style="max-width: 95vw; touch-action:none;"></canvas>
+
+        <div id="tekken-controls" style="display:flex; gap:14px; margin-top:14px; flex-wrap:wrap; justify-content:center; max-width:900px;">
+            <div style="display:flex; gap:8px;">
+                <button class="tekken-ctrl-btn" id="tekken-btn-left" style="width:56px;">◀</button>
+                <button class="tekken-ctrl-btn" id="tekken-btn-right" style="width:56px;">▶</button>
+                <button class="tekken-ctrl-btn" id="tekken-btn-jump" style="width:56px;">▲W</button>
+                <button class="tekken-ctrl-btn" id="tekken-btn-guard" style="width:70px; background: linear-gradient(145deg, #475569, #334155);">가드S</button>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="tekken-skill-wrap" style="width:70px;">
+                    <button class="tekken-ctrl-btn" id="tekken-btn-skill1" style="width:70px; background: linear-gradient(145deg, #3b82f6, #1d4ed8);">기술1(H)</button>
+                    <div class="tekken-cd-track"><div class="tekken-cd-fill" id="tekken-cd-fill-0"></div></div>
+                    <div class="tekken-cd-label" id="tekken-cd-label-0"></div>
+                </div>
+                <div class="tekken-skill-wrap" style="width:70px;">
+                    <button class="tekken-ctrl-btn" id="tekken-btn-skill2" style="width:70px; background: linear-gradient(145deg, #3b82f6, #1d4ed8);">기술2(J)</button>
+                    <div class="tekken-cd-track"><div class="tekken-cd-fill" id="tekken-cd-fill-1"></div></div>
+                    <div class="tekken-cd-label" id="tekken-cd-label-1"></div>
+                </div>
+                <div class="tekken-skill-wrap" style="width:70px;">
+                    <button class="tekken-ctrl-btn" id="tekken-btn-skill3" style="width:70px; background: linear-gradient(145deg, #3b82f6, #1d4ed8);">기술3(K)</button>
+                    <div class="tekken-cd-track"><div class="tekken-cd-fill" id="tekken-cd-fill-2"></div></div>
+                    <div class="tekken-cd-label" id="tekken-cd-label-2"></div>
+                </div>
+                <div class="tekken-skill-wrap" style="width:80px;">
+                    <button class="tekken-ctrl-btn" id="tekken-btn-ult" style="width:80px; background: linear-gradient(145deg, #f59e0b, #b45309);">궁극기(L)</button>
+                    <div class="tekken-cd-track"><div class="tekken-cd-fill ult-fill" id="tekken-cd-fill-ult"></div></div>
+                    <div class="tekken-cd-label" id="tekken-cd-label-ult"></div>
+                </div>
+            </div>
+        </div>
+        <p style="color:#64748b; font-size:0.8rem; margin-top:10px; text-align:center;">키보드: 이동 A/D · 점프 W · 가드 S · 기술 H/J/K · 궁극기 L</p>
+
+        <div id="tekken-result-overlay" style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); z-index: 200; justify-content:center; align-items:center;">
+            <div class="modal-content">
+                <h2 id="tekken-result-title" style="color:#fbbf24;">결과</h2>
+                <p id="tekken-result-desc" style="color:#94a3b8;">설명</p>
+                <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
+                    <button onclick="restartTekken()">다시하기</button>
+                    <button class="btn-secondary" onclick="quitTekken()">메인으로 돌아가기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- ▲▲▲ 철권 대전 끝 ▲▲▲ -->
 
     <div id="screen-mode" class="screen">
         <h2 id="mode-title">게임 모드 선택</h2>
@@ -428,7 +617,7 @@
         <canvas id="boardCanvas"></canvas>
 
         <div id="spacewar-submodel-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.92); backdrop-filter: blur(5px); flex-direction: column; justify-content: center; align-items: center; z-index: 60; border-radius: 12px; text-align: center; padding: 20px;">
-            <h2 style="color:#fbbf24; margin-bottom: 8px;">🎉 보스 격파!</h2>
+            <h2 id="spacewar-submodel-title" style="color:#fbbf24; margin-bottom: 8px;">🎉 보스 격파!</h2>
             <p style="color:#e2e8f0; margin-bottom: 18px;">새로운 서브 모델을 선택하세요</p>
             <div id="spacewar-submodel-overlay-list" style="display:flex; gap:12px; flex-wrap:wrap; justify-content:center; max-width: 480px;"></div>
         </div>
@@ -1657,12 +1846,21 @@
             T: '적들 사이를 잇는 전기 줄기로 연쇄 피해',
             V: '중력장 블랙홀로 주변 적을 끌어들여 피해'
         };
-        // ▼ 1인용 전용: 서브 모델(캐릭터) 선택 시스템 — 선택된 키만 드롭/사용 가능 ▼
-        let spaceUnlockedSubModules = []; // 현재 선택되어 사용 가능한 서브 모듈 키 목록 (초기 1개 + 보스(10/15/20/25) 처치마다 1개씩 추가)
-        let spaceInitialSubModuleKey = null; // 1인용 시작 전 캐릭터 선택 화면에서 고른 초기 서브 모델
+        // ▼ 서브 모델(캐릭터) 선택 시스템 — 1P/2P 각 플레이어가 개별적으로 선택, 선택된 키만 드롭/사용 가능 ▼
+        // 각 플레이어별 "현재 선택되어 사용 가능한" 서브 모듈 키 목록은 spacePlayers[i].unlockedSubModules 에 저장됨(플레이어별 독립)
+        let spaceCharSelectKeys = { 1: null, 2: null }; // 시작 전 캐릭터 선택 화면에서 각 플레이어가 고른 초기 서브 모델
+        let spaceCharSelectPlayer = 1; // 캐릭터 선택 화면에서 현재 선택 차례인 플레이어(1P → 2P 순서로 진행)
+        let spacePostBossQueue = []; // 보스 처치 후 서브 모델을 선택해야 하는 플레이어 id 대기열(1P → 2P 순서로 순차 진행)
         const SUB_MODULE_PICK_STAGES = [10, 15, 20, 25]; // 이 스테이지의 보스를 처치하면 서브 모델을 하나 더 선택
         // ▲ 서브 모델 선택 시스템 변수 끝 ▲
         // ▲ 6종 서브 모듈 시스템 변수 끝 ▲
+
+        // 현재 살아있는 플레이어 중 하나를 무작위로 반환(적/보스가 조준할 대상 선정용, 2인용에서도 공평하게 분산)
+        function pickAliveTargetPlayer() {
+            let alive = spacePlayers.filter(p => !p.dead);
+            if (alive.length === 0) return null;
+            return alive[Math.floor(Math.random() * alive.length)];
+        }
 
         const chessChars = {
             1: '♙', 2: '♖', 3: '♘', 4: '♗', 5: '♕', 6: '♔',
@@ -1680,6 +1878,10 @@
                 showScreen('screen-spacewar-mode');
                 return;
             }
+            if (game === 'tekken') {
+                openTekkenCharSelect();
+                return;
+            }
             if (game === 'snake' || game === 'stairs') {
                 startGame(0); 
                 return;
@@ -1690,21 +1892,20 @@
         }
 
         function startSpaceWar(mode) {
+            // 결과창(다시하기 버튼)에서 호출될 때 result-modal이 계속 떠 있으면
+            // 캐릭터 선택 화면이 그 아래에 가려져 클릭이 먹지 않으므로 여기서 확실히 닫아준다.
+            document.getElementById('result-modal').style.display = 'none';
             spaceWarMode = mode || 1;
             config.game = 'spacewar';
             // 1인용/2인용 모두 동일한 캔버스 기반 스페이스워 엔진(initSpaceWarGame)을 사용.
-            // 1인용: 우주선 1대(WASD 조작), 화면 폭이 좁고, 적 스폰 확률도 더 낮음.
-            // 2인용: 우주선 2대(1P WASD / 2P 화살표), 화면 폭이 더 넓고, 적 스폰 확률도 더 높음.
-            // (분기 로직은 initSpaceWarGame / spaceWarLoop 안의 spaceWarMode 체크에 있음)
-            if (spaceWarMode === 1) {
-                // 1인용은 게임 시작 전에 서브 모델(캐릭터) 선택 화면을 먼저 보여줌
-                openSpaceWarCharSelect();
-                return;
-            }
-            startGame(0);
+            // 1인용: 우주선 1대(WASD 조작), 화면 폭이 좁음.
+            // 2인용: 우주선 2대(1P WASD / 2P 화살표), 화면 폭이 더 넓고, 적/보스 체력이 더 강화됨.
+            // 두 모드 모두 스테이지/보스/서브 모델 진화 시스템을 동일하게 사용하며,
+            // 서브 모델은 1P/2P가 각자 따로 선택함(분기 로직은 initSpaceWarGame / spaceWarLoop 안의 spaceWarMode 체크에 있음)
+            openSpaceWarCharSelect();
         }
 
-        // ▼▼▼ 1인용 전용: 서브 모델(캐릭터) 선택 UI ▼▼▼
+        // ▼▼▼ 서브 모델(캐릭터) 선택 UI (1P/2P 공용) ▼▼▼
         function buildSubModuleCard(key, onPick) {
             let info = SUB_MODULE_INFO[key];
             let card = document.createElement('button');
@@ -1714,36 +1915,74 @@
             return card;
         }
 
+        // 게임 시작 전 캐릭터 선택 화면 진입: 1인용은 1P만, 2인용은 1P → 2P 순서로 각자 선택
         function openSpaceWarCharSelect() {
-            spaceUnlockedSubModules = [];
-            spaceInitialSubModuleKey = null;
+            spaceCharSelectKeys = { 1: null, 2: null };
+            spaceCharSelectPlayer = 1;
+            renderSpaceWarCharSelect();
+        }
+
+        function renderSpaceWarCharSelect() {
+            let titleEl = document.getElementById('spacewar-charselect-title');
+            let descEl = document.getElementById('spacewar-charselect-desc');
+            if (spaceWarMode === 2) {
+                titleEl.innerText = `${spaceCharSelectPlayer}P 서브 모델(캐릭터) 선택`;
+                descEl.innerText = `${spaceCharSelectPlayer}P가 사용할 첫 서브 모델을 선택하세요. Stage 10/15/20/25 보스를 처치할 때마다 새로운 서브 모델을 하나씩 더 선택할 수 있습니다.`;
+            } else {
+                titleEl.innerText = '서브 모델(캐릭터) 선택';
+                descEl.innerText = '첫 서브 모델을 선택하세요. Stage 10/15/20/25 보스를 처치할 때마다 새로운 서브 모델을 하나씩 더 선택할 수 있습니다.';
+            }
             let list = document.getElementById('spacewar-charselect-list');
             list.innerHTML = '';
             Object.keys(SUB_MODULE_INFO).forEach(key => {
                 list.appendChild(buildSubModuleCard(key, () => {
-                    spaceInitialSubModuleKey = key;
-                    startGame(0);
+                    spaceCharSelectKeys[spaceCharSelectPlayer] = key;
+                    if (spaceWarMode === 2 && spaceCharSelectPlayer === 1) {
+                        spaceCharSelectPlayer = 2;
+                        renderSpaceWarCharSelect();
+                    } else {
+                        startGame(0);
+                    }
                 }));
             });
             showScreen('screen-spacewar-charselect');
         }
 
-        // 보스(Stage 10/15/20/25) 처치 후: 아직 선택하지 않은 서브 모델 중 하나를 선택
+        // 보스(Stage 10/15/20/25) 처치 후: 아직 선택하지 않은 서브 모델 중 하나를 선택 (1인용은 1P만, 2인용은 1P→2P 순서로 각자 진행)
         function openPostBossSubModuleSelect() {
-            let candidates = Object.keys(SUB_MODULE_INFO).filter(key => !spaceUnlockedSubModules.includes(key));
-            if (candidates.length === 0) {
+            spacePostBossQueue = spacePlayers.filter(p => !p.dead).map(p => p.id);
+            openNextPostBossSelect();
+        }
+
+        function openNextPostBossSelect() {
+            if (spacePostBossQueue.length === 0) {
                 resumeAfterSubModulePick();
                 return;
             }
+            let pid = spacePostBossQueue[0];
+            let p = spacePlayers.find(pl => pl.id === pid);
+            if (!p || p.dead) {
+                spacePostBossQueue.shift();
+                openNextPostBossSelect();
+                return;
+            }
+            let candidates = Object.keys(SUB_MODULE_INFO).filter(key => !p.unlockedSubModules.includes(key));
+            if (candidates.length === 0) {
+                spacePostBossQueue.shift();
+                openNextPostBossSelect();
+                return;
+            }
             let overlay = document.getElementById('spacewar-submodel-overlay');
+            let titleEl = document.getElementById('spacewar-submodel-title');
+            titleEl.innerText = spaceWarMode === 2 ? `🎉 보스 격파! ${p.id}P 서브 모델 선택` : '🎉 보스 격파!';
             let list = document.getElementById('spacewar-submodel-overlay-list');
             list.innerHTML = '';
             candidates.forEach(key => {
                 list.appendChild(buildSubModuleCard(key, () => {
-                    spaceUnlockedSubModules.push(key);
-                    let p1 = spacePlayers[0];
-                    if (p1 && p1.subModules) p1.subModules[key] = Math.max(p1.subModules[key], 1);
-                    resumeAfterSubModulePick();
+                    p.unlockedSubModules.push(key);
+                    p.subModules[key] = Math.max(p.subModules[key], 1);
+                    spacePostBossQueue.shift();
+                    openNextPostBossSelect();
                 }));
             });
             overlay.style.display = 'flex';
@@ -3060,61 +3299,40 @@
             canvas.width = spaceWarMode === 2 ? Math.min(screenWidth * 0.9, 760) : Math.min(screenWidth * 0.9, 520);
             canvas.height = Math.min(screenHeight * 0.85, 750);
 
-            spacePlayers = [];
-            if (spaceWarMode === 1) {
-                spacePlayers.push({
-                    id: 1,
-                    x: canvas.width / 2 - 18,
+            // 1P/2P 공용 플레이어 생성 헬퍼: 메인 무기 진화(0~6)/6종 서브 모듈/서브 모델 선택 시스템을 동일하게 갖춤
+            function makeSpacePlayer(id, x, color) {
+                let initialKey = spaceCharSelectKeys[id] || null;
+                let p = {
+                    id: id,
+                    x: x,
                     y: canvas.height - 70,
                     w: 36,
                     h: 36,
                     speed: 6,
                     hp: 3,
                     score: 0,
-                    color: '#38bdf8',
+                    color: color,
                     lastShot: 0,
-                    lastCrescent: 0, // 1인용 전용 Lv.7 초승달 파동포 쿨다운
+                    lastCrescent: 0, // Lv.7 초승달 파동포 쿨다운
                     dead: false,
-                    evolution: 0, // 진화 단계 (0~6, 1인용은 메인 무기 Lv.1~Lv.7)
+                    evolution: 0, // 진화 단계 (0~6, 메인 무기 Lv.1~Lv.7)
                     subModules: { D: 0, M: 0, B: 0, G: 0, T: 0, V: 0 }, // 6종 서브 모듈 레벨(0~5)
                     lastSubD: 0, lastSubM: 0, lastSubB: 0, lastSubG: 0, lastSubT: 0, lastSubV: 0, // 서브 모듈별 발사/작동 쿨다운
                     droneCount: 0, // 드론 수호(D) Lv.5 전용: 현재 보유한 수호 드론 수(실드 역할, 최대 5)
-                    droneAngleOffsets: [] // 드론 수호(D) Lv.4~5 전용: 드론별 개별 회전/이동 상태
-                });
-                // 캐릭터 선택 화면에서 고른 초기 서브 모델을 Lv.1로 즉시 장착 + 드롭 가능 목록에 등록
-                spaceUnlockedSubModules = spaceInitialSubModuleKey ? [spaceInitialSubModuleKey] : [];
-                if (spaceInitialSubModuleKey) {
-                    spacePlayers[0].subModules[spaceInitialSubModuleKey] = 1;
-                }
+                    droneAngleOffsets: [], // 드론 수호(D) Lv.4~5 전용: 드론별 개별 회전/이동 상태
+                    unlockedSubModules: initialKey ? [initialKey] : [] // 이 플레이어가 선택/보유한 서브 모델 키 목록(플레이어별 독립)
+                };
+                // 캐릭터 선택 화면에서 고른 초기 서브 모델을 Lv.1로 즉시 장착
+                if (initialKey) p.subModules[initialKey] = 1;
+                return p;
+            }
+
+            spacePlayers = [];
+            if (spaceWarMode === 1) {
+                spacePlayers.push(makeSpacePlayer(1, canvas.width / 2 - 18, '#38bdf8'));
             } else {
-                spacePlayers.push({
-                    id: 1,
-                    x: canvas.width / 3 - 18,
-                    y: canvas.height - 70,
-                    w: 36,
-                    h: 36,
-                    speed: 6,
-                    hp: 3,
-                    score: 0,
-                    color: '#38bdf8',
-                    lastShot: 0,
-                    dead: false,
-                    evolution: 0 // 진화 단계 (0~5)
-                });
-                spacePlayers.push({
-                    id: 2,
-                    x: (canvas.width / 3) * 2 - 18,
-                    y: canvas.height - 70,
-                    w: 36,
-                    h: 36,
-                    speed: 6,
-                    hp: 3,
-                    score: 0,
-                    color: '#f43f5e',
-                    lastShot: 0,
-                    dead: false,
-                    evolution: 0 // 진화 단계 (0~5)
-                });
+                spacePlayers.push(makeSpacePlayer(1, canvas.width / 3 - 18, '#38bdf8'));
+                spacePlayers.push(makeSpacePlayer(2, (canvas.width / 3) * 2 - 18, '#f43f5e'));
             }
 
             spaceBullets = [];
@@ -3137,12 +3355,10 @@
             spaceSubBlackholes = [];
             spaceDroneAngle = 0;
 
-            if (spaceWarMode === 1) {
-                // 1인용 전용 30스테이지 시스템 초기화 (2인용은 기존 방식 그대로 유지)
-                spaceStage = 1;
-                spaceStageLastSpawn = 0;
-                startSpaceStage();
-            }
+            // 30스테이지 시스템 초기화 (1인용/2인용 공용)
+            spaceStage = 1;
+            spaceStageLastSpawn = 0;
+            startSpaceStage();
 
             for (let i = 0; i < 60; i++) {
                 spaceStars.push({
@@ -3529,7 +3745,9 @@
             }
 
             // 스테이지가 오를수록 적의 총 수가 크게 늘어남 (1스테이지부터 동일한 커브 적용, 30스테이지 약 65마리)
+            // 2인용은 플레이어가 2명이므로 적이 더 많이 등장하도록 총 수를 추가로 늘림
             spaceStageEnemiesTotal = 9 + Math.round(spaceStage * 1.85);
+            if (spaceWarMode === 2) spaceStageEnemiesTotal = Math.round(spaceStageEnemiesTotal * 1.6);
             spaceFx.push({ type: 'stageIntroText', life: 90, maxLife: 90, stage: spaceStage });
         }
 
@@ -3539,11 +3757,15 @@
             if (spaceStageEnemiesSpawned >= spaceStageEnemiesTotal) return;
 
             // 스테이지가 오를수록 동시에 등장 가능한 적 수가 늘어남 (1스테이지부터 동일한 커브 적용)
+            // 2인용은 플레이어가 2명이므로 동시 등장 한도를 더 높게 잡음
             let maxConcurrent = Math.min(4 + Math.floor(spaceStage / 4), 11);
+            if (spaceWarMode === 2) maxConcurrent = Math.min(maxConcurrent + 4, 15);
             if (spaceEnemies.length >= maxConcurrent) return;
 
             // 스테이지가 오를수록 스폰 간격이 짧아짐 (최소 320ms, 1스테이지부터 동일하게 적용)
+            // 2인용은 스폰 간격을 더 줄여 적이 더 자주 등장하도록 함
             let spawnInterval = Math.max(1100 - spaceStage * 22, 320);
+            if (spaceWarMode === 2) spawnInterval = Math.max(spawnInterval * 0.65, 220);
             if (now - spaceStageLastSpawn < spawnInterval) return;
             spaceStageLastSpawn = now;
 
@@ -3631,7 +3853,7 @@
             if (now - e.lastShot < e.shotInterval) return;
             e.lastShot = now;
 
-            let player = spacePlayers.find(p => !p.dead);
+            let player = pickAliveTargetPlayer();
             if (!player) return;
 
             let cx = e.x + e.w / 2, cy = e.y + e.h / 2;
@@ -3683,13 +3905,16 @@
             spaceStageClearing = true;
             let isFinal = spaceStage >= 30;
 
-            // 스테이지 1개를 깰 때마다 하트(체력) 1개 회복 (상한 5개, 최종 클리어 시에는 회복 불필요)
+            // 스테이지 1개를 깰 때마다 살아있는 모든 플레이어가 하트(체력) 1개씩 회복 (상한 5개, 최종 클리어 시에는 회복 불필요)
             let healedHp = false;
-            let player = spacePlayers[0];
             let maxHeartHp = 5;
-            if (!isFinal && player && !player.dead && player.hp < maxHeartHp) {
-                player.hp++;
-                healedHp = true;
+            if (!isFinal) {
+                spacePlayers.forEach(player => {
+                    if (!player.dead && player.hp < maxHeartHp) {
+                        player.hp++;
+                        healedHp = true;
+                    }
+                });
             }
 
             spaceFx.push({ type: 'stageClearText', life: 100, maxLife: 100, stage: spaceStage, isFinal: isFinal, healedHp: healedHp });
@@ -3697,8 +3922,10 @@
             setTimeout(() => {
                 if (!gameActive || config.game !== 'spacewar') return;
                 if (isFinal) {
-                    let score = spacePlayers[0] ? spacePlayers[0].score : 0;
-                    endGame("🎉 GAME CLEAR!", `30개 스테이지를 모두 클리어했습니다!<br>최종 점수: ${score}점`, true);
+                    let scoreDesc = spaceWarMode === 2 ?
+                        `1P 점수: ${spacePlayers[0].score}점 | 2P 점수: ${spacePlayers[1].score}점` :
+                        `최종 점수: ${spacePlayers[0].score}점`;
+                    endGame("🎉 GAME CLEAR!", `30개 스테이지를 모두 클리어했습니다!<br>${scoreDesc}`, true);
                 } else {
                     spaceStage++;
                     startSpaceStage();
@@ -3709,8 +3936,8 @@
 
         // ▼▼▼ 1인용 전용: 6종 서브 모듈 아이템 드롭/뽑기 헬퍼 ▼▼▼
         // 가중치 확률 테이블(SUB_MODULE_DROP_TABLE)에 따라, 현재 "선택되어 사용 가능한" 서브 모듈 키 중 하나를 뽑음
-        function rollSubModuleKey() {
-            let pool = SUB_MODULE_DROP_TABLE.filter(([key]) => spaceUnlockedSubModules.includes(key));
+        function rollSubModuleKey(unlockedKeys) {
+            let pool = SUB_MODULE_DROP_TABLE.filter(([key]) => unlockedKeys.includes(key));
             if (pool.length === 0) return null;
             let total = pool.reduce((sum, [, weight]) => sum + weight, 0);
             let r = Math.random() * total;
@@ -3724,10 +3951,16 @@
 
         // 적 처치 지점에 서브 모듈 아이템 캡슐을 드롭 (10% 확률로 드롭 이벤트 발생 → 그 안에서 선택된 서브 모델만 가중치 뽑기)
         function maybeDropSubModuleItem(x, y) {
-            if (spaceWarMode !== 1) return;
-            if (spaceUnlockedSubModules.length === 0) return;
+            // 살아있는 모든 플레이어가 선택한 서브 모델 키를 합쳐서 드롭 후보로 사용(1P/2P 각자 선택 반영)
+            let unlockedKeys = [];
+            spacePlayers.forEach(p => {
+                if (p.unlockedSubModules) {
+                    p.unlockedSubModules.forEach(k => { if (!unlockedKeys.includes(k)) unlockedKeys.push(k); });
+                }
+            });
+            if (unlockedKeys.length === 0) return;
             if (Math.random() < 0.10) {
-                let key = rollSubModuleKey();
+                let key = rollSubModuleKey(unlockedKeys);
                 if (!key) return;
                 spaceSubItems.push({
                     x: x - 10, y: y - 10, w: 20, h: 20,
@@ -3791,7 +4024,18 @@
                 }
             }
             p.hp -= dmgAmount;
-            if (p.hp <= 0) p.dead = true;
+            if (p.hp <= 0 && !p.dead) {
+                p.dead = true;
+                // 2인용 모드 한정: 플레이어가 죽으면 1% 확률로 부활 아이템을 그 자리에 드롭.
+                // 남은 생존 플레이어가 이 아이템을 먹으면 죽은 플레이어를 부활시킬 수 있음.
+                if (spaceWarMode === 2 && Math.random() < 0.01) {
+                    spaceSubItems.push({
+                        x: p.x + p.w / 2 - 10, y: p.y + p.h / 2 - 10, w: 20, h: 20,
+                        speed: 1.6, pulse: Math.random() * Math.PI * 2,
+                        key: 'REVIVE', revivePlayerId: p.id
+                    });
+                }
+            }
             return false;
         }
 
@@ -3945,7 +4189,7 @@
                     if (sm.G === 1) {
                         spaceSubBullets.push({ x: cx - 2, y: p.y, w: 4, h: 12, vx: 0, vy: -14, color: SUB_MODULE_INFO.G.color, dmg: 0.45, sub: 'G' });
                     } else if (sm.G === 2) {
-                        [-0.24, -0.08, 0.08, 0.24].forEach(spread => {
+                        [-0.18, -0.06, 0.06, 0.18].forEach(spread => {
                             spaceSubBullets.push({ x: cx - 2, y: p.y, w: 4, h: 12, vx: Math.sin(spread) * 8, vy: -14 * Math.cos(spread), color: SUB_MODULE_INFO.G.color, dmg: 0.45, sub: 'G' });
                         });
                     } else if (sm.G >= 4) {
@@ -3992,7 +4236,7 @@
                 let vInterval = 3000;
                 if (now - p.lastSubV > vInterval) {
                     p.lastSubV = now;
-                    let radius = sm.V === 1 ? 46 : (sm.V === 2 ? 66 : (sm.V === 3 ? 92 : (sm.V === 4 ? 130 : 130)));
+                    let radius = sm.V === 1 ? 46 : (sm.V === 2 ? 66 : (sm.V === 3 ? 92 : (sm.V === 4 ? 100 : 100)));
                     let pull = sm.V === 1 ? 0.6 : (sm.V === 2 ? 1.1 : 1.8);
                     let dot = sm.V >= 3 ? (sm.V >= 5 ? 0.9 : 0.4) : 0;
                     spaceSubBlackholes.push({
@@ -4141,7 +4385,8 @@
                         let eb = spaceBossBullets[j];
                         if (eb.isBeam || eb.isCrossBeam) continue;
                         let dx = bh.x - eb.x, dy = bh.y - eb.y;
-                        if (Math.sqrt(dx * dx + dy * dy) < bh.radius) spaceBossBullets.splice(j, 1);
+                        // 보스 공격은 블랙홀이라도 25% 확률로만 흡수(=평균적으로 4분의 1만 막힘). 일반 적 탄막은 기존대로 전부 흡수.
+                        if (Math.sqrt(dx * dx + dy * dy) < bh.radius && Math.random() < 0.25) spaceBossBullets.splice(j, 1);
                     }
                 }
             }
@@ -4159,7 +4404,18 @@
                     if (!p.dead && p.subModules &&
                         p.x < it.x + it.w && p.x + p.w > it.x &&
                         p.y < it.y + it.h && p.y + p.h > it.y) {
-                        if (p.subModules[it.key] < 5) p.subModules[it.key]++;
+                        if (it.key === 'REVIVE') {
+                            // 부활 아이템: 죽은 팀원을 되살림 (hp 절반 회복 후 재참전)
+                            let dead = spacePlayers.find(dp => dp.id === it.revivePlayerId && dp.dead);
+                            if (dead) {
+                                dead.dead = false;
+                                dead.hp = 2; // 최대 체력(3)의 절반만큼 회복시켜 부활
+                                spaceFx.push({ type: 'explosion', x: dead.x, y: dead.y, life: 20, maxLife: 20 });
+                            }
+                        } else if (p.unlockedSubModules && p.unlockedSubModules.includes(it.key) && p.subModules[it.key] < 5) {
+                            // 이 플레이어가 선택/보유한 서브 모델일 때만 레벨업(선택하지 않은 종류는 캡슐만 사라짐)
+                            p.subModules[it.key]++;
+                        }
                         collected = true;
                         break;
                     }
@@ -4273,7 +4529,9 @@
         // 서브 모듈 아이템(캡슐) 그리기
         function drawSubItems() {
             spaceSubItems.forEach(it => {
-                let info = SUB_MODULE_INFO[it.key];
+                // 부활 아이템(REVIVE)은 서브 모델 목록에 없는 특수 아이템이라 별도 색상/라벨 사용
+                let isRevive = it.key === 'REVIVE';
+                let info = isRevive ? { color: '#22c55e' } : SUB_MODULE_INFO[it.key];
                 let cx = it.x + it.w / 2, cy = it.y + it.h / 2;
                 let pulseR = it.w / 2 + Math.sin(it.pulse) * 1.5;
                 ctx.save();
@@ -4286,7 +4544,7 @@
                 ctx.font = 'bold 12px Arial';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(it.key, cx, cy + 1);
+                ctx.fillText(isRevive ? '♥' : it.key, cx, cy + 1);
                 ctx.restore();
             });
         }
@@ -4306,12 +4564,22 @@
             ctx.roundRect(10, y - 13, canvas.width - 20, 20, 6);
             ctx.fill();
 
-            let totalWidth = canvas.width - 20;
+            // 2인용에서는 각 플레이어(1P/2P)의 바를 구분할 수 있도록 왼쪽에 색상 라벨 표시
+            let labelW = 0;
+            if (spaceWarMode === 2) {
+                labelW = 26;
+                ctx.textAlign = 'left';
+                ctx.fillStyle = p.color;
+                ctx.fillText(`${p.id}P`, 14, y + 2);
+            }
+
+            let totalWidth = canvas.width - 20 - labelW;
             let segW = totalWidth / order.length;
+            ctx.textAlign = 'center';
             order.forEach((key, idx) => {
                 let lvl = sm[key];
                 let info = SUB_MODULE_INFO[key];
-                let segX = 10 + segW * idx + segW / 2;
+                let segX = 10 + labelW + segW * idx + segW / 2;
                 ctx.fillStyle = lvl > 0 ? info.color : 'rgba(255,255,255,0.3)';
                 ctx.fillText(`[${key}:Lv.${lvl}]`, segX, y + 2);
             });
@@ -4326,7 +4594,7 @@
             switch (bossType) {
                 case 'titan_carnox':      return { hp: 1000, w: 150, h: 125, color: '#4b5563' };
                 case 'neo_sphera':        return { hp: 1500, w: 138, h: 138, color: '#38bdf8' };
-                case 'chronos_leviathan': return { hp: 2200, w: 165, h: 140, color: '#7f1d1d' };
+                case 'chronos_leviathan': return { hp: 3400, w: 165, h: 140, color: '#7f1d1d' };
                 case 'arc_angel':         return { hp: 3000, w: 175, h: 125, color: '#f8fafc' };
                 case 'omega_genesis':     return { hp: 5500, w: 260, h: 155, color: '#334155' };
             }
@@ -4336,6 +4604,8 @@
         // 보스 등장: 화면 상단에서 서서히 진입
         function spawnSpaceBoss(bossType) {
             let stats = getBossBaseStats(bossType);
+            // 2인용은 플레이어가 2명이 함께 공격하므로 보스 체력을 2.5배로 강화
+            let bossHp = spaceWarMode === 2 ? Math.round(stats.hp * 2.5) : stats.hp;
             spaceBoss = {
                 type: bossType,
                 name: BOSS_NAMES[bossType],
@@ -4344,8 +4614,8 @@
                 w: stats.w,
                 h: stats.h,
                 targetY: 60,
-                hp: stats.hp,
-                maxHp: stats.hp,
+                hp: bossHp,
+                maxHp: bossHp,
                 color: stats.color,
                 state: 'enter', // enter → idle(패턴 전투)
                 phase: 1,
@@ -4401,7 +4671,7 @@
             b.x += (hoverX - b.w / 2 - b.x) * 0.02;
             b.x = Math.max(4, Math.min(canvas.width - b.w - 4, b.x));
 
-            let player = spacePlayers.find(p => !p.dead);
+            let player = pickAliveTargetPlayer();
             let ratio = b.hp / b.maxHp;
 
             if (b.type === 'titan_carnox') {
@@ -4471,48 +4741,52 @@
                 }
 
                 if (b.phase === 1) {
-                    if (now - b.lastPattern > 950) {
+                    // 발사 간격을 750ms → 520ms로 단축해 압박감 강화 (2번째 보스보다 처지지 않도록)
+                    if (now - b.lastPattern > 520) {
                         b.lastPattern = now;
-                        // 추적 유도 구체 3개
-                        for (let i = 0; i < 3; i++) {
+                        // 추적 유도 구체 5개, 속도도 소폭 상승
+                        for (let i = 0; i < 5; i++) {
                             spaceBossBullets.push({
-                                x: cx + (i - 1) * 26, y: cy, w: 12, h: 12,
-                                vx: 0, vy: 1.2, color: '#c084fc', homing: true, homingSpeed: 2.4
+                                x: cx + (i - 2) * 22, y: cy, w: 12, h: 12,
+                                vx: 0, vy: 1.2, color: '#c084fc', homing: true, homingSpeed: 3.3
                             });
                         }
-                        // 3연장 가속탄 (속도 점점 빨라짐)
+                        // 5연장 가속탄 (속도 점점 빨라짐)
                         if (player) {
                             let dx = (player.x + player.w / 2) - cx, dy = (player.y + player.h / 2) - cy;
                             let ang = Math.atan2(dy, dx);
-                            [0, 260, 520].forEach((delay, idx) => {
+                            [0, 150, 300, 450, 600].forEach((delay, idx) => {
                                 setTimeout(() => {
                                     if (!spaceBoss || spaceBoss !== b) return;
-                                    fireBossBullet(ang, 3 + idx * 1.4, cx, cy, '#ef4444', 9);
+                                    fireBossBullet(ang, 3.8 + idx * 1.6, cx, cy, '#ef4444', 9);
                                 }, delay);
                             });
                         }
                     }
                 } else {
-                    // Phase2: 중력장 흡인 + 360도 확산탄
-                    if (now - b.lastPattern > 1500) {
+                    // Phase2: 중력장 흡인 + 360도 확산탄 (간격 단축 + 탄 수/속도 증가)
+                    if (now - b.lastPattern > 850) {
                         b.lastPattern = now;
                         b.gravityPullUntil = now + 1400;
                         spaceFx.push({ type: 'bossGravityWarn', life: 40, maxLife: 40 });
                         setTimeout(() => {
                             if (!spaceBoss || spaceBoss !== b) return;
-                            for (let i = 0; i < 24; i++) {
-                                let a = (Math.PI * 2 * i) / 24;
-                                fireBossBullet(a, 3.6, cx, cy, '#f87171', 9);
+                            for (let i = 0; i < 36; i++) {
+                                let a = (Math.PI * 2 * i) / 36;
+                                fireBossBullet(a, 4.6, cx, cy, '#f87171', 9);
                             }
                         }, 1400);
                     }
-                    if (now < b.gravityPullUntil && player) {
-                        let dx = cx - (player.x + player.w / 2), dy = cy - (player.y + player.h / 2);
-                        let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
-                        player.x += (dx / dist) * 2.2;
-                        player.y += (dy / dist) * 2.2;
-                        player.x = Math.max(0, Math.min(canvas.width - player.w, player.x));
-                        player.y = Math.max(0, Math.min(canvas.height - player.h, player.y));
+                    if (now < b.gravityPullUntil) {
+                        spacePlayers.forEach(pl => {
+                            if (pl.dead) return;
+                            let dx = cx - (pl.x + pl.w / 2), dy = cy - (pl.y + pl.h / 2);
+                            let dist = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+                            pl.x += (dx / dist) * 3.3;
+                            pl.y += (dy / dist) * 3.3;
+                            pl.x = Math.max(0, Math.min(canvas.width - pl.w, pl.x));
+                            pl.y = Math.max(0, Math.min(canvas.height - pl.h, pl.y));
+                        });
                     }
                 }
             } else if (b.type === 'arc_angel') {
@@ -4599,7 +4873,7 @@
 
         // 보스 탄막 이동 + 플레이어 피격 + 파동탄 상쇄 + 반사 처리 (매 프레임 호출)
         function updateSpaceBossBullets(now) {
-            let player = spacePlayers.find(p => !p.dead);
+            let player = pickAliveTargetPlayer();
             for (let i = spaceBossBullets.length - 1; i >= 0; i--) {
                 let eb = spaceBossBullets[i];
 
@@ -4679,7 +4953,7 @@
 
         // 보스 쫄몹(드론) 이동 + 자폭/충돌 처리
         function updateSpaceBossMinions(now) {
-            let player = spacePlayers.find(p => !p.dead);
+            let player = pickAliveTargetPlayer();
             for (let i = spaceBossMinions.length - 1; i >= 0; i--) {
                 let m = spaceBossMinions[i];
                 if (m.kamikaze && player) {
@@ -4766,12 +5040,15 @@
             spaceStageClearing = true;
 
             let isFinal = spaceStage >= 30;
-            let player = spacePlayers[0];
             let maxHeartHp = 5;
             let healedHp = false;
-            if (!isFinal && player && !player.dead && player.hp < maxHeartHp) {
-                player.hp++;
-                healedHp = true;
+            if (!isFinal) {
+                spacePlayers.forEach(player => {
+                    if (!player.dead && player.hp < maxHeartHp) {
+                        player.hp++;
+                        healedHp = true;
+                    }
+                });
             }
 
             setTimeout(() => {
@@ -4780,8 +5057,10 @@
                 setTimeout(() => {
                     if (!gameActive || config.game !== 'spacewar') return;
                     if (isFinal) {
-                        let score = spacePlayers[0] ? spacePlayers[0].score : 0;
-                        endGame("🎉 GAME CLEAR!", `종말 요새 「오메가 제네시스」를 격파하고 전 30개 스테이지를 모두 클리어했습니다!<br>최종 점수: ${score}점`, true);
+                        let scoreDesc = spaceWarMode === 2 ?
+                            `1P 점수: ${spacePlayers[0].score}점 | 2P 점수: ${spacePlayers[1].score}점` :
+                            `최종 점수: ${spacePlayers[0] ? spacePlayers[0].score : 0}점`;
+                        endGame("🎉 GAME CLEAR!", `종말 요새 「오메가 제네시스」를 격파하고 전 30개 스테이지를 모두 클리어했습니다!<br>${scoreDesc}`, true);
                     } else if (SUB_MODULE_PICK_STAGES.includes(spaceStage)) {
                         // Stage 10/15/20/25 보스 처치 보상: 새 서브 모델을 고른 뒤 게임이 연달아 이어짐
                         if (spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
@@ -5077,33 +5356,9 @@
             let now = Date.now();
             spacePlayers.forEach(p => {
                 if (p.dead) return;
-                if (spaceWarMode === 1) {
-                    // ▼ 1인용 전용: 메인 무기 7단계 진화 발사 로직 (기존 2인용 로직은 아래 else에서 그대로 유지) ▼
-                    fireEvolvedWeapon(p, now);
-                    // ▼ 1인용 전용: 6종 서브 모듈 자동 발사/작동 (메인 무기와 독립적으로 동시 작동) ▼
-                    fireSubModules(p, now);
-                } else {
-                    // 진화 단계별 공격 속도: 5단계부터 발사 간격이 짧아짐(공속 증가)
-                    let fireInterval = p.evolution >= 5 ? 100 : 180;
-                    if (now - p.lastShot > fireInterval) {
-                        // 진화 단계별 레이저 개수: 1단계 2개, 2단계 3개, 3단계 4개, 4단계 5개(5단계는 개수 유지하고 공속만 증가)
-                        let laserCount = Math.min(1 + p.evolution, 5);
-                        let spacing = 9;
-                        let startX = p.x + p.w / 2 - 3 - ((laserCount - 1) * spacing) / 2;
-                        for (let li = 0; li < laserCount; li++) {
-                            spaceBullets.push({
-                                x: startX + li * spacing,
-                                y: p.y,
-                                w: 6,
-                                h: 14,
-                                speed: 10,
-                                ownerId: p.id,
-                                color: p.color
-                            });
-                        }
-                        p.lastShot = now;
-                    }
-                }
+                // 메인 무기 7단계 진화 발사 로직 + 6종 서브 모듈 자동 발사/작동 (1P/2P 공용)
+                fireEvolvedWeapon(p, now);
+                fireSubModules(p, now);
             });
 
             spaceStars.forEach(s => {
@@ -5118,45 +5373,22 @@
                 if (b.y < -20 || b.x < -40 || b.x > canvas.width + 40) spaceBullets.splice(i, 1);
             }
 
-            if (spaceWarMode === 1) {
-                if (BOSS_STAGES[spaceStage]) {
-                    // 1인용 전용: 관문 보스 스테이지 (일반 잡몹 스폰 없음, 보스 등장/패턴만 진행)
-                    updateSpaceBossIntro();
-                    updateSpaceBossPatterns(now);
-                } else {
-                    // 1인용 전용: 30스테이지 시스템에 따른 트리클 스폰 (돌진형이 아닌 패턴형 적)
-                    updateSpaceStageSpawning(now);
-                }
+            if (BOSS_STAGES[spaceStage]) {
+                // 관문 보스 스테이지 (일반 잡몹 스폰 없음, 보스 등장/패턴만 진행) — 1P/2P 공용
+                updateSpaceBossIntro();
+                updateSpaceBossPatterns(now);
             } else {
-                // 2인용 기존 로직 그대로 유지
-                let spawnRate = 0.11;
-                if (Math.random() < spawnRate) {
-                    let isBoss = Math.random() < 0.15;
-                    spaceEnemies.push({
-                        x: Math.random() * (canvas.width - 35),
-                        y: -40,
-                        w: isBoss ? 45 : 32,
-                        h: isBoss ? 45 : 32,
-                        speed: isBoss ? 2 : Math.random() * 2 + 2,
-                        hp: isBoss ? 3 : 1,
-                        isBoss: isBoss,
-                        color: isBoss ? '#ef4444' : '#f59e0b'
-                    });
-                }
+                // 30스테이지 시스템에 따른 트리클 스폰 (돌진형이 아닌 패턴형 적) — 1P/2P 공용, 2P는 함수 내부에서 더 많이 스폰됨
+                updateSpaceStageSpawning(now);
             }
 
             let pendingEvoExplosions = []; // 1인용 전용 플라즈마 범위 폭발 대기열(기존 로직 종료 후 별도 처리)
 
             for (let i = spaceEnemies.length - 1; i >= 0; i--) {
                 let e = spaceEnemies[i];
-                if (spaceWarMode === 1) {
-                    // 1인용 전용: 돌진이 아니라 정해진 위치까지 진입 후 규칙적인 패턴으로 이동 + 원거리 사격
-                    updateStageEnemyMovement(e, now);
-                    stageEnemyTryFire(e, now);
-                } else {
-                    // 2인용 기존 로직 그대로 유지: 화면 아래로 직진
-                    e.y += e.speed;
-                }
+                // 정해진 위치까지 진입 후 규칙적인 패턴으로 이동 + 원거리 사격 (1P/2P 공용)
+                updateStageEnemyMovement(e, now);
+                stageEnemyTryFire(e, now);
 
                 for (let j = spaceBullets.length - 1; j >= 0; j--) {
                     let b = spaceBullets[j];
@@ -5236,57 +5468,59 @@
                 }
             });
 
-            if (spaceWarMode === 1) {
-                // 1인용 전용: 적의 원거리 공격탄 이동 + 파동탄(Lv.6+) 상쇄 + 플레이어 피격 처리
-                for (let i = spaceEnemyBullets.length - 1; i >= 0; i--) {
-                    let eb = spaceEnemyBullets[i];
-                    eb.x += eb.vx;
-                    eb.y += eb.vy;
-                    if (eb.y > canvas.height + 20 || eb.y < -20 || eb.x < -20 || eb.x > canvas.width + 20) {
-                        spaceEnemyBullets.splice(i, 1);
-                        continue;
-                    }
+            // 적의 원거리 공격탄 이동 + 파동탄(Lv.6+) 상쇄 + 플레이어 피격 처리 (1P/2P 공용, 살아있는 모든 플레이어와 충돌 판정)
+            for (let i = spaceEnemyBullets.length - 1; i >= 0; i--) {
+                let eb = spaceEnemyBullets[i];
+                eb.x += eb.vx;
+                eb.y += eb.vy;
+                if (eb.y > canvas.height + 20 || eb.y < -20 || eb.x < -20 || eb.x > canvas.width + 20) {
+                    spaceEnemyBullets.splice(i, 1);
+                    continue;
+                }
 
-                    let cleared = false;
-                    for (let j = 0; j < spaceBullets.length; j++) {
-                        let b = spaceBullets[j];
-                        if (b.type !== 'wave') continue;
-                        let ddx = b.x - eb.x, ddy = b.y - eb.y;
-                        if (Math.sqrt(ddx * ddx + ddy * ddy) < (b.w / 2) + 14) {
-                            cleared = true;
-                            break;
-                        }
+                let cleared = false;
+                for (let j = 0; j < spaceBullets.length; j++) {
+                    let b = spaceBullets[j];
+                    if (b.type !== 'wave') continue;
+                    let ddx = b.x - eb.x, ddy = b.y - eb.y;
+                    if (Math.sqrt(ddx * ddx + ddy * ddy) < (b.w / 2) + 14) {
+                        cleared = true;
+                        break;
                     }
-                    if (cleared) {
-                        spaceEnemyBullets.splice(i, 1);
-                        continue;
-                    }
+                }
+                if (cleared) {
+                    spaceEnemyBullets.splice(i, 1);
+                    continue;
+                }
 
-                    let player = spacePlayers.find(p => !p.dead);
-                    if (player && eb.x < player.x + player.w && eb.x + eb.w > player.x &&
+                let hitAny = false;
+                for (let player of spacePlayers) {
+                    if (!player.dead && eb.x < player.x + player.w && eb.x + eb.w > player.x &&
                         eb.y < player.y + player.h && eb.y + eb.h > player.y) {
-                        spaceEnemyBullets.splice(i, 1);
                         takeSpaceHit(player, 1);
+                        hitAny = true;
+                        break;
                     }
                 }
-
-                // 1인용 전용: 관문 보스 스테이지라면 보스 탄막/쫄몹/피격 처리
-                if (BOSS_STAGES[spaceStage]) {
-                    updateSpaceBossBullets(now);
-                    updateSpaceBossMinions(now);
-                    updateSpaceBossHit(now);
-                }
-
-                // 1인용 전용: 6종 서브 모듈 탄/빔/블랙홀/아이템 업데이트 (메인 시스템과 독립적으로 동작)
-                spaceDroneAngle += 0.06;
-                updateSubBullets(now);
-                updateSubBeams(now);
-                updateSubBlackholes(now);
-                updateSubItems();
-
-                // 1인용 전용: 스테이지의 모든 적을 처치했는지 확인 후 다음 스테이지/최종 클리어로 진행
-                checkSpaceStageClear();
+                if (hitAny) spaceEnemyBullets.splice(i, 1);
             }
+
+            // 관문 보스 스테이지라면 보스 탄막/쫄몹/피격 처리 (1P/2P 공용)
+            if (BOSS_STAGES[spaceStage]) {
+                updateSpaceBossBullets(now);
+                updateSpaceBossMinions(now);
+                updateSpaceBossHit(now);
+            }
+
+            // 6종 서브 모듈 탄/빔/블랙홀/아이템 업데이트 (메인 시스템과 독립적으로 동작, 1P/2P 공용)
+            spaceDroneAngle += 0.06;
+            updateSubBullets(now);
+            updateSubBeams(now);
+            updateSubBlackholes(now);
+            updateSubItems();
+
+            // 스테이지의 모든 적을 처치했는지 확인 후 다음 스테이지/최종 클리어로 진행 (1P/2P 공용)
+            checkSpaceStageClear();
 
             // 진화 에너지 이동/획득 처리
             for (let i = spaceEnergies.length - 1; i >= 0; i--) {
@@ -5299,8 +5533,8 @@
                     if (!p.dead &&
                         p.x < en.x + en.w && p.x + p.w > en.x &&
                         p.y < en.y + en.h && p.y + p.h > en.y) {
-                        // 1인용은 메인 무기 Lv.1~Lv.7(evolution 0~6), 2인용은 기존과 동일하게 0~5 유지
-                        let maxEvo = spaceWarMode === 1 ? 6 : 5;
+                        // 메인 무기 Lv.1~Lv.7(evolution 0~6) — 1P/2P 공용
+                        let maxEvo = 6;
                         if (p.evolution < maxEvo) p.evolution++;
                         // 드론 수호(D) Lv.5 보유 중이면: 에너지를 먹을 때마다 수호 드론이 1대 재생성(최대 5대)
                         if (p.subModules && p.subModules.D >= 5) {
@@ -5357,22 +5591,20 @@
 
             spaceEnemies.forEach(e => drawSpaceEnemyShip(e));
 
-            // 1인용 전용: 관문 보스 / 보스 탄막 / 보스 쫄몹 그리기
-            if (spaceWarMode === 1 && spaceBoss) {
+            // 관문 보스 / 보스 탄막 / 보스 쫄몹 그리기 (1P/2P 공용)
+            if (spaceBoss) {
                 drawSpaceBossBullets();
                 drawSpaceBossMinions();
                 drawSpaceBoss(spaceBoss, now);
             }
 
-            // 1인용 전용: 6종 서브 모듈 시각 연출 (관통 빔 → 블랙홀 → 체인 전기줄기 → 서브 탄 → 드론 순으로 레이어링)
-            if (spaceWarMode === 1) {
-                drawSubBeams();
-                drawBlackholes();
-                drawAndUpdateChains();
-                drawSubBullets();
-                drawSubItems();
-                spacePlayers.forEach(p => { if (!p.dead) drawDrones(p, now); });
-            }
+            // 6종 서브 모듈 시각 연출 (관통 빔 → 블랙홀 → 체인 전기줄기 → 서브 탄 → 드론 순으로 레이어링, 1P/2P 공용)
+            drawSubBeams();
+            drawBlackholes();
+            drawAndUpdateChains();
+            drawSubBullets();
+            drawSubItems();
+            spacePlayers.forEach(p => { if (!p.dead) drawDrones(p, now); });
 
             spaceEnergies.forEach(en => drawSpaceEnergy(en));
 
@@ -5502,19 +5734,19 @@
             ctx.stroke();
 
             ctx.font = 'bold 15px Arial';
+            let remaining = Math.max(0, spaceStageEnemiesTotal - spaceStageEnemiesSpawned) + spaceEnemies.length;
             if (spaceWarMode === 1) {
                 let p1 = spacePlayers[0];
                 let hearts = '❤️'.repeat(Math.max(0, Math.ceil(p1.hp)));
                 ctx.fillStyle = '#38bdf8';
                 ctx.textAlign = 'left';
                 ctx.fillText(`1P ${hearts}`, 20, 37);
-                // 1인용 전용: 현재 스테이지 / 남은 적 수 표시
+                // 현재 스테이지 / 남은 적 수 표시
                 ctx.fillStyle = '#7dd3fc';
                 ctx.textAlign = 'center';
                 ctx.font = 'bold 13px Arial';
-                let remaining = Math.max(0, spaceStageEnemiesTotal - spaceStageEnemiesSpawned) + spaceEnemies.length;
                 ctx.fillText(`STAGE ${spaceStage} / 30   (남은 적 ${remaining})`, canvas.width / 2, 37);
-                // 1인용 전용 메인 무기 Lv.1~Lv.7 표시 (evolution 0~6 → Lv.1~Lv.7): 오른쪽 상단으로 이동
+                // 메인 무기 Lv.1~Lv.7 표시 (evolution 0~6 → Lv.1~Lv.7): 오른쪽 상단으로 이동
                 let evoTxt = `⚡Lv.${p1.evolution + 1}${p1.evolution >= 6 ? ' MAX' : ''}`;
                 ctx.font = 'bold 14px Arial';
                 ctx.fillStyle = '#fde047';
@@ -5527,28 +5759,39 @@
             } else {
                 let p1 = spacePlayers[0];
                 let p2 = spacePlayers[1];
-                let h1 = p1.dead ? '💀' : '❤️'.repeat(Math.max(0, Math.ceil(p1.hp))) + (p1.evolution > 0 ? ` ⚡Lv.${p1.evolution}` : '');
-                let h2 = p2.dead ? '💀' : '❤️'.repeat(Math.max(0, Math.ceil(p2.hp))) + (p2.evolution > 0 ? ` ⚡Lv.${p2.evolution}` : '');
-                
+                let h1 = p1.dead ? '💀' : `${'❤️'.repeat(Math.max(0, Math.ceil(p1.hp)))} ⚡Lv.${p1.evolution + 1}`;
+                let h2 = p2.dead ? '💀' : `${'❤️'.repeat(Math.max(0, Math.ceil(p2.hp)))} ⚡Lv.${p2.evolution + 1}`;
+
+                ctx.font = 'bold 14px Arial';
                 ctx.fillStyle = '#38bdf8';
                 ctx.textAlign = 'left';
-                ctx.fillText(`1P: ${h1} (${p1.score})`, 20, 37);
-                
+                ctx.fillText(`1P: ${h1} (${p1.score})`, 20, 24);
+
                 ctx.fillStyle = '#f43f5e';
+                ctx.fillText(`2P: ${h2} (${p2.score})`, 20, 42);
+
+                // 현재 스테이지 / 남은 적 수 표시 (2인용은 적이 더 많이 나오도록 스케일됨)
+                ctx.fillStyle = '#7dd3fc';
                 ctx.textAlign = 'right';
-                ctx.fillText(`2P: ${h2} (${p2.score})`, canvas.width - 20, 37);
+                ctx.font = 'bold 13px Arial';
+                ctx.fillText(`STAGE ${spaceStage} / 30`, canvas.width - 20, 24);
+                ctx.fillText(`(남은 적 ${remaining})`, canvas.width - 20, 42);
             }
 
-            // 1인용 전용: 관문 보스 HUD (상단 하트/점수 바 아래, 겹치지 않게 배치)
-            let bossHudActive = spaceWarMode === 1 && spaceBoss && spaceBoss.state === 'idle';
+            // 관문 보스 HUD (상단 하트/점수 바 아래, 겹치지 않게 배치) — 1P/2P 공용, 2P는 체력이 2.5배 강화됨
+            let bossHudActive = spaceBoss && spaceBoss.state === 'idle';
             if (bossHudActive) {
                 drawSpaceBossHud(spaceBoss);
             }
 
-            // 1인용 전용: 6종 서브 모듈 레벨 HUD (보스 HUD가 떠 있으면 그 아래로 밀어서 겹치지 않게 배치)
-            if (spaceWarMode === 1 && spacePlayers[0] && !spacePlayers[0].dead) {
-                drawSubModuleHud(spacePlayers[0], bossHudActive ? 40 : 0);
-            }
+            // 6종 서브 모듈 레벨 HUD (보스 HUD가 떠 있으면 그 아래로 밀어서 겹치지 않게 배치) — 1P/2P 각자 표시
+            let subHudOffset = bossHudActive ? 40 : 0;
+            spacePlayers.forEach(p => {
+                if (!p.dead) {
+                    drawSubModuleHud(p, subHudOffset);
+                    subHudOffset += 24;
+                }
+            });
         }
 
         function endSpaceWarGame() {
@@ -7264,6 +7507,1307 @@
             stairsFrameCounter++;
             renderStairsFrame();
         }
+
+        // ===================================================================
+        // ===== 철권 대전 (Tekken 스타일 2인 대전 격투 게임) =====
+        // 캐릭터 선택(칼 쓰는 남캐 '진우' / 주먹 쓰는 여캐 '미라') → 바로 CPU와 대전.
+        // 각 캐릭터는 기술 3개 + 궁극기(게이지 100% 시 사용)를 가지고 있으며,
+        // 이 게임은 기존 바둑/오목/체스/지렁이/계단/스페이스워 코드와 변수를 공유하지 않는
+        // 완전히 독립된 캔버스(tekkenCanvas)와 루프(tekkenLoop)로 동작합니다.
+        // ===================================================================
+        const TEKKEN_GRAVITY = 0.7;
+        const TEKKEN_JUMP_VY = -14;
+        const TEKKEN_MOVE_SPEED = 4.2;
+
+        const TEKKEN_CHARS = {
+            jin: {
+                name: '진우',
+                title: '검사',
+                type: 'sword',
+                accent: '#3b82f6',
+                skinTone: '#f3c9a3',
+                outfitColor: '#1e293b',
+                desc: '칼을 쓰는 검사. 빠른 베기와 강력한 찌르기가 특기.',
+                skills: [
+                    { name: '베기',     dmg: 8,  range: 78, startup: 6,  active: 6,  recovery: 12, cooldown: 8,  knockback: 10, ultGain: 8,  color: '#e2e8f0' },
+                    { name: '찌르기',   dmg: 13, range: 92, startup: 10, active: 6,  recovery: 16, cooldown: 16, knockback: 16, ultGain: 12, color: '#93c5fd' },
+                    { name: '회전베기', dmg: 17, range: 96, startup: 15, active: 9,  recovery: 22, cooldown: 30, knockback: 24, ultGain: 16, color: '#f87171' }
+                ],
+                ultimate: { name: '천검일섬', dmg: 34, range: 160, startup: 20, active: 10, recovery: 28, knockback: 40, color: '#facc15' }
+            },
+            mira: {
+                name: '미라',
+                title: '격투가',
+                type: 'fist',
+                accent: '#ec4899',
+                skinTone: '#f3c9a3',
+                outfitColor: '#7f1d1d',
+                desc: '주먹을 쓰는 격투가. 빠른 연타와 강력한 어퍼컷이 특기.',
+                skills: [
+                    { name: '연속잽',     dmg: 6,  range: 58, startup: 4,  active: 5,  recovery: 8,  cooldown: 6,  knockback: 6,  ultGain: 6,  color: '#fda4af' },
+                    { name: '어퍼컷',     dmg: 14, range: 64, startup: 9,  active: 6,  recovery: 15, cooldown: 18, knockback: 22, ultGain: 12, color: '#fb7185' },
+                    { name: '회전발차기', dmg: 16, range: 84, startup: 13, active: 8,  recovery: 21, cooldown: 32, knockback: 26, ultGain: 16, color: '#f472b6' }
+                ],
+                ultimate: { name: '폭풍연타', dmg: 38, range: 90, startup: 14, active: 16, recovery: 26, knockback: 34, color: '#facc15' }
+            }
+        };
+
+        let tekkenCanvas = null, tekkenCtx = null;
+        let tekkenAnimId = null;
+        let tekkenActive = false;
+        let tekkenGameOver = false;
+        let tekkenP1 = null, tekkenP2 = null;
+        let tekkenSelectedCharKey = null, tekkenCpuCharKey = null;
+        let tekkenInput = { left: false, right: false, up: false, down: false };
+        let tekkenParticles = [];
+        let tekkenFloatingTexts = [];
+        let tekkenRoundEndTime = 0;
+
+        // ===== 철권 온라인 1대1(방 코드) 관련 상태 =====
+        let tekkenMode = 'cpu';           // 'cpu' | 'online'
+        let tekkenOnlineRole = null;      // 'host' | 'guest'
+        let tekkenRoomCode = null;
+        let tekkenRoomUnsub = null;       // Firestore onSnapshot 구독 해제 함수
+        const tekkenClientId = 'c_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        let tekkenRoomsCollection = (typeof stairsFirebaseReady !== 'undefined' && stairsFirebaseReady && stairsDb)
+            ? stairsDb.collection('tekkenOnlineRooms') : null;
+        let tekkenLocalOnlineInput = { left: false, right: false, up: false, down: false, skillSeq: [0, 0, 0], ultSeq: 0 };
+        let tekkenRemoteOnlineInput = { left: false, right: false, up: false, down: false, skillSeq: [0, 0, 0], ultSeq: 0 };
+        let tekkenLastProcessedRemoteSeq = { skill: [0, 0, 0], ult: 0 };
+        let tekkenLastSentInputAt = 0;
+        let tekkenLastBroadcastAt = 0;
+        let tekkenPendingEvents = [];
+        let tekkenLastProcessedEventCount = 0;
+        let tekkenOnlineOpponentLeft = false;
+        let tekkenOnlineHostChar = null, tekkenOnlineGuestChar = null;
+
+        function tekkenPortraitSVG(key) {
+            if (key === 'jin') {
+                return `<svg width="55" height="55" viewBox="0 0 60 60">
+                    <circle cx="30" cy="20" r="10" fill="#f3c9a3"/>
+                    <rect x="20" y="30" width="20" height="22" rx="4" fill="#1e293b"/>
+                    <line x1="12" y1="52" x2="38" y2="14" stroke="#e2e8f0" stroke-width="4" stroke-linecap="round"/>
+                    <rect x="9" y="48" width="8" height="5" rx="2" fill="#78350f" transform="rotate(-40 13 50)"/>
+                </svg>`;
+            }
+            return `<svg width="55" height="55" viewBox="0 0 60 60">
+                <circle cx="30" cy="20" r="10" fill="#f3c9a3"/>
+                <rect x="20" y="30" width="20" height="22" rx="4" fill="#7f1d1d"/>
+                <circle cx="13" cy="40" r="6" fill="#fca5a5"/>
+                <circle cx="47" cy="34" r="6" fill="#fca5a5"/>
+            </svg>`;
+        }
+
+        function tekkenStopOtherGameLoops() {
+            // 다른 게임 루프/키 리스너가 남아있지 않도록 정리
+            gameActive = false;
+            if (snakeAnimId) { cancelAnimationFrame(snakeAnimId); snakeAnimId = null; }
+            if (stairsAnimId) { cancelAnimationFrame(stairsAnimId); stairsAnimId = null; }
+            if (spaceWarAnimId) { cancelAnimationFrame(spaceWarAnimId); spaceWarAnimId = null; }
+            window.removeEventListener('keydown', snakeKeyHandler);
+            window.removeEventListener('keydown', stairsKeyHandler);
+            window.removeEventListener('keydown', spaceWarKeyHandler);
+            window.removeEventListener('keyup', spaceWarKeyUpHandler);
+        }
+
+        function openTekkenCharSelect() {
+            tekkenStopOtherGameLoops();
+            tekkenMode = 'cpu';
+            renderTekkenCharSelectList();
+            document.getElementById('tekken-charselect-desc').textContent = '사용할 캐릭터를 선택하면 바로 대전이 시작됩니다.';
+            document.getElementById('tekken-charselect-wait').style.display = 'none';
+            showScreen('screen-tekken-charselect');
+        }
+
+        function renderTekkenCharSelectList() {
+            let list = document.getElementById('tekken-charselect-list');
+            list.innerHTML = '';
+            Object.keys(TEKKEN_CHARS).forEach(key => {
+                let c = TEKKEN_CHARS[key];
+                let card = document.createElement('button');
+                card.className = 'game-card';
+                card.style.cssText = `background: linear-gradient(145deg, ${c.accent}, #1e293b); min-width:220px; max-width:260px;`;
+                card.innerHTML = `
+                    <span class="game-title">${c.name} <span style="font-size:0.85rem; font-weight:normal; color:#e2e8f0;">(${c.title})</span></span>
+                    <div class="game-icon" style="width:70px;height:70px;">${tekkenPortraitSVG(key)}</div>
+                    <span style="font-size:0.82rem; color:#f1f5f9; line-height:1.4;">${c.desc}</span>
+                `;
+                card.onclick = () => handleTekkenCharPick(key);
+                list.appendChild(card);
+            });
+        }
+
+        function handleTekkenCharPick(playerKey) {
+            if (tekkenMode === 'online') {
+                selectTekkenOnlineCharacter(playerKey);
+            } else {
+                pickTekkenCharacter(playerKey);
+            }
+        }
+
+        function pickTekkenCharacter(playerKey) {
+            tekkenSelectedCharKey = playerKey;
+            tekkenCpuCharKey = Object.keys(TEKKEN_CHARS).find(k => k !== playerKey);
+            initTekkenGame();
+        }
+
+        // ================= 철권 온라인 1대1 (방 코드 시스템) =================
+
+        function genTekkenRoomCode() {
+            return String(Math.floor(100000 + Math.random() * 900000));
+        }
+
+        function openTekkenOnlineMenu() {
+            tekkenStopOtherGameLoops();
+            leaveTekkenOnlineRoom(); // 이전 방이 남아있다면 정리
+            config.game = 'tekken';
+            document.getElementById('tekken-online-create-panel').style.display = 'flex';
+            document.getElementById('tekken-online-code-panel').style.display = 'none';
+            document.getElementById('tekken-online-join-panel').style.display = 'flex';
+            document.getElementById('tekken-join-code-input').value = '';
+            document.getElementById('tekken-join-status').textContent = '';
+            showScreen('screen-tekken-online');
+        }
+
+        async function createTekkenRoom() {
+            if (!tekkenRoomsCollection) {
+                alert('온라인 서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.');
+                return;
+            }
+            document.getElementById('tekken-online-create-panel').style.display = 'none';
+            document.getElementById('tekken-online-join-panel').style.display = 'none';
+            try {
+                let code = null;
+                for (let i = 0; i < 6; i++) {
+                    let candidate = genTekkenRoomCode();
+                    let snap = await tekkenRoomsCollection.doc(candidate).get();
+                    if (!snap.exists) { code = candidate; break; }
+                }
+                if (!code) { alert('방 코드 생성에 실패했습니다. 다시 시도해주세요.'); openTekkenOnlineMenu(); return; }
+
+                await tekkenRoomsCollection.doc(code).set({
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    hostId: tekkenClientId,
+                    guestId: null,
+                    status: 'waiting',
+                    hostChar: null,
+                    guestChar: null,
+                    hostInput: null,
+                    guestInput: null,
+                    state: null,
+                    events: [],
+                    hostLeft: false,
+                    guestLeft: false
+                });
+
+                tekkenOnlineRole = 'host';
+                tekkenRoomCode = code;
+                document.getElementById('tekken-room-code-display').textContent = code;
+                document.getElementById('tekken-online-code-panel').style.display = 'flex';
+                attachTekkenRoomListener(code);
+            } catch (e) {
+                console.error('철권 방 생성 실패:', e);
+                alert('방을 만드는 중 오류가 발생했습니다.');
+                openTekkenOnlineMenu();
+            }
+        }
+
+        function joinTekkenRoomFromInput() {
+            let code = (document.getElementById('tekken-join-code-input').value || '').trim();
+            if (!/^\d{4,6}$/.test(code)) {
+                document.getElementById('tekken-join-status').textContent = '올바른 코드를 입력해주세요.';
+                return;
+            }
+            joinTekkenRoom(code);
+        }
+
+        async function joinTekkenRoom(code) {
+            if (!tekkenRoomsCollection) {
+                alert('온라인 서버에 연결할 수 없습니다. 인터넷 연결을 확인해주세요.');
+                return;
+            }
+            let statusEl = document.getElementById('tekken-join-status');
+            statusEl.textContent = '참가하는 중...';
+            try {
+                let ref = tekkenRoomsCollection.doc(code);
+                let snap = await ref.get();
+                if (!snap.exists) {
+                    statusEl.textContent = '해당 코드의 방을 찾을 수 없습니다.';
+                    return;
+                }
+                let data = snap.data();
+                if (data.guestId && data.guestId !== tekkenClientId) {
+                    statusEl.textContent = '이미 다른 사람이 참가한 방입니다.';
+                    return;
+                }
+                await ref.update({ guestId: tekkenClientId, status: 'charselect', guestLeft: false });
+                tekkenOnlineRole = 'guest';
+                tekkenRoomCode = code;
+                attachTekkenRoomListener(code);
+            } catch (e) {
+                console.error('철권 방 참가 실패:', e);
+                statusEl.textContent = '참가 중 오류가 발생했습니다.';
+            }
+        }
+
+        function attachTekkenRoomListener(code) {
+            if (tekkenRoomUnsub) { tekkenRoomUnsub(); tekkenRoomUnsub = null; }
+            tekkenOnlineOpponentLeft = false;
+            tekkenRoomUnsub = tekkenRoomsCollection.doc(code).onSnapshot(snap => {
+                if (!snap.exists) {
+                    if (tekkenMode === 'online' || tekkenRoomCode) handleTekkenOpponentGone();
+                    return;
+                }
+                handleTekkenRoomUpdate(snap.data());
+            }, err => {
+                console.error('철권 방 구독 오류:', err);
+            });
+        }
+
+        function handleTekkenOpponentGone() {
+            if (tekkenOnlineOpponentLeft) return;
+            tekkenOnlineOpponentLeft = true;
+            if (tekkenActive) {
+                tekkenActive = false;
+                if (tekkenAnimId) { cancelAnimationFrame(tekkenAnimId); tekkenAnimId = null; }
+            }
+            alert('상대방이 방을 나갔습니다. 메인 화면으로 돌아갑니다.');
+            leaveTekkenOnlineRoom();
+            showScreen('screen-main');
+        }
+
+        function handleTekkenRoomUpdate(data) {
+            if (!data) return;
+            let leftFlag = tekkenOnlineRole === 'host' ? data.guestLeft : data.hostLeft;
+            if (leftFlag) { handleTekkenOpponentGone(); return; }
+
+            if (data.status === 'waiting') return;
+
+            if (data.status === 'charselect') {
+                if (tekkenActive) {
+                    tekkenActive = false;
+                    if (tekkenAnimId) { cancelAnimationFrame(tekkenAnimId); tekkenAnimId = null; }
+                }
+                tekkenOnlineHostChar = data.hostChar || null;
+                tekkenOnlineGuestChar = data.guestChar || null;
+                let onCharScreen = document.getElementById('screen-tekken-charselect').classList.contains('active');
+                if (tekkenMode !== 'online' || !onCharScreen) {
+                    enterTekkenOnlineCharSelect();
+                }
+                let myChar = tekkenOnlineRole === 'host' ? tekkenOnlineHostChar : tekkenOnlineGuestChar;
+                let oppChar = tekkenOnlineRole === 'host' ? tekkenOnlineGuestChar : tekkenOnlineHostChar;
+                document.getElementById('tekken-charselect-wait').style.display = myChar ? 'block' : 'none';
+                if (myChar && oppChar) {
+                    startTekkenOnlineMatch();
+                }
+                return;
+            }
+
+            if (data.status === 'playing') {
+                tekkenOnlineHostChar = data.hostChar || tekkenOnlineHostChar;
+                tekkenOnlineGuestChar = data.guestChar || tekkenOnlineGuestChar;
+                if (!tekkenActive) startTekkenOnlineMatch();
+                if (tekkenOnlineRole === 'host') {
+                    if (data.guestInput) tekkenRemoteOnlineInput = data.guestInput;
+                } else {
+                    if (data.hostInput) tekkenRemoteOnlineInput = data.hostInput;
+                    if (data.state) applyTekkenRemoteState(data.state);
+                    if (data.events && data.events.length) processTekkenRemoteEvents(data.events);
+                }
+                return;
+            }
+        }
+
+        function enterTekkenOnlineCharSelect() {
+            tekkenMode = 'online';
+            renderTekkenCharSelectList();
+            document.getElementById('tekken-charselect-desc').textContent = '상대방과 겹치지 않게 캐릭터를 선택하세요. 둘 다 선택하면 바로 대전이 시작됩니다.';
+            document.getElementById('tekken-charselect-wait').style.display = 'none';
+            showScreen('screen-tekken-charselect');
+        }
+
+        async function selectTekkenOnlineCharacter(key) {
+            if (!tekkenRoomCode || !tekkenRoomsCollection) return;
+            let field = tekkenOnlineRole === 'host' ? 'hostChar' : 'guestChar';
+            document.getElementById('tekken-charselect-wait').style.display = 'block';
+            try {
+                await tekkenRoomsCollection.doc(tekkenRoomCode).update({ [field]: key });
+            } catch (e) {
+                console.error('캐릭터 선택 전송 실패:', e);
+            }
+        }
+
+        function startTekkenOnlineMatch() {
+            if (tekkenActive && tekkenMode === 'online') return; // 이미 시작됨
+            document.getElementById('result-modal') && (document.getElementById('result-modal').style.display = 'none');
+            tekkenMode = 'online';
+            showScreen('screen-tekken-game');
+            tekkenCanvas = document.getElementById('tekkenCanvas');
+            tekkenCtx = tekkenCanvas.getContext('2d');
+            resizeTekkenCanvas();
+
+            // 규칙: 방장(host)이 항상 왼쪽(P1), 참가자(guest)가 항상 오른쪽(P2)
+            tekkenP1 = createTekkenFighter(tekkenOnlineHostChar);
+            tekkenP2 = createTekkenFighter(tekkenOnlineGuestChar);
+            tekkenP1.x = tekkenCanvas.width * 0.28;
+            tekkenP2.x = tekkenCanvas.width * 0.72;
+            tekkenP1.facing = 1;
+            tekkenP2.facing = -1;
+
+            tekkenParticles = [];
+            tekkenFloatingTexts = [];
+            tekkenGameOver = false;
+            tekkenRoundEndTime = performance.now() + 60000;
+            tekkenInput = { left: false, right: false, up: false, down: false };
+            tekkenLocalOnlineInput = { left: false, right: false, up: false, down: false, skillSeq: [0, 0, 0], ultSeq: 0 };
+            tekkenRemoteOnlineInput = { left: false, right: false, up: false, down: false, skillSeq: [0, 0, 0], ultSeq: 0 };
+            tekkenLastProcessedRemoteSeq = { skill: [0, 0, 0], ult: 0 };
+            tekkenPendingEvents = [];
+            tekkenLastProcessedEventCount = 0;
+
+            document.getElementById('tekken-result-overlay').style.display = 'none';
+
+            window.removeEventListener('keydown', tekkenKeyDownHandler);
+            window.removeEventListener('keyup', tekkenKeyUpHandler);
+            window.addEventListener('keydown', tekkenKeyDownHandler);
+            window.addEventListener('keyup', tekkenKeyUpHandler);
+
+            if (tekkenOnlineRole === 'host') {
+                tekkenRoomsCollection.doc(tekkenRoomCode).update({ status: 'playing' }).catch(() => {});
+            }
+
+            tekkenActive = true;
+            if (tekkenAnimId) cancelAnimationFrame(tekkenAnimId);
+            tekkenAnimId = requestAnimationFrame(tekkenLoop);
+        }
+
+        function leaveTekkenOnlineRoom() {
+            if (tekkenRoomUnsub) { tekkenRoomUnsub(); tekkenRoomUnsub = null; }
+            if (tekkenRoomCode && tekkenRoomsCollection && tekkenOnlineRole) {
+                let field = tekkenOnlineRole === 'host' ? { hostLeft: true } : { guestLeft: true };
+                tekkenRoomsCollection.doc(tekkenRoomCode).update(field).catch(() => {});
+                if (tekkenOnlineRole === 'host') {
+                    // 방장이 나가면 방 자체를 정리(선택적, 실패해도 무방)
+                    tekkenRoomsCollection.doc(tekkenRoomCode).delete().catch(() => {});
+                }
+            }
+            tekkenRoomCode = null;
+            tekkenOnlineRole = null;
+            tekkenMode = 'cpu';
+            tekkenOnlineHostChar = null;
+            tekkenOnlineGuestChar = null;
+        }
+
+        // 게스트 화면에서 호스트가 보내준 상태를 그대로 반영(권위 있는 상태는 호스트가 관리)
+        function applyTekkenRemoteState(state) {
+            if (!tekkenP1 || !tekkenP2 || !state) return;
+            ['p1', 'p2'].forEach((k, i) => {
+                let src = state[k];
+                let dst = i === 0 ? tekkenP1 : tekkenP2;
+                if (!src) return;
+                dst.x = src.x; dst.y = src.y; dst.vx = src.vx; dst.vy = src.vy;
+                dst.facing = src.facing; dst.hp = src.hp; dst.ult = src.ult;
+                dst.onGround = src.onGround; dst.state = src.state;
+                dst.cooldown = src.cooldown.slice();
+                dst.guarding = src.guarding;
+                if (src.attack) {
+                    let idx = src.attack.idx;
+                    let def = idx === -1 ? dst.def.ultimate : dst.def.skills[idx];
+                    dst.attack = { idx, def, frame: src.attack.frame, hitApplied: src.attack.hitApplied, isUlt: src.attack.isUlt };
+                } else {
+                    dst.attack = null;
+                }
+            });
+            tekkenRoundEndTime = performance.now() + Math.max(0, state.remainMs || 0);
+            let el = document.getElementById('tekken-round-timer');
+            if (el) el.textContent = Math.max(0, Math.ceil((state.remainMs || 0) / 1000));
+            if (state.gameOver && !tekkenGameOver) {
+                endTekkenRound(state.winner);
+            }
+        }
+
+        function processTekkenRemoteEvents(events) {
+            // events는 호스트가 매 브로드캐스트마다 "그 사이 새로 발생한 이벤트만" 보내주므로 그대로 재생
+            events.forEach(ev => {
+                if (ev.type === 'hit' || ev.type === 'guard') {
+                    tekkenSpawnHitSpark(ev.sparkX, -58, ev.color || '#fff');
+                    tekkenSpawnFloatingText(ev.textX, -95, ev.text, ev.textColor);
+                }
+            });
+        }
+
+        function createTekkenFighter(key) {
+            return {
+                key, def: TEKKEN_CHARS[key],
+                x: 0, y: 0, vx: 0, vy: 0,
+                facing: 1,
+                hp: 100, maxHp: 100,
+                ult: 0, maxUlt: 100,
+                onGround: true,
+                state: 'idle', // idle, walk, jump, attack, hitstun, guard, dead
+                cooldown: [0, 0, 0],
+                attack: null,
+                hitstunFrames: 0,
+                guarding: false,
+                aiTimer: 20 + Math.random() * 20,
+                walkAnim: 0
+            };
+        }
+
+        const TEKKEN_CHAR_SCALE = 1.85; // 캐릭터를 실제 철권처럼 크게 보이도록 확대하는 배율
+
+        function resizeTekkenCanvas() {
+            if (!tekkenCanvas) return;
+            let w = Math.min(window.innerWidth * 0.97, 1040);
+            let h = Math.min(window.innerHeight * 0.68, 560);
+            if (h < 380) h = 380;
+            tekkenCanvas.width = w;
+            tekkenCanvas.height = h;
+        }
+
+        function initTekkenGame() {
+            document.getElementById('result-modal').style.display = 'none';
+            showScreen('screen-tekken-game');
+            tekkenCanvas = document.getElementById('tekkenCanvas');
+            tekkenCtx = tekkenCanvas.getContext('2d');
+            resizeTekkenCanvas();
+
+            tekkenP1 = createTekkenFighter(tekkenSelectedCharKey);
+            tekkenP2 = createTekkenFighter(tekkenCpuCharKey);
+            tekkenP1.x = tekkenCanvas.width * 0.28;
+            tekkenP2.x = tekkenCanvas.width * 0.72;
+            tekkenP1.facing = 1;
+            tekkenP2.facing = -1;
+
+            tekkenParticles = [];
+            tekkenFloatingTexts = [];
+            tekkenGameOver = false;
+            tekkenRoundEndTime = performance.now() + 60000;
+            tekkenInput = { left: false, right: false, up: false, down: false };
+
+            document.getElementById('tekken-result-overlay').style.display = 'none';
+
+            window.removeEventListener('keydown', tekkenKeyDownHandler);
+            window.removeEventListener('keyup', tekkenKeyUpHandler);
+            window.addEventListener('keydown', tekkenKeyDownHandler);
+            window.addEventListener('keyup', tekkenKeyUpHandler);
+
+            tekkenActive = true;
+            if (tekkenAnimId) cancelAnimationFrame(tekkenAnimId);
+            tekkenAnimId = requestAnimationFrame(tekkenLoop);
+        }
+
+        const TEKKEN_MOVE_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'a', 'A', 'd', 'D', 'w', 'W', 's', 'S', ' '];
+
+        // 온라인 대전에서 내가 게스트(참가자)인지 여부 - 게스트는 로컬 물리 시뮬레이션을 하지 않고
+        // 입력만 호스트에게 전송하며, 호스트가 계산한 상태를 그대로 받아서 화면에 반영한다.
+        function tekkenIsGuestOnline() {
+            return tekkenMode === 'online' && tekkenOnlineRole === 'guest';
+        }
+
+        // 내가 직접 조작하는 캐릭터(호스트=P1, 게스트=P2, CPU모드=P1)
+        function tekkenLocalFighterRef() {
+            if (tekkenMode === 'online' && tekkenOnlineRole === 'guest') return tekkenP2;
+            return tekkenP1;
+        }
+
+        function tekkenSetMoveFlag(name, value) {
+            if (tekkenIsGuestOnline()) {
+                tekkenLocalOnlineInput[name] = value;
+                sendTekkenLocalInputThrottled(false);
+            } else {
+                tekkenInput[name] = value;
+            }
+        }
+
+        function tekkenLocalSkillPress(idx) {
+            if (tekkenIsGuestOnline()) {
+                tekkenLocalOnlineInput.skillSeq[idx]++;
+                sendTekkenLocalInputThrottled(true);
+            } else {
+                tekkenTryAttack(tekkenLocalFighterRef(), idx);
+            }
+        }
+
+        function tekkenLocalUltPress() {
+            if (tekkenIsGuestOnline()) {
+                tekkenLocalOnlineInput.ultSeq++;
+                sendTekkenLocalInputThrottled(true);
+            } else {
+                tekkenTryUltimate(tekkenLocalFighterRef());
+            }
+        }
+
+        function sendTekkenLocalInputThrottled(force) {
+            if (!tekkenIsGuestOnline() || !tekkenRoomCode || !tekkenRoomsCollection) return;
+            let now = performance.now();
+            if (!force && now - tekkenLastSentInputAt < 70) return;
+            tekkenLastSentInputAt = now;
+            tekkenRoomsCollection.doc(tekkenRoomCode).update({
+                guestInput: {
+                    left: tekkenLocalOnlineInput.left, right: tekkenLocalOnlineInput.right,
+                    up: tekkenLocalOnlineInput.up, down: tekkenLocalOnlineInput.down,
+                    skillSeq: tekkenLocalOnlineInput.skillSeq.slice(), ultSeq: tekkenLocalOnlineInput.ultSeq
+                }
+            }).catch(() => {});
+        }
+
+        function tekkenKeyDownHandler(e) {
+            if (!tekkenActive) return;
+            if (TEKKEN_MOVE_KEYS.includes(e.key) || ['h','H','j','J','k','K','l','L','1','2','3','4'].includes(e.key)) e.preventDefault();
+            switch (e.key) {
+                case 'ArrowLeft': case 'a': case 'A': tekkenSetMoveFlag('left', true); break;
+                case 'ArrowRight': case 'd': case 'D': tekkenSetMoveFlag('right', true); break;
+                case 'ArrowUp': case 'w': case 'W': case ' ': tekkenSetMoveFlag('up', true); break;
+                case 'ArrowDown': case 's': case 'S': tekkenSetMoveFlag('down', true); break;
+                case 'h': case 'H': case '1': tekkenLocalSkillPress(0); break;
+                case 'j': case 'J': case '2': tekkenLocalSkillPress(1); break;
+                case 'k': case 'K': case '3': tekkenLocalSkillPress(2); break;
+                case 'l': case 'L': case '4': tekkenLocalUltPress(); break;
+            }
+        }
+
+        function tekkenKeyUpHandler(e) {
+            switch (e.key) {
+                case 'ArrowLeft': case 'a': case 'A': tekkenSetMoveFlag('left', false); break;
+                case 'ArrowRight': case 'd': case 'D': tekkenSetMoveFlag('right', false); break;
+                case 'ArrowUp': case 'w': case 'W': case ' ': tekkenSetMoveFlag('up', false); break;
+                case 'ArrowDown': case 's': case 'S': tekkenSetMoveFlag('down', false); break;
+            }
+        }
+
+        function setupTekkenControlButtons() {
+            const bind = (id, onDown, onUp) => {
+                let el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('pointerdown', (e) => { e.preventDefault(); onDown(); });
+                if (onUp) {
+                    el.addEventListener('pointerup', (e) => { e.preventDefault(); onUp(); });
+                    el.addEventListener('pointerleave', () => onUp());
+                    el.addEventListener('pointercancel', () => onUp());
+                }
+            };
+            bind('tekken-btn-left', () => tekkenSetMoveFlag('left', true), () => tekkenSetMoveFlag('left', false));
+            bind('tekken-btn-right', () => tekkenSetMoveFlag('right', true), () => tekkenSetMoveFlag('right', false));
+            bind('tekken-btn-jump', () => tekkenSetMoveFlag('up', true), () => tekkenSetMoveFlag('up', false));
+            bind('tekken-btn-guard', () => tekkenSetMoveFlag('down', true), () => tekkenSetMoveFlag('down', false));
+            bind('tekken-btn-skill1', () => tekkenLocalSkillPress(0));
+            bind('tekken-btn-skill2', () => tekkenLocalSkillPress(1));
+            bind('tekken-btn-skill3', () => tekkenLocalSkillPress(2));
+            bind('tekken-btn-ult', () => tekkenLocalUltPress());
+        }
+        window.addEventListener('DOMContentLoaded', setupTekkenControlButtons);
+
+        window.addEventListener('resize', () => {
+            let scr = document.getElementById('screen-tekken-game');
+            if (scr && scr.classList.contains('active')) resizeTekkenCanvas();
+        });
+
+        function tekkenTryAttack(fighter, idx) {
+            if (!tekkenActive || tekkenGameOver || !fighter || fighter.hp <= 0) return;
+            if (fighter.state === 'attack' || fighter.state === 'hitstun') return;
+            if (fighter.cooldown[idx] > 0) return;
+            let skillDef = fighter.def.skills[idx];
+            let opponent = fighter === tekkenP1 ? tekkenP2 : tekkenP1;
+            fighter.facing = opponent.x >= fighter.x ? 1 : -1;
+            fighter.guarding = false;
+            fighter.state = 'attack';
+            fighter.vx = 0;
+            fighter.attack = { idx, def: skillDef, frame: 0, hitApplied: false, isUlt: false };
+        }
+
+        function tekkenTryUltimate(fighter) {
+            if (!tekkenActive || tekkenGameOver || !fighter || fighter.hp <= 0) return;
+            if (fighter.state === 'attack' || fighter.state === 'hitstun') return;
+            if (fighter.ult < fighter.maxUlt) return;
+            let opponent = fighter === tekkenP1 ? tekkenP2 : tekkenP1;
+            fighter.facing = opponent.x >= fighter.x ? 1 : -1;
+            fighter.guarding = false;
+            fighter.state = 'attack';
+            fighter.vx = 0;
+            fighter.attack = { idx: -1, def: fighter.def.ultimate, frame: 0, hitApplied: false, isUlt: true };
+            fighter.ult = 0;
+        }
+
+        function tekkenSpawnHitSpark(x, yFromGround, color) {
+            for (let i = 0; i < 7; i++) {
+                tekkenParticles.push({
+                    x: x + (Math.random() - 0.5) * 12,
+                    yFromGround: yFromGround + (Math.random() - 0.5) * 12,
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: -(Math.random() * 2 + 1),
+                    alpha: 1,
+                    color,
+                    size: Math.random() * 3 + 2
+                });
+            }
+        }
+
+        function tekkenSpawnFloatingText(x, yFromGround, text, color) {
+            tekkenFloatingTexts.push({ x, yFromGround, text, color, alpha: 1, vy: -1 });
+        }
+
+        function tekkenApplyHit(attacker, defender, skillDef, isUlt) {
+            let dmg = skillDef.dmg;
+            let guarded = defender.guarding && !isUlt;
+            if (guarded) dmg = Math.round(dmg * 0.3);
+            defender.hp = Math.max(0, defender.hp - dmg);
+
+            if (!guarded) {
+                defender.state = 'hitstun';
+                defender.hitstunFrames = isUlt ? 26 : 14;
+                defender.vx = skillDef.knockback * attacker.facing * 0.4;
+                defender.vy = isUlt ? -4 : 0;
+                defender.onGround = defender.y >= 0 ? defender.onGround : false;
+            } else {
+                defender.vx = skillDef.knockback * attacker.facing * 0.15;
+                tekkenSpawnFloatingText(defender.x, -82, '가드!', '#93c5fd');
+            }
+
+            attacker.ult = Math.min(attacker.maxUlt, attacker.ult + (isUlt ? 0 : skillDef.ultGain));
+            if (!isUlt) defender.ult = Math.min(defender.maxUlt, defender.ult + Math.round(skillDef.dmg * 0.3));
+
+            let sparkX = (attacker.x + defender.x) / 2;
+            tekkenSpawnHitSpark(sparkX, -58, skillDef.color || '#fff');
+            tekkenSpawnFloatingText(defender.x, -95, `-${dmg}`, guarded ? '#93c5fd' : '#f87171');
+
+            // 온라인 대전 중 호스트가 계산한 히트 이벤트는 게스트 화면에도 이펙트가 보이도록 큐에 쌓아둔다
+            if (tekkenMode === 'online' && tekkenOnlineRole === 'host') {
+                tekkenPendingEvents.push({
+                    type: guarded ? 'guard' : 'hit',
+                    sparkX, color: skillDef.color || '#fff',
+                    textX: defender.x, text: `-${dmg}`, textColor: guarded ? '#93c5fd' : '#f87171'
+                });
+            }
+        }
+
+        function applyTekkenInputFlagsToFighter(f, flags) {
+            if (!f || f.hp <= 0) return;
+            if (f.state === 'attack' || f.state === 'hitstun') return;
+
+            f.guarding = flags.down && f.onGround;
+            if (f.guarding) {
+                f.vx = 0;
+                f.state = 'guard';
+                return;
+            }
+            if (f.state === 'guard') f.state = 'idle';
+
+            let mv = 0;
+            if (flags.left) mv -= 1;
+            if (flags.right) mv += 1;
+            f.vx = mv * TEKKEN_MOVE_SPEED;
+            if (f.onGround) f.state = mv !== 0 ? 'walk' : 'idle';
+
+            if (flags.up && f.onGround) {
+                f.vy = TEKKEN_JUMP_VY;
+                f.onGround = false;
+                f.state = 'jump';
+            }
+        }
+
+        function applyTekkenPlayerInput() {
+            applyTekkenInputFlagsToFighter(tekkenP1, tekkenInput);
+        }
+
+        // ===== 온라인 대전: 호스트가 매 프레임 실행하는 권위 시뮬레이션 =====
+        function stepTekkenOnlineHostFrame() {
+            applyTekkenInputFlagsToFighter(tekkenP1, tekkenInput);
+            applyTekkenInputFlagsToFighter(tekkenP2, tekkenRemoteOnlineInput);
+
+            // 게스트가 보낸 기술/궁극기 입력을 1회성 이벤트로 처리(같은 값 재처리 방지)
+            for (let i = 0; i < 3; i++) {
+                if ((tekkenRemoteOnlineInput.skillSeq[i] || 0) > tekkenLastProcessedRemoteSeq.skill[i]) {
+                    tekkenLastProcessedRemoteSeq.skill[i] = tekkenRemoteOnlineInput.skillSeq[i];
+                    tekkenTryAttack(tekkenP2, i);
+                }
+            }
+            if ((tekkenRemoteOnlineInput.ultSeq || 0) > tekkenLastProcessedRemoteSeq.ult) {
+                tekkenLastProcessedRemoteSeq.ult = tekkenRemoteOnlineInput.ultSeq;
+                tekkenTryUltimate(tekkenP2);
+            }
+
+            stepTekkenFighter(tekkenP1, tekkenP2);
+            stepTekkenFighter(tekkenP2, tekkenP1);
+            updateTekkenTimer();
+            checkTekkenRoundEnd();
+            broadcastTekkenHostStateThrottled();
+        }
+
+        function tekkenSnapshotFighter(f) {
+            return {
+                x: f.x, y: f.y, vx: f.vx, vy: f.vy, facing: f.facing,
+                hp: f.hp, ult: f.ult, onGround: f.onGround, state: f.state,
+                cooldown: f.cooldown.slice(), guarding: f.guarding,
+                attack: f.attack ? { idx: f.attack.idx, frame: f.attack.frame, hitApplied: f.attack.hitApplied, isUlt: f.attack.isUlt } : null
+            };
+        }
+
+        function broadcastTekkenHostStateThrottled() {
+            if (!tekkenRoomCode || !tekkenRoomsCollection) return;
+            let now = performance.now();
+            if (now - tekkenLastBroadcastAt < 60) return;
+            tekkenLastBroadcastAt = now;
+            let remainMs = Math.max(0, tekkenRoundEndTime - performance.now());
+            let payload = {
+                state: {
+                    p1: tekkenSnapshotFighter(tekkenP1),
+                    p2: tekkenSnapshotFighter(tekkenP2),
+                    remainMs, gameOver: tekkenGameOver,
+                    winner: tekkenGameOver ? (tekkenP1.hp > tekkenP2.hp ? 'p1' : (tekkenP2.hp > tekkenP1.hp ? 'p2' : 'draw')) : null
+                },
+                events: tekkenPendingEvents.slice(0, 12)
+            };
+            tekkenPendingEvents = [];
+            tekkenRoomsCollection.doc(tekkenRoomCode).update(payload).catch(() => {});
+        }
+
+        function updateTekkenAI(f, opp) {
+            if (!f || f.hp <= 0 || tekkenGameOver) { if (f) f.vx = 0; return; }
+            if (f.state === 'attack' || f.state === 'hitstun') return;
+
+            let dist = Math.abs(opp.x - f.x);
+            let dir = opp.x > f.x ? 1 : -1;
+            f.aiTimer--;
+
+            f.guarding = false;
+            if (opp.state === 'attack' && dist < 110 && Math.random() < 0.35) {
+                f.guarding = true;
+                f.vx = 0;
+                f.state = 'guard';
+                return;
+            }
+            if (f.state === 'guard') f.state = 'idle';
+
+            if (f.ult >= f.maxUlt && dist < f.def.ultimate.range * 0.8 && Math.random() < 0.05) {
+                tekkenTryUltimate(f);
+                return;
+            }
+
+            let preferredRange = 70;
+            if (dist > preferredRange + 20) {
+                f.vx = TEKKEN_MOVE_SPEED * 0.85 * dir;
+                if (f.onGround) f.state = 'walk';
+                if (Math.random() < 0.004 && f.onGround) { f.vy = TEKKEN_JUMP_VY; f.onGround = false; f.state = 'jump'; }
+            } else if (dist < preferredRange - 30) {
+                f.vx = -TEKKEN_MOVE_SPEED * 0.6 * dir;
+                if (f.onGround) f.state = 'walk';
+            } else {
+                f.vx = 0;
+                if (f.state === 'walk') f.state = 'idle';
+                if (f.aiTimer <= 0) {
+                    f.aiTimer = 25 + Math.random() * 30;
+                    let choices = [];
+                    f.def.skills.forEach((s, idx) => { if (f.cooldown[idx] <= 0 && dist <= s.range + 15) choices.push(idx); });
+                    if (choices.length > 0 && Math.random() < 0.75) {
+                        let idx = choices[Math.floor(Math.random() * choices.length)];
+                        tekkenTryAttack(f, idx);
+                    }
+                }
+            }
+        }
+
+        function stepTekkenFighter(f, opp) {
+            if (!f) return;
+            if (f.hp <= 0) { f.state = 'dead'; f.vx = 0; f.vy = 0; return; }
+
+            // 중력 및 위치
+            f.vy += TEKKEN_GRAVITY;
+            f.y += f.vy;
+            if (f.y >= 0) {
+                f.y = 0;
+                if (!f.onGround) { f.onGround = true; if (f.state === 'jump') f.state = 'idle'; }
+                f.vy = 0;
+            }
+            f.x += f.vx;
+            let margin = 34 * TEKKEN_CHAR_SCALE;
+            if (f.x < margin) f.x = margin;
+            if (tekkenCanvas && f.x > tekkenCanvas.width - margin) f.x = tekkenCanvas.width - margin;
+
+            for (let i = 0; i < f.cooldown.length; i++) if (f.cooldown[i] > 0) f.cooldown[i]--;
+
+            if (f.state !== 'attack' && f.state !== 'hitstun') {
+                f.facing = opp.x >= f.x ? 1 : -1;
+            }
+
+            if (f.state === 'hitstun') {
+                f.hitstunFrames--;
+                f.vx *= 0.85;
+                if (f.hitstunFrames <= 0) { f.state = 'idle'; f.vx = 0; }
+                return;
+            }
+
+            if (f.state === 'attack' && f.attack) {
+                let a = f.attack;
+                a.frame++;
+                let d = a.def;
+                if (a.frame > d.startup && a.frame <= d.startup + d.active && !a.hitApplied) {
+                    let dist = Math.abs(opp.x - f.x);
+                    let towardOpponent = (opp.x - f.x) * f.facing;
+                    if (dist <= d.range && towardOpponent > -20 && opp.hp > 0) {
+                        tekkenApplyHit(f, opp, d, a.isUlt);
+                        a.hitApplied = true;
+                    }
+                }
+                if (a.frame >= d.startup + d.active + d.recovery) {
+                    f.state = 'idle';
+                    if (!a.isUlt) f.cooldown[a.idx] = d.cooldown;
+                    f.attack = null;
+                }
+            }
+        }
+
+        function updateTekkenEffects() {
+            for (let i = tekkenParticles.length - 1; i >= 0; i--) {
+                let p = tekkenParticles[i];
+                p.x += p.vx; p.yFromGround += p.vy; p.vy += 0.15; p.alpha -= 0.05;
+                if (p.alpha <= 0) tekkenParticles.splice(i, 1);
+            }
+            for (let i = tekkenFloatingTexts.length - 1; i >= 0; i--) {
+                let t = tekkenFloatingTexts[i];
+                t.yFromGround += t.vy; t.alpha -= 0.02;
+                if (t.alpha <= 0) tekkenFloatingTexts.splice(i, 1);
+            }
+        }
+
+        function updateTekkenTimer() {
+            if (tekkenGameOver) return;
+            let remain = Math.max(0, Math.ceil((tekkenRoundEndTime - performance.now()) / 1000));
+            let el = document.getElementById('tekken-round-timer');
+            if (el) el.textContent = remain;
+            if (remain <= 0) {
+                endTekkenRound(tekkenP1.hp > tekkenP2.hp ? 'p1' : (tekkenP2.hp > tekkenP1.hp ? 'p2' : 'draw'));
+            }
+        }
+
+        function checkTekkenRoundEnd() {
+            if (tekkenGameOver) return;
+            if (tekkenP1.hp <= 0 || tekkenP2.hp <= 0) {
+                endTekkenRound(tekkenP1.hp > tekkenP2.hp ? 'p1' : (tekkenP2.hp > tekkenP1.hp ? 'p2' : 'draw'));
+            }
+        }
+
+        function endTekkenRound(winner) {
+            if (tekkenGameOver) return;
+            tekkenGameOver = true;
+            tekkenP1.vx = 0; tekkenP2.vx = 0;
+            let title = document.getElementById('tekken-result-title');
+            let desc = document.getElementById('tekken-result-desc');
+
+            let isOnline = tekkenMode === 'online';
+            let localIsP1 = !isOnline || tekkenOnlineRole === 'host';
+            let localWon = (winner === 'p1' && localIsP1) || (winner === 'p2' && !localIsP1);
+
+            if (winner === 'draw') {
+                title.textContent = '무승부';
+                title.style.color = '#facc15';
+                desc.textContent = '시간 종료! 무승부입니다.';
+            } else if (!isOnline) {
+                if (winner === 'p1') {
+                    title.textContent = '🎉 승리!';
+                    title.style.color = '#4ade80';
+                    desc.textContent = `${tekkenP1.def.name}가(이) 승리했습니다!`;
+                } else {
+                    title.textContent = '패배...';
+                    title.style.color = '#f87171';
+                    desc.textContent = `${tekkenP2.def.name}에게 패배했습니다.`;
+                }
+            } else {
+                let winnerFighter = winner === 'p1' ? tekkenP1 : tekkenP2;
+                if (localWon) {
+                    title.textContent = '🎉 승리!';
+                    title.style.color = '#4ade80';
+                    desc.textContent = `${winnerFighter.def.name}(으)로 상대를 이겼습니다!`;
+                } else {
+                    title.textContent = '패배...';
+                    title.style.color = '#f87171';
+                    desc.textContent = `상대의 ${winnerFighter.def.name}에게 패배했습니다.`;
+                }
+            }
+            setTimeout(() => {
+                let overlay = document.getElementById('tekken-result-overlay');
+                if (overlay) overlay.style.display = 'flex';
+            }, 900);
+        }
+
+        function restartTekken() {
+            document.getElementById('tekken-result-overlay').style.display = 'none';
+            if (tekkenMode === 'online') {
+                // 같은 방에서 캐릭터를 다시 선택하고 재대결
+                if (tekkenOnlineRole === 'host' && tekkenRoomCode && tekkenRoomsCollection) {
+                    tekkenRoomsCollection.doc(tekkenRoomCode).update({
+                        status: 'charselect', hostChar: null, guestChar: null, state: null, events: []
+                    }).catch(() => {});
+                }
+                tekkenActive = false;
+                if (tekkenAnimId) { cancelAnimationFrame(tekkenAnimId); tekkenAnimId = null; }
+            } else {
+                initTekkenGame();
+            }
+        }
+
+        function quitTekken() {
+            tekkenActive = false;
+            tekkenGameOver = true;
+            if (tekkenAnimId) { cancelAnimationFrame(tekkenAnimId); tekkenAnimId = null; }
+            window.removeEventListener('keydown', tekkenKeyDownHandler);
+            window.removeEventListener('keyup', tekkenKeyUpHandler);
+            let overlay = document.getElementById('tekken-result-overlay');
+            if (overlay) overlay.style.display = 'none';
+            leaveTekkenOnlineRoom();
+            showScreen('screen-main');
+        }
+
+        function tekkenLoop() {
+            if (!tekkenActive || config.game !== 'tekken') return;
+            tekkenAnimId = requestAnimationFrame(tekkenLoop);
+            if (!tekkenGameOver) {
+                if (tekkenMode === 'online') {
+                    if (tekkenOnlineRole === 'host') {
+                        stepTekkenOnlineHostFrame();
+                    }
+                    // 게스트는 호스트가 브로드캐스트한 상태를 그대로 렌더링만 함(직접 시뮬레이션하지 않음)
+                } else {
+                    applyTekkenPlayerInput();
+                    updateTekkenAI(tekkenP2, tekkenP1);
+                    stepTekkenFighter(tekkenP1, tekkenP2);
+                    stepTekkenFighter(tekkenP2, tekkenP1);
+                    updateTekkenTimer();
+                    checkTekkenRoundEnd();
+                }
+            }
+            updateTekkenEffects();
+            renderTekkenFrame();
+            updateTekkenCooldownUI();
+        }
+
+        function updateTekkenCooldownUI() {
+            let f = tekkenLocalFighterRef();
+            if (!f) return;
+            for (let i = 0; i < 3; i++) {
+                let skill = f.def.skills[i];
+                let cd = Math.max(0, f.cooldown[i] || 0);
+                let ratio = cd / skill.cooldown;
+                let fillEl = document.getElementById('tekken-cd-fill-' + i);
+                let labelEl = document.getElementById('tekken-cd-label-' + i);
+                let btnEl = document.getElementById('tekken-btn-skill' + (i + 1));
+                if (fillEl) fillEl.style.width = (Math.min(1, Math.max(0, ratio)) * 100) + '%';
+                if (labelEl) labelEl.textContent = cd > 0 ? (cd / 60).toFixed(1) + 's' : '준비완료';
+                if (btnEl) btnEl.classList.toggle('on-cooldown', cd > 0);
+            }
+            let ultReady = f.ult >= f.maxUlt;
+            let ultRatio = f.ult / f.maxUlt;
+            let ultFillEl = document.getElementById('tekken-cd-fill-ult');
+            let ultLabelEl = document.getElementById('tekken-cd-label-ult');
+            let ultBtnEl = document.getElementById('tekken-btn-ult');
+            if (ultFillEl) ultFillEl.style.width = (Math.min(1, Math.max(0, ultRatio)) * 100) + '%';
+            if (ultLabelEl) ultLabelEl.textContent = ultReady ? '사용가능!' : Math.round(ultRatio * 100) + '%';
+            if (ultBtnEl) ultBtnEl.classList.toggle('on-cooldown', !ultReady);
+        }
+
+        function drawTekkenShadow(ctx, f, groundY) {
+            ctx.save();
+            ctx.globalAlpha = 0.35;
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(f.x, groundY + 4, 26 * TEKKEN_CHAR_SCALE, 7 * TEKKEN_CHAR_SCALE, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawTekkenFighter(ctx, f, groundY) {
+            if (!f) return;
+            let feetY = groundY + f.y;
+            let bodyH = 62;
+            let headR = 13;
+            let torsoTopY = feetY - bodyH;
+            let dir = f.facing;
+            let flash = (f.state === 'hitstun');
+            let isDead = f.hp <= 0;
+
+            ctx.save();
+            // 캐릭터의 발 위치(f.x, feetY)를 기준으로 확대해서 그리도록 좌표계를 조정
+            ctx.translate(f.x, feetY);
+            ctx.scale(TEKKEN_CHAR_SCALE, TEKKEN_CHAR_SCALE);
+            ctx.translate(0, -feetY);
+
+            f.walkAnim = (f.walkAnim || 0) + (f.state === 'walk' ? 0.35 : 0);
+            let legSwing = f.state === 'walk' ? Math.sin(f.walkAnim) * 8 : 0;
+
+            ctx.strokeStyle = f.def.outfitColor;
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-6, torsoTopY + bodyH * 0.55);
+            ctx.lineTo(-6 - legSwing * 0.4, feetY);
+            ctx.moveTo(6, torsoTopY + bodyH * 0.55);
+            ctx.lineTo(6 + legSwing * 0.4, feetY);
+            ctx.stroke();
+
+            ctx.fillStyle = f.def.outfitColor;
+            ctx.beginPath();
+            ctx.roundRect(-16, torsoTopY + bodyH * 0.15, 32, bodyH * 0.45, 6);
+            ctx.fill();
+
+            ctx.fillStyle = f.def.skinTone;
+            ctx.beginPath();
+            ctx.arc(0, torsoTopY, headR, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = f.def.accent;
+            ctx.fillRect(-headR, torsoTopY - 4, headR * 2, 4);
+
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(dir * 5, torsoTopY - 1, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            let armY = torsoTopY + bodyH * 0.22;
+            let isAttackActive = f.state === 'attack' && f.attack && f.attack.frame > f.attack.def.startup && f.attack.frame <= f.attack.def.startup + f.attack.def.active;
+            let isWindup = f.state === 'attack' && f.attack && f.attack.frame <= f.attack.def.startup;
+            let reachOut = f.state === 'attack' ? (isAttackActive ? 1 : (isWindup ? -0.3 : 0.4)) : (f.guarding ? 0.15 : 0.25);
+
+            ctx.strokeStyle = f.def.skinTone;
+            ctx.lineWidth = 7;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(-dir * 10, armY);
+            ctx.lineTo(-dir * 16, armY + 14);
+            ctx.stroke();
+
+            let handX = dir * (14 + reachOut * 30);
+            let handY = armY - reachOut * 6;
+            ctx.beginPath();
+            ctx.moveTo(dir * 10, armY);
+            ctx.lineTo(handX, handY);
+            ctx.stroke();
+
+            if (f.def.type === 'sword') {
+                ctx.save();
+                ctx.strokeStyle = isAttackActive ? '#fff7cc' : '#e2e8f0';
+                ctx.lineWidth = isAttackActive ? 5 : 4;
+                ctx.beginPath();
+                ctx.moveTo(handX, handY);
+                ctx.lineTo(handX + dir * (30 + reachOut * 20), handY - 20 - reachOut * 10);
+                ctx.stroke();
+                ctx.restore();
+                if (isAttackActive) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(226,232,240,0.55)';
+                    ctx.lineWidth = 10;
+                    ctx.beginPath();
+                    ctx.arc(dir * 10, armY - 10, 34, dir > 0 ? -0.8 : Math.PI + 0.8, dir > 0 ? 0.6 : Math.PI - 0.6);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            } else {
+                ctx.fillStyle = isAttackActive ? '#fecaca' : f.def.skinTone;
+                ctx.beginPath();
+                ctx.arc(handX, handY, 6, 0, Math.PI * 2);
+                ctx.fill();
+                if (isAttackActive) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(252,165,165,0.5)';
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.arc(dir * 10, armY, 26, dir > 0 ? -0.5 : Math.PI + 0.5, dir > 0 ? 0.5 : Math.PI - 0.5);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            if (f.guarding) {
+                ctx.save();
+                ctx.strokeStyle = 'rgba(147,197,253,0.7)';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(dir * 8, armY + 6, 20, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            if (flash) {
+                ctx.save();
+                ctx.globalAlpha = 0.4;
+                ctx.fillStyle = '#f87171';
+                ctx.beginPath();
+                ctx.arc(0, torsoTopY + bodyH * 0.3, 34, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            if (isDead) {
+                ctx.save();
+                ctx.globalAlpha = 0.85;
+                ctx.font = 'bold 14px "Noto Sans KR", sans-serif';
+                ctx.fillStyle = '#f87171';
+                ctx.textAlign = 'center';
+                ctx.fillText('KO', 0, torsoTopY - 24);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        function drawTekkenHPBar(ctx, x, y, w, h, f, anchorRight) {
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+            let ratio = Math.max(0, f.hp / f.maxHp);
+            let grad = ctx.createLinearGradient(x, 0, x + w, 0);
+            grad.addColorStop(0, '#ef4444');
+            grad.addColorStop(0.5, '#f59e0b');
+            grad.addColorStop(1, '#4ade80');
+            ctx.fillStyle = grad;
+            if (anchorRight) {
+                ctx.fillRect(x + w * (1 - ratio), y, w * ratio, h);
+            } else {
+                ctx.fillRect(x, y, w * ratio, h);
+            }
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(x, y, w, h);
+            // HP 수치 텍스트 (진짜 격투 게임처럼 크게)
+            ctx.font = 'bold 12px "Noto Sans KR", sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${Math.ceil(f.hp)} / ${f.maxHp}`, x + w / 2, y + h - 6);
+        }
+
+        function drawTekkenUltBar(ctx, x, y, w, h, f) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+            let ratio = f.ult / f.maxUlt;
+            ctx.fillStyle = ratio >= 1 ? '#facc15' : '#6366f1';
+            ctx.fillRect(x, y, w * ratio, h);
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, w, h);
+            if (ratio >= 1) {
+                ctx.fillStyle = '#1e293b';
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('ULT READY', x + w / 2, y + h - 3);
+            }
+        }
+
+        function drawTekkenHUD(ctx, w) {
+            let barW = Math.min(w * 0.42, 400);
+            let barH = 34;
+            let topY = 48;
+
+            drawTekkenHPBar(ctx, 14, topY, barW, barH, tekkenP1, true);
+            drawTekkenHPBar(ctx, w - 14 - barW, topY, barW, barH, tekkenP2, false);
+
+            ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'left';
+            ctx.fillText(tekkenP1.def.name, 14, topY - 10);
+            ctx.textAlign = 'right';
+            ctx.fillText(tekkenP2.def.name, w - 14, topY - 10);
+
+            drawTekkenUltBar(ctx, 14, topY + barH + 10, barW * 0.65, 16, tekkenP1);
+            drawTekkenUltBar(ctx, w - 14 - barW * 0.65, topY + barH + 10, barW * 0.65, 16, tekkenP2);
+        }
+
+        function renderTekkenFrame() {
+            if (!tekkenCtx || !tekkenCanvas || !tekkenP1 || !tekkenP2) return;
+            let ctx = tekkenCtx;
+            let w = tekkenCanvas.width, h = tekkenCanvas.height;
+            let groundY = h - 50;
+
+            let sky = ctx.createLinearGradient(0, 0, 0, groundY);
+            sky.addColorStop(0, '#1e1b4b');
+            sky.addColorStop(0.45, '#7c2d5e');
+            sky.addColorStop(0.75, '#ea580c');
+            sky.addColorStop(1, '#fbbf24');
+            ctx.fillStyle = sky;
+            ctx.fillRect(0, 0, w, groundY);
+
+            ctx.save();
+            ctx.globalAlpha = 0.85;
+            ctx.fillStyle = '#fef3c7';
+            ctx.beginPath();
+            ctx.arc(w / 2, groundY * 0.55, Math.min(w, h) * 0.09, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.fillStyle = 'rgba(30, 27, 75, 0.65)';
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(0, groundY - h * 0.18);
+            ctx.lineTo(w * 0.18, groundY - h * 0.3);
+            ctx.lineTo(w * 0.35, groundY - h * 0.15);
+            ctx.lineTo(w * 0.55, groundY - h * 0.32);
+            ctx.lineTo(w * 0.75, groundY - h * 0.14);
+            ctx.lineTo(w * 0.9, groundY - h * 0.28);
+            ctx.lineTo(w, groundY - h * 0.16);
+            ctx.lineTo(w, groundY);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#3f2417';
+            ctx.fillRect(w * 0.03, groundY - h * 0.55, w * 0.03, h * 0.55);
+            ctx.fillRect(w * 0.94, groundY - h * 0.55, w * 0.03, h * 0.55);
+
+            let floorGrad = ctx.createLinearGradient(0, groundY, 0, h);
+            floorGrad.addColorStop(0, '#3f6212');
+            floorGrad.addColorStop(1, '#1a2e05');
+            ctx.fillStyle = floorGrad;
+            ctx.fillRect(0, groundY, w, h - groundY);
+            ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+            ctx.lineWidth = 2;
+            for (let gx = 0; gx < w; gx += 45) {
+                ctx.beginPath();
+                ctx.moveTo(gx, groundY);
+                ctx.lineTo(gx, h);
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.moveTo(0, groundY + (h - groundY) / 2);
+            ctx.lineTo(w, groundY + (h - groundY) / 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(w, groundY);
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(255,255,255,0.75)';
+            ctx.font = 'bold 20px "Noto Sans KR", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('철권 대전', w / 2, 28);
+
+            drawTekkenShadow(ctx, tekkenP1, groundY);
+            drawTekkenShadow(ctx, tekkenP2, groundY);
+
+            drawTekkenFighter(ctx, tekkenP1, groundY);
+            drawTekkenFighter(ctx, tekkenP2, groundY);
+
+            tekkenParticles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, p.alpha);
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, groundY + p.yFromGround, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            tekkenFloatingTexts.forEach(t => {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, t.alpha);
+                ctx.fillStyle = t.color;
+                ctx.font = 'bold 18px "Noto Sans KR", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(t.text, t.x, groundY + t.yFromGround);
+                ctx.restore();
+            });
+
+            drawTekkenHUD(ctx, w);
+        }
+        // ===== 철권 대전 코드 끝 =====
 
         // ===== 안티치트 함수 잠금 =====
         // 콘솔에서 "flagStairsCheatAndBan = function(){}" 같은 식으로 차단 로직 자체를
