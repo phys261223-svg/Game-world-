@@ -256,6 +256,96 @@
             box-shadow: none;
         }
 
+        /* ===== 메인화면 버전 표시(좌하단) & 공지 버튼(우상단) ===== */
+        #site-version-label {
+            position: fixed;
+            left: 16px;
+            bottom: 14px;
+            font-size: 0.85rem;
+            color: #64748b;
+            letter-spacing: 0.5px;
+            z-index: 50;
+            user-select: none;
+        }
+        #notice-btn {
+            position: fixed;
+            right: 16px;
+            top: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 9px 18px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 999px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.08);
+            color: #f1f5f9;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+            z-index: 50;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        #notice-btn:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.15);
+        }
+        #notice-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 900;
+            box-shadow: 0 0 0 2px rgba(15,23,42,0.9);
+            animation: noticeBadgePulse 1.6s infinite;
+        }
+        @keyframes noticeBadgePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        #notice-modal .modal-content {
+            max-width: 460px;
+            text-align: left;
+        }
+        #notice-modal h2 {
+            text-align: center;
+            font-size: 1.9rem;
+        }
+        #notice-modal .notice-version-tag {
+            text-align: center;
+            color: #60a5fa;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 18px;
+        }
+        #notice-modal ul {
+            list-style: none;
+            margin: 0 0 25px 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        #notice-modal li {
+            font-size: 1.05rem;
+            color: #e2e8f0;
+            line-height: 1.5;
+            padding-left: 22px;
+            position: relative;
+        }
+        #notice-modal li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4ade80;
+            font-weight: bold;
+        }
+
         .slime-online-code-box {
             font-size: 2.6rem;
             font-weight: bold;
@@ -309,6 +399,44 @@
         #screen-slime-game .slime-ult-bar { height:100%; width:0%; background: linear-gradient(90deg, #ff007f, #7b2cbf, #00f2fe); transition: width 0.2s ease-out; }
         #screen-slime-game .slime-bar-text { position:absolute; right:8px; top:50%; transform: translateY(-50%); font-size:10px; font-weight:800; color:#fff; text-shadow: 0 1px 2px #000; }
         #screen-slime-game .slime-skills-info { font-size:11px; margin-top:4px; color:#cbd5e0; background: rgba(0,0,0,0.6); padding:6px 10px; border-radius:8px; backdrop-filter: blur(4px); line-height:1.3; border:1px solid rgba(255,255,255,0.1); }
+        /* 하단 쿨타임 표시 UI (롤 스타일 스킬 아이콘): 캐릭터별 1/2/3번 스킬을 이미지 아이콘 네모로 보여주고,
+           그 위에 쿨타임 진행률을 어두운 오버레이로 덮어 표시한다.
+           - 내(data-mine="1") 스킬: 아이콘 + 숫자(남은 초) + 회색 오버레이가 위에서부터 걷히며 준비됨을 보여줌
+           - 상대(data-mine="0") 스킬: 아이콘 위에 어두운 오버레이만 있고 숫자는 절대 표시하지 않음(정확한 쿨타임 은닉) */
+        #screen-slime-game .slime-cd-wrap { display:flex; justify-content:space-between; width:850px; max-width:95vw; margin-top:10px; }
+        #screen-slime-game .slime-cd-group { display:flex; gap:8px; }
+        #screen-slime-game .slime-cd-group.right { flex-direction: row-reverse; }
+        #screen-slime-game .slime-cd-box {
+            width:52px; height:52px; border-radius:10px;
+            background-size: cover; background-position: center;
+            border:2px solid rgba(255,255,255,0.25);
+            display:flex; align-items:flex-end; justify-content:center;
+            position:relative; overflow:hidden;
+            transition: border-color 0.15s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        #screen-slime-game .slime-cd-box .slime-cd-icon {
+            position:absolute; inset:0; background-size:cover; background-position:center;
+        }
+        #screen-slime-game .slime-cd-box .slime-cd-key {
+            position:absolute; top:2px; left:4px; font-size:9px; font-weight:800; color:#fff;
+            text-shadow: 0 1px 2px #000; background: rgba(0,0,0,0.45); border-radius:4px; padding:0 3px; z-index:3;
+        }
+        #screen-slime-game .slime-cd-box .slime-cd-val {
+            position:relative; z-index:3; font-size:13px; font-weight:900; color:#fff;
+            text-shadow: 0 1px 3px #000; margin-bottom:2px;
+        }
+        /* 쿨타임 진행 중: 위에서부터 어두운 오버레이가 남은 비율만큼 덮는다(clip-path로 표현) */
+        #screen-slime-game .slime-cd-box .slime-cd-overlay {
+            position:absolute; left:0; right:0; top:0; height:100%;
+            background: rgba(2,4,10,0.82);
+            z-index:2; transition: height 0.1s linear;
+        }
+        #screen-slime-game .slime-cd-box.ready { border-color:#4ade80; box-shadow: 0 0 10px rgba(74,222,128,0.6); }
+        #screen-slime-game .slime-cd-box.ready .slime-cd-overlay { height:0%; }
+        /* 상대방 스킬 박스: 오버레이(쿨타임 여부)만 보이고 숫자는 항상 비워둔다 */
+        #screen-slime-game .slime-cd-box[data-mine="0"] .slime-cd-val { display:none; }
+        #screen-slime-game .slime-cd-box[data-mine="0"] .slime-cd-key { opacity:0.7; }
         #slimeCanvas { border: 2px solid rgba(255,0,127,0.5); border-radius: 12px; box-shadow: 0 0 60px rgba(255,0,127,0.3); background:#020208; max-width: 95vw; touch-action:none; }
         .slime-char-card { min-width: 220px; max-width: 260px; }
         .slime-char-card .char-desc-mini { font-size: 0.78rem; color:#f1f5f9; line-height:1.4; text-align:left; }
@@ -337,7 +465,23 @@
         <button class="ut-close" onclick="dismissUpdateToast()">확인</button>
     </div>
 
+    <div id="notice-modal" class="modal">
+        <div class="modal-content">
+            <h2>📢 업데이트 공지</h2>
+            <div class="notice-version-tag">버전1</div>
+            <ul id="notice-list"></ul>
+            <div style="display: flex; justify-content: center;">
+                <button onclick="closeNoticeModal()">확인</button>
+            </div>
+        </div>
+    </div>
+
     <div id="screen-main" class="screen active">
+        <div id="site-version-label">버전1</div>
+        <button id="notice-btn" onclick="openNoticeModal()">
+            📢 공지
+            <span id="notice-badge" style="display:none;">!</span>
+        </button>
         <h1>game world</h1>
         <div class="btn-group">
             <button class="game-card" onclick="selectGame('go')">
@@ -431,7 +575,46 @@
                     </svg>
                 </div>
             </button>
+            <button class="game-card" onclick="openIframeGame('minesweeper')" style="background: linear-gradient(145deg, #38bdf8, #0369a1);">
+                <span class="game-title">지뢰찾기</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <rect x="6" y="6" width="48" height="48" fill="#283548" rx="5" stroke="#0f172a" stroke-width="2"/>
+                        <circle cx="30" cy="30" r="10" fill="#1e293b" stroke="#f97316" stroke-width="2"/>
+                        <line x1="30" y1="14" x2="30" y2="20" stroke="#f97316" stroke-width="3"/>
+                        <line x1="30" y1="40" x2="30" y2="46" stroke="#f97316" stroke-width="3"/>
+                        <line x1="14" y1="30" x2="20" y2="30" stroke="#f97316" stroke-width="3"/>
+                        <line x1="40" y1="30" x2="46" y2="30" stroke="#f97316" stroke-width="3"/>
+                        <line x1="18" y1="18" x2="22" y2="22" stroke="#f97316" stroke-width="3"/>
+                        <line x1="38" y1="38" x2="42" y2="42" stroke="#f97316" stroke-width="3"/>
+                        <line x1="42" y1="18" x2="38" y2="22" stroke="#f97316" stroke-width="3"/>
+                        <line x1="22" y1="38" x2="18" y2="42" stroke="#f97316" stroke-width="3"/>
+                    </svg>
+                </div>
+            </button>
+            <button class="game-card" onclick="openIframeGame('billiards')" style="background: linear-gradient(145deg, #16a34a, #14532d);">
+                <span class="game-title">당구</span>
+                <div class="game-icon">
+                    <svg width="55" height="55" viewBox="0 0 60 60">
+                        <rect x="4" y="12" width="52" height="36" fill="#166534" rx="4" stroke="#3f2412" stroke-width="4"/>
+                        <circle cx="20" cy="30" r="6" fill="#ffffff"/>
+                        <circle cx="36" cy="24" r="6" fill="#ef4444"/>
+                        <circle cx="40" cy="36" r="6" fill="#fbbf24"/>
+                    </svg>
+                </div>
+            </button>
         </div>
+    </div>
+
+    <div id="screen-iframe-game" class="screen">
+        <div class="top-bar" style="max-width: 1000px;">
+            <button class="btn-secondary" onclick="closeIframeGame()">← 메인으로</button>
+            <span id="iframe-game-title" style="font-size:1.3rem; font-weight:bold;"></span>
+            <span style="width: 120px;"></span>
+        </div>
+        <iframe id="embedded-game-frame" src=""
+            style="width: 95vw; max-width: 1000px; height: 80vh; border: 2px solid #5c4033; border-radius: 10px; background:#0f172a;"
+            allow="fullscreen"></iframe>
     </div>
 
     <div id="screen-spacewar-mode" class="screen">
@@ -576,6 +759,21 @@
             </div>
         </div>
         <p style="color:#64748b; font-size:0.8rem; margin-top:10px; text-align:center;" id="slime-key-hint">키보드: 이동 W/A/S/D · 스킬 H/J/K · 궁극기 L</p>
+        <!-- 하단 쿨타임 표시(롤 스타일 스킬 아이콘): 내 스킬은 아이콘+숫자+진행률이 모두 보이지만,
+             상대 스킬은 아이콘 위에 쿨타임 중임을 나타내는 어두운 오버레이만 덮일 뿐 정확한 남은 시간(숫자)은
+             절대 표시되지 않는다. slime-cd-box에 붙는 data-mine="1"/"0"으로 내 것인지 상대 것인지 구분한다. -->
+        <div class="slime-cd-wrap">
+            <div class="slime-cd-group" id="slime-p1-cd-group">
+                <div class="slime-cd-box" id="slime-p1-cd-1" data-skill="1"><span class="slime-cd-icon"></span><span class="slime-cd-overlay"></span><span class="slime-cd-key">Q</span><span class="slime-cd-val"></span></div>
+                <div class="slime-cd-box" id="slime-p1-cd-2" data-skill="2"><span class="slime-cd-icon"></span><span class="slime-cd-overlay"></span><span class="slime-cd-key">W</span><span class="slime-cd-val"></span></div>
+                <div class="slime-cd-box" id="slime-p1-cd-3" data-skill="3"><span class="slime-cd-icon"></span><span class="slime-cd-overlay"></span><span class="slime-cd-key">E</span><span class="slime-cd-val"></span></div>
+            </div>
+            <div class="slime-cd-group right" id="slime-p2-cd-group">
+                <div class="slime-cd-box" id="slime-p2-cd-1" data-skill="1"><span class="slime-cd-icon"></span><span class="slime-cd-overlay"></span><span class="slime-cd-key">Q</span><span class="slime-cd-val"></span></div>
+                <div class="slime-cd-box" id="slime-p2-cd-2" data-skill="2"><span class="slime-cd-icon"></span><span class="slime-cd-overlay"></span><span class="slime-cd-key">W</span><span class="slime-cd-val"></span></div>
+                <div class="slime-cd-box" id="slime-p2-cd-3" data-skill="3"><span class="slime-cd-icon"></span><span class="slime-cd-overlay"></span><span class="slime-cd-key">E</span><span class="slime-cd-val"></span></div>
+            </div>
+        </div>
         <button class="btn-secondary" style="margin-top:6px;" onclick="quitSlimeOnline()">포기/나가기</button>
     </div>
     <!-- ▲▲▲ 슬라임 대결 끝 ▲▲▲ -->
@@ -861,6 +1059,49 @@
         }
 
         window.addEventListener('DOMContentLoaded', checkSiteUpdateNotice);
+
+        // ===================================================================
+        // ===== 공지 버튼(우상단) + 버전 표시(좌하단) =====
+        // 새 업데이트를 배포할 때마다 NOTICE_VERSION을 새 값으로 바꾸고
+        // NOTICE_ITEMS에 이번 업데이트 내용을 적어두면 된다.
+        // 사용자가 아직 이 버전 공지를 확인하지 않았다면 공지 버튼에 빨간 느낌표(!) 뱃지가
+        // 붙어있고, 공지를 한 번 열어보면(모달을 열면) 뱃지가 사라지고 그 상태가
+        // localStorage에 저장되어 새로고침해도 다시 뜨지 않는다(버전이 또 바뀌기 전까지).
+        // ===================================================================
+        const NOTICE_VERSION = "1";
+        const NOTICE_ITEMS = [
+            "🎮 새 미니게임 2종 추가: 지뢰찾기, 당구",
+            "🗡️ 슬라임 대결에 신규 캐릭터 \"발도의 카이렌\" 추가 (숨겨진 콤보 포함)",
+            "⏱️ 슬라임 대결 전투 UI 개선: 내 스킬은 남은 쿨타임 숫자까지, 상대 스킬은 쿨타임 여부만 아이콘으로 표시"
+        ];
+        const NOTICE_SEEN_KEY = 'gw_notice_seen_version';
+
+        function refreshNoticeBadge() {
+            try {
+                let seen = localStorage.getItem(NOTICE_SEEN_KEY);
+                document.getElementById('notice-badge').style.display = (seen === NOTICE_VERSION) ? 'none' : 'inline-flex';
+            } catch (e) {}
+        }
+
+        function openNoticeModal() {
+            let list = document.getElementById('notice-list');
+            list.innerHTML = '';
+            NOTICE_ITEMS.forEach(item => {
+                let li = document.createElement('li');
+                li.innerText = item;
+                list.appendChild(li);
+            });
+            document.getElementById('notice-modal').style.display = 'flex';
+            try { localStorage.setItem(NOTICE_SEEN_KEY, NOTICE_VERSION); } catch (e) {}
+            document.getElementById('notice-badge').style.display = 'none';
+        }
+
+        function closeNoticeModal() {
+            document.getElementById('notice-modal').style.display = 'none';
+        }
+
+        window.addEventListener('DOMContentLoaded', refreshNoticeBadge);
+
         let boardSize = 15; 
         let board = [];
         let canvas, ctx;
@@ -1925,6 +2166,44 @@
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
+        }
+
+        // 당구/지뢰찾기 게임 전체 HTML을 base64로 통째로 내장해서,
+        // 별도 파일 없이 이 index.html 파일 하나만으로 두 게임을 iframe(srcdoc)에 그대로 띄운다.
+        // (iframe은 부모 문서와 별도의 자바스크립트 전역 스코프를 가지므로,
+        //  기존 체스/슬라임 등 게임의 전역 변수와 절대 충돌하지 않는다.)
+        // 주의: BILLIARDS_HTML_B64 / MINESWEEPER_HTML_B64 상수는 이 스크립트보다
+        // "뒤에" 있는 별도 <script> 블록에서 선언되므로, 여기서 top-level에 바로
+        // 참조해서 객체를 만들면 안 된다(아직 정의되기 전이라 에러가 나서 이 스크립트
+        // 전체가 멈춰버림). 그래서 실제 클릭이 일어나는 시점(함수 호출 시점)에만
+        // 해당 상수를 참조하도록 함수 안에서 지연 평가한다.
+        function getIframeGameInfo(key) {
+            if (key === 'minesweeper') return { b64: MINESWEEPER_HTML_B64, title: '지뢰찾기' };
+            if (key === 'billiards') return { b64: BILLIARDS_HTML_B64, title: '당구' };
+            return null;
+        }
+
+        // base64(UTF-8) 문자열을 실제 유니코드 문자열로 안전하게 복원
+        function b64ToUtf8(b64) {
+            const binary = atob(b64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new TextDecoder('utf-8').decode(bytes);
+        }
+
+        function openIframeGame(key) {
+            const info = getIframeGameInfo(key);
+            if (!info) return;
+            document.getElementById('iframe-game-title').innerText = info.title;
+            const frame = document.getElementById('embedded-game-frame');
+            frame.srcdoc = b64ToUtf8(info.b64);
+            showScreen('screen-iframe-game');
+        }
+
+        function closeIframeGame() {
+            const frame = document.getElementById('embedded-game-frame');
+            frame.srcdoc = '';
+            showScreen('screen-main');
         }
 
         function selectGame(game) {
@@ -7812,7 +8091,7 @@
             if (!ctx || !p1 || !p2) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawGargantuaBackground();
-            if (mapStairs) mapStairs.draw();
+            if (mapFloor) mapFloor.draw();
             p1.draw(); p2.draw();
         }
 
@@ -8360,7 +8639,8 @@
                 isInvincible: p.isInvincible, isDashing: p.isDashing, isStunned: p.isStunned,
                 scaleX: p.scaleX, scaleY: p.scaleY, scytheAngle: p.scytheAngle,
                 cooldowns: { ...p.cooldowns }, hasBeastBuff: p.hasBeastBuff,
-                isUltCasting: p.isUltCasting, isInvisible: p.isInvisible, isGrounded: p.isGrounded
+                isUltCasting: p.isUltCasting, isInvisible: p.isInvisible, isGrounded: p.isGrounded,
+                isChanneling: p.isChanneling
             };
         }
 
@@ -8372,6 +8652,7 @@
             p.scaleX = s.scaleX; p.scaleY = s.scaleY; p.scytheAngle = s.scytheAngle;
             p.cooldowns = { ...s.cooldowns }; p.hasBeastBuff = s.hasBeastBuff;
             p.isUltCasting = s.isUltCasting; p.isInvisible = s.isInvisible; p.isGrounded = s.isGrounded;
+            p.isChanneling = s.isChanneling;
         }
 
         function broadcastSlimeHostStateThrottled() {
@@ -8485,6 +8766,7 @@
                 p2.scaleX = target.scaleX; p2.scaleY = target.scaleY; p2.scytheAngle = target.scytheAngle;
                 p2.cooldowns = { ...target.cooldowns }; p2.hasBeastBuff = target.hasBeastBuff;
                 p2.isUltCasting = target.isUltCasting; p2.isInvisible = target.isInvisible; p2.isGrounded = target.isGrounded;
+                p2.isChanneling = target.isChanneling;
                 if (!target.facingRight !== !p2.facingRight && Math.abs(p2.vx) < 0.5) p2.facingRight = target.facingRight;
             }
             // HP/게이지가 실제로 바뀐 경우에만 DOM을 갱신한다.
@@ -8499,6 +8781,7 @@
         // 게스트 화면 전용 렌더 프레임: 이펙트들의 시각 진행(update)과 그리기를 그대로 수행하되
         // 데미지 판정(takeDamage/addUlt)은 이미 무력화되어 있어 안전하게 재생만 됨
         function renderSlimeOnlineGuestFrame() {
+            if (mapFloor) mapFloor.update();
             [projectiles, wolves, scytheWaves, daggers].forEach(arr => arr.forEach(o => o.update()));
             [comboEffects, blackHoles, galaxyHandEffects, meteorStorms, holyBeams, groundSlams,
              spinScythes, gargantuaSlashes, shockwaves, radialBeamEffects, heavenlyRainUlts,
@@ -8532,7 +8815,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawGargantuaBackground();
-            if (mapStairs) mapStairs.draw();
+            if (mapFloor) mapFloor.draw();
 
             blackHoles.forEach(bh => bh.draw());
             meteorStorms.forEach(ms => ms.draw());
@@ -8696,8 +8979,323 @@
         color: "#2e1065",
         desc: "<b>[차원 공간 제어자]</b><br>1: 관통 차원 구체 | 2: 공중 도약 십자 참격 | 3: 환영 분신 폭발 설치<br><b style='color:#ff00f0'>[ULT]: 차원 균열 대폭발</b>",
         ultName: "차원 균열 대폭발"
+      },
+      kairen: {
+        name: "발도의 카이렌",
+        color: "#334155",
+        desc: "<b>[칼을 든 슬라임]</b><br>패시브: 적중 시 소량 회복<br>1: 칼 휘두르기(저댐/초단쿨) | 2: 검날 3연사 | 3: 0.5초 정지 후 발도 돌진<br><b style='color:#ff00f0'>[ULT]: 거대검 내리찍기 (적중 시 3번기 쿨초기화 + 1초 기절)</b>",
+        ultName: "거대검 내리찍기"
       }
     };
+
+    // ===== 롤(리그 오브 레전드) 스타일 스킬 아이콘 정의 =====
+    // 이모지는 폰트/OS마다 다르게 보이고 실제 스킬 이펙트와 안 맞아서, 각 캐릭터의 스킬 특징에 맞춰
+    // canvas로 직접 벡터 도형을 그린 아이콘을 사용한다. 아래 SKILL_ICON_DRAWERS[charKey][skillNumber]는
+    // (cx, bg) => void 형태의 그리기 함수이며, cx는 64x64 캔버스의 2D 컨텍스트, bg는 배경 테마색이다.
+    // 그리기 함수 내부 좌표는 32,32를 중심으로 잡는다.
+    function _iconBaseBg(cx, bg) {
+      const grad = cx.createLinearGradient(0, 0, 64, 64);
+      grad.addColorStop(0, bg);
+      grad.addColorStop(1, '#000000');
+      cx.fillStyle = grad;
+      cx.fillRect(0, 0, 64, 64);
+      cx.strokeStyle = 'rgba(255,255,255,0.15)';
+      cx.lineWidth = 2;
+      cx.strokeRect(1, 1, 62, 62);
+    }
+
+    const SKILL_ICON_DRAWERS = {
+      // ---- 성좌의 관찰자 ----
+      cosmic_observer: {
+        1: (cx) => { // 별의 성좌 구체
+          cx.fillStyle = '#c4b5fd'; cx.shadowColor = '#a78bfa'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.arc(32, 32, 11, 0, Math.PI * 2); cx.fill();
+          cx.fillStyle = '#fff';
+          [[20, 20], [46, 22], [44, 46], [18, 44]].forEach(([px, py]) => {
+            cx.beginPath(); cx.arc(px, py, 2.2, 0, Math.PI * 2); cx.fill();
+          });
+        },
+        2: (cx) => { // 연속 음파 펀치
+          cx.strokeStyle = '#e2e8f0'; cx.lineWidth = 3; cx.shadowColor = '#94a3b8'; cx.shadowBlur = 6;
+          [0, 1, 2].forEach(i => { cx.beginPath(); cx.arc(24, 32, 8 + i * 7, -0.6, 0.6); cx.stroke(); });
+          cx.fillStyle = '#f8fafc';
+          cx.beginPath(); cx.moveTo(44, 32); cx.lineTo(52, 26); cx.lineTo(52, 38); cx.closePath(); cx.fill();
+        },
+        3: (cx) => { // 오라 회복
+          cx.fillStyle = '#4ade80'; cx.shadowColor = '#4ade80'; cx.shadowBlur = 10;
+          cx.beginPath();
+          cx.moveTo(32, 46); cx.bezierCurveTo(14, 32, 18, 16, 32, 24);
+          cx.bezierCurveTo(46, 16, 50, 32, 32, 46); cx.fill();
+        }
+      },
+      // ---- 허공의 도사 ----
+      void_sorcerer: {
+        1: (cx) => { // 은하 거대 마법진 손
+          cx.strokeStyle = '#a78bfa'; cx.lineWidth = 2.5; cx.shadowColor = '#818cf8'; cx.shadowBlur = 8;
+          cx.beginPath(); cx.arc(32, 32, 16, 0, Math.PI * 2); cx.stroke();
+          cx.beginPath(); cx.arc(32, 32, 9, 0, Math.PI * 2); cx.stroke();
+          cx.fillStyle = '#c4b5fd';
+          for (let a = 0; a < 6; a++) {
+            const ang = a * Math.PI / 3;
+            cx.beginPath(); cx.arc(32 + Math.cos(ang) * 16, 32 + Math.sin(ang) * 16, 2, 0, Math.PI * 2); cx.fill();
+          }
+        },
+        2: (cx) => { // 유성우
+          cx.strokeStyle = '#fbbf24'; cx.lineWidth = 3; cx.lineCap = 'round'; cx.shadowColor = '#f59e0b'; cx.shadowBlur = 8;
+          [[16, 14, 30, 28], [34, 12, 48, 26], [24, 26, 38, 40]].forEach(([x1, y1, x2, y2]) => {
+            cx.beginPath(); cx.moveTo(x1, y1); cx.lineTo(x2, y2); cx.stroke();
+          });
+          cx.fillStyle = '#fef3c7';
+          [[30, 28], [48, 26], [38, 40]].forEach(([px, py]) => { cx.beginPath(); cx.arc(px, py, 2.5, 0, Math.PI * 2); cx.fill(); });
+        },
+        3: (cx) => { // 치유
+          cx.fillStyle = '#34d399'; cx.shadowColor = '#34d399'; cx.shadowBlur = 10;
+          cx.fillRect(28, 18, 8, 28); cx.fillRect(18, 28, 28, 8);
+        }
+      },
+      // ---- 검투사 무사 ----
+      star_titan: {
+        1: (cx) => { // 회전 네온 톱날
+          cx.save(); cx.translate(32, 32); cx.rotate(0.3);
+          cx.fillStyle = '#818cf8'; cx.shadowColor = '#6366f1'; cx.shadowBlur = 10;
+          cx.beginPath();
+          for (let i = 0; i < 8; i++) {
+            const ang = i * Math.PI / 4;
+            const r = i % 2 === 0 ? 15 : 8;
+            cx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r);
+          }
+          cx.closePath(); cx.fill();
+          cx.fillStyle = '#1e1b4b'; cx.beginPath(); cx.arc(0, 0, 4, 0, Math.PI * 2); cx.fill();
+          cx.restore();
+        },
+        2: (cx) => { // 강철 지면 찍기
+          cx.fillStyle = '#94a3b8'; cx.shadowColor = '#cbd5e1'; cx.shadowBlur = 8;
+          cx.beginPath(); cx.moveTo(32, 12); cx.lineTo(40, 40); cx.lineTo(24, 40); cx.closePath(); cx.fill();
+          cx.strokeStyle = '#e0e7ff'; cx.lineWidth = 3;
+          cx.beginPath(); cx.moveTo(16, 48); cx.lineTo(48, 48); cx.stroke();
+          cx.beginPath(); cx.moveTo(12, 52); cx.lineTo(24, 52); cx.moveTo(40, 52); cx.lineTo(52, 52); cx.stroke();
+        },
+        3: (cx) => { // 네온 방어막
+          cx.strokeStyle = '#60a5fa'; cx.lineWidth = 3; cx.shadowColor = '#3b82f6'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.arc(32, 32, 15, 0, Math.PI * 2); cx.stroke();
+          cx.fillStyle = 'rgba(96,165,250,0.25)'; cx.fill();
+        }
+      },
+      // ---- 시간의 집행자 ----
+      time_reaper: {
+        1: (cx) => { // 시공 절단 검기
+          cx.strokeStyle = '#5eead4'; cx.lineWidth = 4; cx.lineCap = 'round'; cx.shadowColor = '#2dd4bf'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.moveTo(14, 44); cx.lineTo(50, 20); cx.stroke();
+          cx.lineWidth = 2; cx.beginPath(); cx.moveTo(20, 44); cx.lineTo(50, 26); cx.stroke();
+        },
+        2: (cx) => { // 이중 회전 낫
+          cx.strokeStyle = '#5eead4'; cx.lineWidth = 3; cx.shadowColor = '#2dd4bf'; cx.shadowBlur = 8;
+          cx.beginPath(); cx.arc(24, 32, 13, 0.3, Math.PI * 1.6); cx.stroke();
+          cx.beginPath(); cx.arc(40, 32, 13, Math.PI + 0.3, Math.PI * 2.6); cx.stroke();
+        },
+        3: (cx) => { // 시간 복원
+          cx.strokeStyle = '#a7f3d0'; cx.lineWidth = 3; cx.shadowColor = '#34d399'; cx.shadowBlur = 8;
+          cx.beginPath(); cx.arc(32, 32, 15, -Math.PI * 0.3, Math.PI * 1.5); cx.stroke();
+          cx.beginPath(); cx.moveTo(32, 22); cx.lineTo(32, 32); cx.lineTo(40, 36); cx.stroke();
+        }
+      },
+      // ---- 신성의 수호자 ----
+      holy_guardian: {
+        1: (cx) => { // 돌진 충돌
+          cx.fillStyle = '#fbbf24'; cx.shadowColor = '#f59e0b'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.moveTo(14, 32); cx.lineTo(38, 22); cx.lineTo(34, 32); cx.lineTo(38, 42); cx.closePath(); cx.fill();
+          cx.strokeStyle = '#fef3c7'; cx.lineWidth = 2;
+          cx.beginPath(); cx.moveTo(40, 20); cx.lineTo(50, 32); cx.lineTo(40, 44); cx.stroke();
+        },
+        2: (cx) => { // 천상 광선
+          const grad = cx.createLinearGradient(32, 10, 32, 54);
+          grad.addColorStop(0, '#fef9c3'); grad.addColorStop(1, 'rgba(251,191,36,0)');
+          cx.fillStyle = grad; cx.shadowColor = '#fbbf24'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.moveTo(26, 12); cx.lineTo(38, 12); cx.lineTo(44, 54); cx.lineTo(20, 54); cx.closePath(); cx.fill();
+        },
+        3: (cx) => { // 성역 무적 방어막
+          cx.strokeStyle = '#fde68a'; cx.lineWidth = 3; cx.shadowColor = '#fbbf24'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.moveTo(32, 14); cx.lineTo(48, 20); cx.lineTo(48, 34); cx.quadraticCurveTo(48, 46, 32, 52); cx.quadraticCurveTo(16, 46, 16, 34); cx.lineTo(16, 20); cx.closePath(); cx.stroke();
+          cx.fillStyle = 'rgba(253,230,138,0.2)'; cx.fill();
+        }
+      },
+      // ---- 환수 테이머 ----
+      beast_tamer: {
+        1: (cx) => { // 메카 늑대
+          cx.fillStyle = '#34d399'; cx.shadowColor = '#10b981'; cx.shadowBlur = 8;
+          cx.beginPath(); cx.moveTo(16, 40); cx.lineTo(22, 24); cx.lineTo(34, 22); cx.lineTo(44, 30); cx.lineTo(48, 40); cx.lineTo(16, 40); cx.closePath(); cx.fill();
+          cx.fillStyle = '#022c22'; cx.beginPath(); cx.moveTo(40, 26); cx.lineTo(46, 22); cx.lineTo(45, 30); cx.closePath(); cx.fill();
+        },
+        2: (cx) => { // 에어본 곰 발톱
+          cx.strokeStyle = '#6ee7b7'; cx.lineWidth = 3.5; cx.lineCap = 'round'; cx.shadowColor = '#10b981'; cx.shadowBlur = 8;
+          [[-6, 6], [0, 8], [6, 6]].forEach(([dx]) => {
+            cx.beginPath(); cx.moveTo(24 + dx, 16); cx.lineTo(30 + dx, 46); cx.stroke();
+          });
+        },
+        3: (cx) => { // 환수화 변신
+          cx.strokeStyle = '#a7f3d0'; cx.lineWidth = 3; cx.shadowColor = '#34d399'; cx.shadowBlur = 8;
+          cx.beginPath();
+          cx.moveTo(20, 20); cx.bezierCurveTo(20, 44, 44, 44, 44, 20);
+          cx.moveTo(44, 44); cx.lineTo(48, 40); cx.moveTo(44, 44); cx.lineTo(48, 48);
+          cx.stroke();
+        }
+      },
+      // ---- 차원 균열의 환영사 ----
+      phantom_weaver: {
+        1: (cx) => { // 관통 차원 구체
+          cx.fillStyle = '#c4b5fd'; cx.shadowColor = '#8b5cf6'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.arc(28, 32, 10, 0, Math.PI * 2); cx.fill();
+          cx.strokeStyle = '#ede9fe'; cx.lineWidth = 2;
+          cx.beginPath(); cx.moveTo(38, 32); cx.lineTo(52, 32); cx.stroke();
+          cx.beginPath(); cx.moveTo(46, 26); cx.lineTo(52, 32); cx.lineTo(46, 38); cx.stroke();
+        },
+        2: (cx) => { // 공중 도약 십자 참격
+          cx.strokeStyle = '#e9d5ff'; cx.lineWidth = 3.5; cx.lineCap = 'round'; cx.shadowColor = '#a855f7'; cx.shadowBlur = 8;
+          cx.beginPath(); cx.moveTo(16, 16); cx.lineTo(48, 48); cx.stroke();
+          cx.beginPath(); cx.moveTo(48, 16); cx.lineTo(16, 48); cx.stroke();
+        },
+        3: (cx) => { // 환영 분신 폭발 설치
+          cx.strokeStyle = '#c4b5fd'; cx.lineWidth = 2.5; cx.setLineDash([3, 3]); cx.shadowColor = '#8b5cf6'; cx.shadowBlur = 6;
+          cx.strokeRect(20, 18, 24, 28); cx.setLineDash([]);
+          cx.fillStyle = '#fbbf24'; cx.shadowBlur = 8; cx.shadowColor = '#f59e0b';
+          cx.beginPath(); cx.arc(32, 32, 4, 0, Math.PI * 2); cx.fill();
+        }
+      },
+      // ---- 발도의 카이렌 ----
+      kairen: {
+        1: (cx) => { // 칼 휘두르기(저댐/초단쿨) - 짧고 빠른 호 베기
+          cx.strokeStyle = '#e2e8f0'; cx.lineWidth = 4; cx.lineCap = 'round'; cx.shadowColor = '#94a3b8'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.arc(28, 32, 16, -0.8, 0.8); cx.stroke();
+          cx.fillStyle = '#f8fafc';
+          cx.beginPath(); cx.moveTo(42, 22); cx.lineTo(48, 20); cx.lineTo(44, 26); cx.closePath(); cx.fill();
+        },
+        2: (cx) => { // 검날 3연사
+          cx.fillStyle = '#e2e8f0'; cx.shadowColor = '#94a3b8'; cx.shadowBlur = 6;
+          [14, 28, 42].forEach((px, i) => {
+            cx.save(); cx.translate(px, 32 - i);
+            cx.beginPath(); cx.moveTo(-7, -3); cx.lineTo(7, 0); cx.lineTo(-7, 3); cx.closePath(); cx.fill();
+            cx.restore();
+          });
+        },
+        3: (cx) => { // 0.5초 정지 후 발도 돌진
+          cx.strokeStyle = '#cbd5e1'; cx.lineWidth = 2; cx.shadowColor = '#94a3b8'; cx.shadowBlur = 4;
+          [40, 32, 24].forEach((yy, i) => {
+            cx.globalAlpha = 0.35 + i * 0.3;
+            cx.beginPath(); cx.moveTo(14 + i * 6, yy); cx.lineTo(30 + i * 6, yy - 4); cx.stroke();
+          });
+          cx.globalAlpha = 1;
+          cx.fillStyle = '#f8fafc'; cx.shadowBlur = 10;
+          cx.beginPath(); cx.moveTo(34, 16); cx.lineTo(52, 26); cx.lineTo(34, 36); cx.closePath(); cx.fill();
+        }
+      }
+    };
+
+    const ULT_ICON_DRAWERS = {
+      cosmic_observer: (cx) => { // 블랙홀 소용돌이
+        cx.fillStyle = '#0f172a'; cx.shadowColor = '#c084fc'; cx.shadowBlur = 16;
+        cx.beginPath(); cx.arc(32, 32, 13, 0, Math.PI * 2); cx.fill();
+        cx.strokeStyle = '#e9d5ff'; cx.lineWidth = 2;
+        cx.beginPath(); cx.arc(32, 32, 18, 0.4, 2.6); cx.stroke();
+        cx.beginPath(); cx.arc(32, 32, 22, 3.4, 5.6); cx.stroke();
+      },
+      void_sorcerer: (cx) => { // 차원 붕괴 블랙홀
+        cx.fillStyle = '#000'; cx.shadowColor = '#a78bfa'; cx.shadowBlur = 18;
+        cx.beginPath(); cx.arc(32, 32, 14, 0, Math.PI * 2); cx.fill();
+        cx.strokeStyle = '#c4b5fd'; cx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) { cx.beginPath(); cx.arc(32, 32, 16 + i * 5, i, i + 4); cx.stroke(); }
+      },
+      star_titan: (cx) => { // 심연 중력 블랙홀
+        cx.fillStyle = '#000'; cx.shadowColor = '#6366f1'; cx.shadowBlur = 18;
+        cx.beginPath(); cx.arc(32, 32, 15, 0, Math.PI * 2); cx.fill();
+        cx.strokeStyle = '#818cf8'; cx.lineWidth = 3;
+        cx.beginPath(); cx.arc(32, 32, 20, 0, Math.PI * 1.4); cx.stroke();
+      },
+      time_reaper: (cx) => { // 시공 대참격
+        cx.strokeStyle = '#5eead4'; cx.lineWidth = 5; cx.lineCap = 'round'; cx.shadowColor = '#2dd4bf'; cx.shadowBlur = 14;
+        cx.beginPath(); cx.moveTo(10, 50); cx.lineTo(54, 14); cx.stroke();
+        cx.lineWidth = 2; cx.globalAlpha = 0.6;
+        cx.beginPath(); cx.moveTo(16, 50); cx.lineTo(54, 22); cx.stroke();
+        cx.globalAlpha = 1;
+      },
+      holy_guardian: (cx) => { // 천상의 광선 폭격
+        cx.strokeStyle = '#fde68a'; cx.lineWidth = 2; cx.shadowColor = '#fbbf24'; cx.shadowBlur = 12;
+        [16, 28, 40, 52].forEach(px => { cx.beginPath(); cx.moveTo(px, 10); cx.lineTo(px - 6, 54); cx.stroke(); });
+      },
+      beast_tamer: (cx) => { // 스탬피드 / 드래곤 브레스
+        cx.fillStyle = '#f59e0b'; cx.shadowColor = '#ea580c'; cx.shadowBlur = 14;
+        cx.beginPath(); cx.moveTo(14, 40); cx.quadraticCurveTo(30, 10, 50, 24); cx.quadraticCurveTo(36, 30, 40, 46); cx.quadraticCurveTo(24, 40, 14, 40); cx.closePath(); cx.fill();
+      },
+      phantom_weaver: (cx) => { // 차원 균열 대폭발
+        cx.strokeStyle = '#e9d5ff'; cx.lineWidth = 2.5; cx.shadowColor = '#a855f7'; cx.shadowBlur = 14;
+        cx.beginPath(); cx.moveTo(32, 10); cx.lineTo(26, 30); cx.lineTo(38, 28); cx.lineTo(28, 54); cx.stroke();
+        cx.fillStyle = 'rgba(168,85,247,0.3)'; cx.beginPath(); cx.arc(32, 32, 18, 0, Math.PI * 2); cx.fill();
+      },
+      kairen: (cx) => { // 거대검 내리찍기
+        cx.save(); cx.translate(32, 32); cx.rotate(-0.55);
+        cx.fillStyle = '#f1f5f9'; cx.shadowColor = '#94a3b8'; cx.shadowBlur = 12;
+        cx.beginPath();
+        cx.moveTo(-7, 18); cx.lineTo(-7, -14); cx.lineTo(0, -22); cx.lineTo(7, -14); cx.lineTo(7, 18);
+        cx.closePath(); cx.fill();
+        cx.fillStyle = '#334155'; cx.fillRect(-9, 18, 18, 6);
+        cx.fillRect(-3, 24, 6, 10);
+        cx.restore();
+        cx.strokeStyle = '#94a3b8'; cx.lineWidth = 2; cx.globalAlpha = 0.7;
+        cx.beginPath(); cx.moveTo(14, 50); cx.lineTo(50, 50); cx.stroke();
+        cx.globalAlpha = 1;
+      }
+    };
+
+    // 캐시: 같은 캐릭터/스킬 아이콘을 반복 생성하지 않도록 dataURL을 저장해둔다.
+    const _skillIconCache = {};
+    function slimeSkillIconDataUrl(charKey, skillNumber) {
+      const cacheKey = charKey + ':' + skillNumber;
+      if (_skillIconCache[cacheKey]) return _skillIconCache[cacheKey];
+
+      const bg = (CHARACTERS[charKey] && CHARACTERS[charKey].color) || '#334155';
+      const drawer = (skillNumber === 'ult')
+        ? (ULT_ICON_DRAWERS[charKey] || null)
+        : ((SKILL_ICON_DRAWERS[charKey] && SKILL_ICON_DRAWERS[charKey][skillNumber]) || null);
+
+      const c = document.createElement('canvas');
+      c.width = 64; c.height = 64;
+      const cx = c.getContext('2d');
+
+      _iconBaseBg(cx, bg);
+      if (drawer) {
+        cx.save();
+        drawer(cx);
+        cx.restore();
+      } else {
+        // 정의되지 않은 조합에 대한 안전한 기본값(별 모양)
+        cx.fillStyle = '#e2e8f0'; cx.shadowColor = '#94a3b8'; cx.shadowBlur = 8;
+        cx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const ang = -Math.PI / 2 + i * (Math.PI * 2 / 5);
+          const ang2 = ang + Math.PI / 5;
+          cx.lineTo(32 + Math.cos(ang) * 14, 32 + Math.sin(ang) * 14);
+          cx.lineTo(32 + Math.cos(ang2) * 6, 32 + Math.sin(ang2) * 6);
+        }
+        cx.closePath(); cx.fill();
+      }
+
+      const url = c.toDataURL('image/png');
+      _skillIconCache[cacheKey] = url;
+      return url;
+    }
+
+    // 쿨타임 하단 UI의 각 스킬 박스에 캐릭터별 아이콘 이미지를 채워 넣는다.
+    // 라운드가 새로 시작되거나 캐릭터가 바뀔 때마다 호출해줘야 한다.
+    function slimeApplySkillIcons() {
+      if (!p1Config || !p2Config) return;
+      [[p1Config, 'p1'], [p2Config, 'p2']].forEach(([config, tag]) => {
+        for (let i = 1; i <= 3; i++) {
+          const box = document.getElementById(`slime-${tag}-cd-${i}`);
+          if (!box) continue;
+          const icon = box.querySelector('.slime-cd-icon');
+          if (icon) icon.style.backgroundImage = `url(${slimeSkillIconDataUrl(config.charKey, i)})`;
+        }
+      });
+    }
 
     // canvas, ctx는 페이지 상단에서 이미 선언된 전역변수를 그대로 재사용합니다(다른 게임들과 공유)
     const GRAVITY = 0.65;
@@ -8707,63 +9305,145 @@
 
     const keys = {};
 
-    class MapStairs {
+    // ================= 2층 구조 맵 (포탈로 1층 ↔ 2층 이동) =================
+    // 기존의 좁은 계단(양쪽 3단)을 완전히 대체하는 구조.
+    // - 1층(지면, GROUND_Y)에 있어도 2층 전체가 항상 화면에 보인다(같은 캔버스에 함께 그려짐).
+    // - 좌/우 양 끝에 위치한 포탈에 들어가면 반대쪽(같은 편) 포탈로 순간이동하며 층이 바뀐다.
+    //   예: 1층 왼쪽 포탈 → 2층 왼쪽 포탈로 이동. 2층 오른쪽 포탈 → 1층 오른쪽 포탈로 이동.
+    // - 2층은 여러 개의 넓은 발판으로 구성되어 있고, 발판 밖으로 벗어나면 그대로 낙하하여 1층 지면으로 떨어진다.
+    const UPPER_Y = GROUND_Y - 150; // 2층 발판의 기준 높이(1층 지면보다 150px 위)
+
+    class MapPortalFloor {
       constructor() {
-        this.leftSteps = [
-          { x: 70,  y: GROUND_Y - 25, width: 60, height: 14 },
-          { x: 120, y: GROUND_Y - 60, width: 60, height: 14 },
-          { x: 170, y: GROUND_Y - 95, width: 70, height: 14 }
+        // 2층을 구성하는 발판들: 좌측 발판, 중앙 발판(살짝 높게 배치), 우측 발판.
+        // 캔버스 폭(850 기준)에 맞춰 넉넉하게 배치해 기존 계단보다 훨씬 넓은 활동 공간을 제공한다.
+        this.upperPlatforms = [
+          { x: 30,  y: UPPER_Y,      width: 260, height: 16 },
+          { x: 330, y: UPPER_Y - 25, width: 190, height: 16 },
+          { x: 560, y: UPPER_Y,      width: 260, height: 16 }
         ];
 
-        this.rightSteps = [
-          { x: 720, y: GROUND_Y - 25, width: 60, height: 14 },
-          { x: 670, y: GROUND_Y - 60, width: 60, height: 14 },
-          { x: 610, y: GROUND_Y - 95, width: 70, height: 14 }
-        ];
+        // 포탈 크기 및 좌/우 위치(1층·2층 각각 좌우 끝에 하나씩, 총 4개).
+        // 포탈은 해당 층 발판/지면의 좌우 끝에 자연스럽게 "세워진 게이트"처럼 배치한다.
+        const portalW = 46, portalH = 74;
+        this.portals = {
+          lower_left:  { x: 30,  y: GROUND_Y - portalH, width: portalW, height: portalH, color: '#00f2fe' },
+          lower_right: { x: 850 - 30 - portalW, y: GROUND_Y - portalH, width: portalW, height: portalH, color: '#ff0055' },
+          upper_left:  { x: 40,  y: UPPER_Y - portalH, width: portalW, height: portalH, color: '#00f2fe' },
+          upper_right: { x: 850 - 40 - portalW, y: UPPER_Y - portalH, width: portalW, height: portalH, color: '#ff0055' }
+        };
+        // 각 포탈이 순간이동시킬 목적지 좌표(같은 편끼리 층만 바뀜: 왼쪽↔왼쪽, 오른쪽↔오른쪽).
+        this.portalLinks = {
+          lower_left:  { x: this.portals.upper_left.x,  y: UPPER_Y },
+          lower_right: { x: this.portals.upper_right.x, y: UPPER_Y },
+          upper_left:  { x: this.portals.lower_left.x,  y: GROUND_Y },
+          upper_right: { x: this.portals.lower_right.x, y: GROUND_Y }
+        };
+        this.portalGlow = 0; // 포탈 전체 애니메이션(맥동)용 타이머
       }
 
+      // 2층 발판 위에 착지했는지 검사. MapStairs.checkCollision과 동일한 역할을 하되
+      // 발판 폭이 훨씬 넓어졌다.
       checkCollision(player) {
-        let landedOnStairs = false;
-        const allSteps = [...this.leftSteps, ...this.rightSteps];
-
+        let landed = false;
         const pBottom = player.y + player.baseHeight;
         const pLeft = player.x;
         const pRight = player.x + player.baseWidth;
 
-        allSteps.forEach(step => {
-          if (pRight > step.x && pLeft < step.x + step.width) {
-            if (player.vy >= 0 && pBottom >= step.y && pBottom <= step.y + 12) {
-              player.y = step.y - player.baseHeight;
+        this.upperPlatforms.forEach(plat => {
+          if (pRight > plat.x && pLeft < plat.x + plat.width) {
+            if (player.vy >= 0 && pBottom >= plat.y && pBottom <= plat.y + 14) {
+              player.y = plat.y - player.baseHeight;
               player.vy = 0;
               player.isGrounded = true;
-              landedOnStairs = true;
+              landed = true;
             }
           }
         });
+        return landed;
+      }
 
-        return landedOnStairs;
+      // 플레이어가 포탈과 겹치는지 검사하고, 겹쳤다면 즉시 반대편으로 순간이동시킨다.
+      // 쿨다운(player.portalCooldown)을 살짝 둬서 포탈 위치에 도착하자마자 다시 빨려들어가는 것을 방지한다.
+      checkPortals(player) {
+        if (player.portalCooldown > 0) return;
+        for (const key in this.portals) {
+          const p = this.portals[key];
+          const overlap = player.x < p.x + p.width && player.x + player.baseWidth > p.x &&
+                           player.y < p.y + p.height && player.y + player.baseHeight > p.y;
+          if (overlap) {
+            const dest = this.portalLinks[key];
+            player.x = dest.x + (p.width - player.baseWidth) / 2;
+            player.y = dest.y - player.baseHeight;
+            player.vy = 0;
+            player.isGrounded = true;
+            player.portalCooldown = 20; // 약 0.33초 동안 재진입 방지
+            spawnSparks(player.x + 20, player.y + 20, p.color, 20);
+            triggerScreenShake(2, 6);
+            return;
+          }
+        }
+      }
+
+      update() {
+        this.portalGlow += 0.06;
       }
 
       draw() {
         ctx.save();
-        const allSteps = [...this.leftSteps, ...this.rightSteps];
 
-        allSteps.forEach(step => {
+        // ---- 2층 발판 그리기 ----
+        this.upperPlatforms.forEach(plat => {
           ctx.fillStyle = '#0f172a';
-          ctx.fillRect(step.x, step.y, step.width, step.height);
-
-          ctx.strokeStyle = '#00f2fe';
+          ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+          ctx.strokeStyle = 'rgba(0, 242, 254, 0.55)';
           ctx.lineWidth = 2;
           ctx.shadowColor = '#00f2fe';
-          ctx.shadowBlur = 10;
-          ctx.strokeRect(step.x, step.y, step.width, step.height);
-
-          ctx.fillStyle = '#00f2fe';
-          ctx.fillRect(step.x + 2, step.y + 2, step.width - 4, 3);
+          ctx.shadowBlur = 8;
+          ctx.strokeRect(plat.x, plat.y, plat.width, plat.height);
+          // 발판 상단 하이라이트 라인
+          ctx.fillStyle = 'rgba(0, 242, 254, 0.6)';
+          ctx.fillRect(plat.x + 2, plat.y + 2, plat.width - 4, 3);
+          // 발판을 지탱하는 체인/기둥 느낌의 세로선(장식용)
+          ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(plat.x + 10, plat.y + plat.height);
+          ctx.lineTo(plat.x + 10, plat.y + plat.height + 26);
+          ctx.moveTo(plat.x + plat.width - 10, plat.y + plat.height);
+          ctx.lineTo(plat.x + plat.width - 10, plat.y + plat.height + 26);
+          ctx.stroke();
         });
+
+        // ---- 포탈 그리기(맥동하는 원형 게이트) ----
+        const pulse = 1 + Math.sin(this.portalGlow) * 0.08;
+        for (const key in this.portals) {
+          const p = this.portals[key];
+          const cx = p.x + p.width / 2;
+          const cy = p.y + p.height / 2;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.scale(pulse, pulse);
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 5;
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 22;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.width / 2, p.height / 2, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          // 안쪽 반투명 채움(게이트 내부 느낌)
+          ctx.globalAlpha = 0.18;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.width / 2 - 4, p.height / 2 - 4, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
         ctx.restore();
       }
     }
+
 
     class SparkParticle {
       constructor(x, y, color, vxmult = 1, vymult = 1) {
@@ -9576,6 +10256,755 @@
       }
     }
 
+    // ================= 카이렌(칼을 든 슬라임) 전용 스킬/이펙트 =================
+    // 패시브: 상대를 공격해서 데미지를 입릴 때마다 그 데미지의 일부만큼 회복한다.
+    // 카이렌의 모든 공격(스킬1/2/3, 궁극기)이 적을 맞출 때마다 이 함수를 호출한다.
+    function kairenLifesteal(attacker, dmg) {
+      if (slimeIsGuestOnline()) return; // 게스트는 판정하지 않고 호스트 스냅샷을 그대로 반영받는다
+      const healAmount = dmg * 0.3;
+      attacker.hp = Math.min(attacker.maxHp, attacker.hp + healAmount);
+      spawnSparks(attacker.x + 20, attacker.y + 20, '#4ade80', 8);
+      updateUI();
+    }
+
+    // ===== 카이렌의 숨겨진 상급 콤보들 =====
+    // 여러 콤보를 동시에(독립적으로) 추적할 수 있도록 배열로 정의한다. 각 콤보는 정해진 시간
+    // (windowMs) 안에 sequence를 순서대로 입력하면 발동하며, 완성 시 kairenTriggerCombo(player, combo)가
+    // 호출된다. (숫자 1~3은 스킬 1~3번, 4는 궁극기를 의미한다)
+
+    // "고인물 콤보"(3 → 1 → 4 → 2 → 3): 발도 → 칼 휘두르기 → 궁극기 → 검날 3연사 → 발도.
+    // ※ 3번 스킬(발도)의 자체 쿨타임이 4.2초이기 때문에, 마지막 "3"까지 채우려면 최소 그 쿨타임만큼의
+    //   시간이 필요하다. 그래서 제한시간을 10초로 넉넉하게 잡았다.
+    const KAIREN_MASTER_COMBO_SEQUENCE = [3, 1, 4, 2, 3];
+    const KAIREN_MASTER_COMBO_WINDOW_MS = 10000;
+    const KAIREN_MASTER_COMBO_BONUS_DAMAGE = 55; // 콤보 완성 시 즉시 들어가는 추가 데미지
+
+    // "월광 콤보"(2 → 3 → 1 → 4 → 2 → 1 → 3 → 1): 검날 3연사 → 발도 → 칼 휘두르기 → 궁극기 →
+    // 검날 3연사 → 칼 휘두르기 → 발도 → 칼 휘두르기, 총 8회 입력을 순서대로 완성하면 발동하는
+    // 카이렌의 또 다른 숨겨진 콤보. "고인물 콤보"보다 길고 3번(발도, 쿨타임 4.2초)이 두 번 필요해서
+    // 제한시간을 16초로 넉넉하게 잡았다. 완성 시 추가 데미지 + 회복 + 배경이 푸른 달로 바뀌며
+    // 꽃잎이 흩날리는 연출이 함께 발동한다.
+    const KAIREN_MOON_COMBO_SEQUENCE = [2, 3, 1, 4, 2, 1, 3, 1];
+    const KAIREN_MOON_COMBO_WINDOW_MS = 16000;
+    const KAIREN_MOON_COMBO_BONUS_DAMAGE = 70; // 콤보 완성 시 즉시 들어가는 추가 데미지
+    const KAIREN_MOON_COMBO_HEAL = 60;         // 콤보 완성 시 시전자가 즉시 회복하는 양
+    const KAIREN_MOON_MODE_DURATION_MS = 7000; // 배경이 푸른 달로 바뀌어 꽃잎이 흩날리는 지속시간(ms)
+
+    const KAIREN_COMBOS = [
+      { id: 'master', sequence: KAIREN_MASTER_COMBO_SEQUENCE, windowMs: KAIREN_MASTER_COMBO_WINDOW_MS, displayName: '3-1-4-2-3', uiRow: 0 },
+      { id: 'moon', sequence: KAIREN_MOON_COMBO_SEQUENCE, windowMs: KAIREN_MOON_COMBO_WINDOW_MS, displayName: '2-3-1-4-2-1-3-1', uiRow: 1 }
+    ];
+
+    // player.kairenComboState[combo.id] = { progress, lastTime } 형태로 콤보마다 독립적인 진행
+    // 상태를 추적한다(입력 히스토리를 통째로 들고 있지 않고, 콤보별 진행 인덱스만 갱신하는 방식).
+    function kairenCreateComboState() {
+      const state = {};
+      KAIREN_COMBOS.forEach(combo => { state[combo.id] = { progress: 0, lastTime: 0 }; });
+      return state;
+    }
+
+    // 스킬 3(발도, 쿨타임 4.2초)이 어떤 콤보든 "바로 다음에 필요한 입력"인 상태라면 true를 반환한다.
+    // useSkill()의 가드에서 이 경우 3번 스킬의 남은 쿨타임을 예외적으로 무시해 콤보를 매끄럽게
+    // 이어갈 수 있게 해준다(다른 스킬들은 쿨타임이 짧아 이런 예외가 필요 없다).
+    function kairenNeedsComboCooldownSkip(player, skillNumber) {
+      if (skillNumber !== 3) return false;
+      const now = Date.now();
+      return KAIREN_COMBOS.some(combo => {
+        const state = player.kairenComboState[combo.id];
+        if (!state || state.progress <= 0 || state.progress >= combo.sequence.length) return false;
+        if (combo.sequence[state.progress] !== 3) return false;
+        return (now - state.lastTime) <= combo.windowMs;
+      });
+    }
+
+    // 스킬(또는 궁극기)을 사용할 때마다 호출되어, 모든 콤보의 진행 상태를 함께 갱신한다.
+    // 한 콤보가 완성되면 즉시 발동시키고 그 콤보만 초기화한다(다른 콤보의 진행에는 영향을 주지 않는다).
+    function kairenRecordComboInput(player, key) {
+      const now = Date.now();
+      KAIREN_COMBOS.forEach(combo => {
+        const state = player.kairenComboState[combo.id];
+
+        // 진행 중이던 콤보가 제한시간을 넘겼다면 새 입력을 반영하기 전에 초기화한다.
+        if (state.progress > 0 && (now - state.lastTime) > combo.windowMs) {
+          state.progress = 0;
+        }
+
+        if (key === combo.sequence[state.progress]) {
+          state.progress++;
+          state.lastTime = now;
+        } else if (key === combo.sequence[0]) {
+          // 순서가 어긋났더라도 지금 누른 키가 이 콤보의 시작 키라면, 그 키부터 새로 다시 쌓는다.
+          state.progress = 1;
+          state.lastTime = now;
+        } else {
+          state.progress = 0;
+        }
+
+        kairenUpdateComboProgressUI(player, combo, state.progress);
+
+        if (state.progress === combo.sequence.length) {
+          state.progress = 0; // 재사용을 위해 초기화(같은 콤보 연타 방지)
+          kairenUpdateComboProgressUI(player, combo, 0);
+          kairenTriggerCombo(player, combo);
+        }
+      });
+    }
+
+    // 콤보가 완성되었을 때 콤보 종류별로 다른 보상을 발동시킨다.
+    function kairenTriggerCombo(player, combo) {
+      if (player.hp <= 0) return;
+      const enemy = player.isPlayer1 ? p2 : p1;
+
+      if (combo.id === 'master') {
+        // "고인물 콤보": 상대에게 확정 추가 데미지 + 파란 용 회전 이펙트 + 대형 화염 폭발.
+        kairenShowCombo(player, `★ 고인물 콤보 완성! (${combo.displayName}) ★`, true);
+        triggerScreenShake(10, 24);
+        // 시전자 본인 위치에서 파란 용이 솟구쳐 회전하는 대형 연출(맞았는지와 무관하게 항상 재생되어
+        // "콤보가 발동했다"는 사실 자체를 놓치지 않도록 한다). 용 색상은 플레이어 색과 무관하게 항상 파란색.
+        kairenMasterBursts.push(new KairenDragonSpinEffect(player, '#38bdf8'));
+        if (enemy && enemy.hp > 0 && !slimeIsGuestOnline()) {
+          enemy.takeDamage(KAIREN_MASTER_COMBO_BONUS_DAMAGE);
+          kairenLifesteal(player, KAIREN_MASTER_COMBO_BONUS_DAMAGE);
+          kairenSpawnImpact(enemy.x + 20, enemy.y + 20, player.config.aura, 3);
+          kairenMasterBursts.push(new KairenMasterComboBurst(enemy.x + 20, enemy.y + 20, player.config.aura));
+        }
+      } else if (combo.id === 'moon') {
+        // "월광 콤보": 상대에게 확정 추가 데미지 + 시전자 즉시 회복 + 배경이 푸른 달로 바뀌며
+        // 꽃잎이 흩날리는 연출(kairenActivateMoonMode)이 함께 발동한다.
+        kairenShowCombo(player, `🌙 월광 콤보 완성! (${combo.displayName}) 🌙`, true);
+        triggerScreenShake(12, 28);
+        kairenMasterBursts.push(new KairenDragonSpinEffect(player, '#93c5fd'));
+        kairenActivateMoonMode();
+        if (!slimeIsGuestOnline()) {
+          player.hp = Math.min(player.maxHp, player.hp + KAIREN_MOON_COMBO_HEAL);
+          spawnSparks(player.x + 20, player.y + 20, '#bfdbfe', 16);
+          updateUI();
+        }
+        if (enemy && enemy.hp > 0 && !slimeIsGuestOnline()) {
+          enemy.takeDamage(KAIREN_MOON_COMBO_BONUS_DAMAGE);
+          kairenLifesteal(player, KAIREN_MOON_COMBO_BONUS_DAMAGE);
+          kairenSpawnImpact(enemy.x + 20, enemy.y + 20, player.config.aura, 3.4);
+          kairenMasterBursts.push(new KairenMasterComboBurst(enemy.x + 20, enemy.y + 20, '#bfdbfe'));
+        }
+      }
+    }
+
+
+    // [카이렌 타격 임팩트] 검이 적을 맞췄을 때 나오는 강한 타격감 이펙트.
+    // 십자 모양의 흰 섬광 + 그 뒤로 퍼지는 얇은 링으로 구성되며, scale로 크기를 조절해
+    // 1번(약함)~궁극기(강함)까지 타격감의 강도를 다르게 표현한다.
+    class KairenHitImpact {
+      constructor(x, y, color, scale = 1) {
+        this.x = x; this.y = y; this.color = color; this.scale = scale;
+        this.timer = 0; this.maxTimer = 14;
+        this.markedForDeletion = false;
+      }
+      update() {
+        this.timer++;
+        if (this.timer >= this.maxTimer) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        const progress = this.timer / this.maxTimer;
+        const fade = Math.max(0, 1 - progress);
+        const s = this.scale;
+
+        // 중심 흰 섬광(임팩트 플래시): 처음엔 크고 밝다가 빠르게 사그라든다
+        ctx.globalAlpha = fade * fade;
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 25 * s;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, (1 - progress * 0.6) * 10 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 십자 스파이크: 상하좌우로 뻗어나가는 얇은 선(타격 순간의 임팩트 라인)
+        const spikeLen = (6 + progress * 26) * s;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = Math.max(1, 3 * s * fade);
+        ctx.globalAlpha = fade;
+        ctx.beginPath();
+        ctx.moveTo(this.x - spikeLen, this.y); ctx.lineTo(this.x - spikeLen * 0.3, this.y);
+        ctx.moveTo(this.x + spikeLen * 0.3, this.y); ctx.lineTo(this.x + spikeLen, this.y);
+        ctx.moveTo(this.x, this.y - spikeLen); ctx.lineTo(this.x, this.y - spikeLen * 0.3);
+        ctx.moveTo(this.x, this.y + spikeLen * 0.3); ctx.lineTo(this.x, this.y + spikeLen);
+        ctx.stroke();
+
+        // 대각선 스파이크(더 화려하게)
+        const d = spikeLen * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(this.x - d, this.y - d); ctx.lineTo(this.x - d * 0.35, this.y - d * 0.35);
+        ctx.moveTo(this.x + d * 0.35, this.y + d * 0.35); ctx.lineTo(this.x + d, this.y + d);
+        ctx.moveTo(this.x + d, this.y - d); ctx.lineTo(this.x + d * 0.35, this.y - d * 0.35);
+        ctx.moveTo(this.x - d * 0.35, this.y + d * 0.35); ctx.lineTo(this.x - d, this.y + d);
+        ctx.stroke();
+
+        // 캐릭터 색(아우라)의 확산 링
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = Math.max(1, 4 * s * fade);
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 18 * s;
+        ctx.globalAlpha = fade * 0.9;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, progress * 30 * s, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+    // 타격 지점에 임팩트 이펙트 + 확산 스파크를 함께 만들어주는 헬퍼.
+    function kairenSpawnImpact(x, y, color, scale = 1) {
+      kairenImpacts.push(new KairenHitImpact(x, y, color, scale));
+      spawnSparks(x, y, '#ffffff', Math.round(6 * scale), 1.4, 1.4);
+    }
+
+    // [카이렌 1번 스킬] 칼 휘두르기: 사용하는 순간 즉시 판정(데미지는 낮고 쿨타임이 매우 짧음).
+    // 타격감을 위해 (1) 캐릭터가 살짝 앞으로 튀어나가는 돌진성 모션, (2) 두껍고 진한 이중 베기 궤적,
+    // (3) 타격 시 화면 흔들림을 함께 연출한다. comboBoost가 true면 "발도+1 콤보"의 후속 연타로 처리되어
+    // 이펙트가 살짝 더 화려해진다.
+    class KairenSlashEffect {
+      constructor(attacker, target, comboBoost = false) {
+        this.attacker = attacker;
+        this.dir = attacker.facingRight ? 1 : -1;
+        this.aura = attacker.config.aura;
+        this.timer = 0;
+        this.comboBoost = comboBoost;
+        this.markedForDeletion = false;
+
+        // 캐릭터가 베는 순간 앞으로 살짝 파고드는 듯한 모션(즉시 살짝 이동 후 원위치로 복귀하지 않고
+        // 다음 프레임의 마찰/조작으로 자연스럽게 흡수됨). 시각적 스케일도 눌러줘서 "휙!" 임팩트를 준다.
+        attacker.x += this.dir * (comboBoost ? 10 : 7);
+        attacker.scaleX = comboBoost ? 1.5 : 1.4;
+        attacker.scaleY = comboBoost ? 0.65 : 0.7;
+
+        const reach = 115;
+        const hitBox = {
+          x: this.dir > 0 ? attacker.x + attacker.baseWidth : attacker.x - reach,
+          y: attacker.y - 10,
+          baseWidth: reach,
+          baseHeight: attacker.baseHeight + 20
+        };
+        this.hit = checkOverlap(hitBox, target);
+        if (this.hit) {
+          const dmg = comboBoost ? 10 : 13;
+          target.takeDamage(dmg);
+          kairenLifesteal(attacker, dmg);
+          spawnSparks(target.x + 20, target.y + 20, this.aura, 12);
+          kairenSpawnImpact(target.x + 20, target.y + 20, this.aura, comboBoost ? 1.0 : 0.95);
+          triggerScreenShake(comboBoost ? 4 : 3, 6);
+        }
+      }
+      update() {
+        this.timer++;
+        if (this.timer >= 10) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        const cx = this.attacker.x + 20 + this.dir * 30;
+        const cy = this.attacker.y + 20;
+        const progress = this.timer / 10;
+        const fade = Math.max(0, 1 - progress);
+
+        // 굵은 메인 베기 궤적(가장 진하고 두꺼움)
+        ctx.globalAlpha = fade;
+        ctx.strokeStyle = this.aura;
+        ctx.lineWidth = 10;
+        ctx.lineCap = 'round';
+        ctx.shadowColor = this.aura;
+        ctx.shadowBlur = 26;
+        ctx.beginPath();
+        if (this.dir > 0) ctx.arc(cx, cy, 66, -1.05, 1.05);
+        else ctx.arc(cx, cy, 66, Math.PI - 1.05, Math.PI + 1.05);
+        ctx.stroke();
+
+        // 안쪽 흰색 하이라이트 궤적(칼날이 실제로 지나간 자리처럼 밝게)
+        ctx.globalAlpha = fade * 0.9;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        if (this.dir > 0) ctx.arc(cx, cy, 62, -0.95, 0.95);
+        else ctx.arc(cx, cy, 62, Math.PI - 0.95, Math.PI + 0.95);
+        ctx.stroke();
+
+        // 바깥쪽 잔상(휙 지나간 느낌의 넓은 세컨드 스윙)
+        ctx.globalAlpha = fade * 0.5;
+        ctx.strokeStyle = this.aura;
+        ctx.lineWidth = 5;
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        if (this.dir > 0) ctx.arc(cx, cy, 78, -0.8, 0.8);
+        else ctx.arc(cx, cy, 78, Math.PI - 0.8, Math.PI + 0.8);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
+    // ===== 콤보 알림 텍스트 =====
+    // 화면 중앙 상단에 짧게 떠올랐다 사라지는 "콤보!" 표시. 콤보 종류별로 다른 문구/색을 쓸 수 있다.
+    class KairenComboText {
+      constructor(x, y, text, color) {
+        this.x = x; this.y = y; this.text = text; this.color = color;
+        this.timer = 0; this.maxTimer = 45;
+        this.markedForDeletion = false;
+      }
+      update() {
+        this.timer++;
+        this.y -= 0.6;
+        if (this.timer >= this.maxTimer) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        const progress = this.timer / this.maxTimer;
+        const pop = progress < 0.15 ? (progress / 0.15) : 1;
+        const fade = progress > 0.7 ? Math.max(0, 1 - (progress - 0.7) / 0.3) : 1;
+        ctx.globalAlpha = fade;
+        ctx.translate(this.x, this.y);
+        ctx.scale(0.6 + pop * 0.5, 0.6 + pop * 0.5);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '900 26px "Noto Sans KR", sans-serif';
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+        ctx.strokeText(this.text, 0, 0);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 16;
+        ctx.fillText(this.text, 0, 0);
+        ctx.restore();
+      }
+    }
+
+    // ===== 콤보 발동 시 나오는 불꽃 파티클 =====
+    // 작은 불씨 여러 개가 위로 솟구치며 흔들리다 사그라드는 형태로, 어떤 콤보든 발동되면
+    // 콤보 텍스트와 함께 자동으로 캐릭터 발밑~몸통 주변에서 피어오른다.
+    class KairenComboFlame {
+      constructor(x, y, scale = 1) {
+        this.x = x; this.baseX = x; this.y = y;
+        this.scale = scale;
+        this.vy = -(1.2 + Math.random() * 1.6) * scale;
+        this.wobble = Math.random() * Math.PI * 2;
+        this.size = (5 + Math.random() * 6) * scale;
+        this.timer = 0;
+        this.maxTimer = 26 + Math.random() * 10;
+        this.markedForDeletion = false;
+        this.hue = Math.random(); // 0이면 빨강쪽, 1이면 노랑쪽으로 색을 섞는다
+      }
+      update() {
+        this.timer++;
+        this.y += this.vy;
+        this.wobble += 0.25;
+        this.x = this.baseX + Math.sin(this.wobble) * 4 * this.scale;
+        if (this.timer >= this.maxTimer) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        const progress = this.timer / this.maxTimer;
+        const fade = Math.max(0, 1 - progress);
+        const s = this.size * (1 - progress * 0.5);
+
+        // 불꽃 색: 안쪽은 밝은 노랑, 바깥쪽은 주황~빨강 그라디언트
+        const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, s);
+        grad.addColorStop(0, `rgba(255, 241, 168, ${fade})`);
+        grad.addColorStop(0.5, `rgba(251, 146, 60, ${fade * 0.9})`);
+        grad.addColorStop(1, `rgba(239, 68, 68, 0)`);
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        // 불꽃 모양(위로 갈수록 좁아지는 물방울 형태)
+        ctx.moveTo(this.x, this.y - s * 1.4);
+        ctx.quadraticCurveTo(this.x + s * 0.9, this.y - s * 0.3, this.x, this.y + s * 0.6);
+        ctx.quadraticCurveTo(this.x - s * 0.9, this.y - s * 0.3, this.x, this.y - s * 1.4);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    // 콤보 발동 지점에서 불꽃 여러 개를 한번에 피워올리는 헬퍼.
+    function kairenSpawnComboFlames(x, y, count = 14, scale = 1) {
+      for (let i = 0; i < count; i++) {
+        const fx = x + (Math.random() - 0.5) * 50 * scale;
+        const fy = y + (Math.random() - 0.5) * 20 * scale;
+        kairenComboFlames.push(new KairenComboFlame(fx, fy, scale));
+      }
+    }
+
+    // ===== "고인물 콤보"(3→1→4→2→3) 전용 대형 화염 폭발 이펙트 =====
+    // 일반 콤보 불꽃보다 훨씬 크고 화려한, 중심에서 사방으로 퍼지는 불기둥+충격파를 연출한다.
+    class KairenMasterComboBurst {
+      constructor(x, y, color) {
+        this.x = x; this.y = y; this.color = color;
+        this.timer = 0; this.maxTimer = 65; // 기존(40)보다 훨씬 오래 지속되어 놓치지 않게 함
+        this.markedForDeletion = false;
+      }
+      update() {
+        this.timer++;
+        if (this.timer >= this.maxTimer) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        const progress = this.timer / this.maxTimer;
+        const fade = Math.max(0, 1 - progress);
+
+        // 중심 화염 코어(강렬한 백색~주황 섬광) - 기존보다 더 크게
+        const coreR = (1 - progress * 0.5) * 70;
+        const coreGrad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, coreR);
+        coreGrad.addColorStop(0, `rgba(255,255,255,${fade})`);
+        coreGrad.addColorStop(0.35, `rgba(253, 224, 71, ${fade * 0.95})`);
+        coreGrad.addColorStop(0.7, `rgba(251, 146, 60, ${fade * 0.7})`);
+        coreGrad.addColorStop(1, 'rgba(239,68,68,0)');
+        ctx.fillStyle = coreGrad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, coreR, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 사방으로 치솟는 불기둥 스파이크(12방향, 더 길고 굵게)
+        for (let i = 0; i < 12; i++) {
+          const ang = (i / 12) * Math.PI * 2 + progress * 0.8;
+          const len = (50 + progress * 150) * fade;
+          const gx = this.x + Math.cos(ang) * len;
+          const gy = this.y + Math.sin(ang) * len;
+          const flameGrad = ctx.createLinearGradient(this.x, this.y, gx, gy);
+          flameGrad.addColorStop(0, `rgba(255,241,168,${fade})`);
+          flameGrad.addColorStop(1, 'rgba(239,68,68,0)');
+          ctx.strokeStyle = flameGrad;
+          ctx.lineWidth = 9 * fade;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.lineTo(gx, gy);
+          ctx.stroke();
+        }
+
+        // 캐릭터 색(아우라) 충격파 링(두 겹)
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 6 * fade;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 30;
+        ctx.globalAlpha = fade;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, progress * 160, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.lineWidth = 3 * fade;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, progress * 190, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+    }
+
+    // ===== "고인물 콤보" 완성 시 시전자 주변에서 솟구치는 파란 용 회전 이펙트 =====
+    // 여러 개의 반투명 파란 세그먼트(몸통 마디)가 캐릭터를 중심으로 나선형으로 휘감아 올라가며
+    // 빠르게 회전하는 "승천하는 용" 모양을 연출한다. 실제 용 그림 대신 곡선 궤적 + 비늘 느낌의
+    // 마디, 그리고 머리 부분의 눈빛으로 용의 실루엣을 표현한다.
+    class KairenDragonSpinEffect {
+      constructor(attacker, color) {
+        this.attacker = attacker;
+        this.color = color || '#38bdf8';
+        this.timer = 0;
+        this.maxTimer = 70; // 넉넉하게 오래 재생되어 "콤보가 터졌다"는 걸 확실히 알 수 있게 함
+        this.markedForDeletion = false;
+        this.segments = 26; // 용 몸통을 구성하는 마디 개수
+      }
+      update() {
+        this.timer++;
+        if (this.timer >= this.maxTimer) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        const progress = this.timer / this.maxTimer;
+        const fadeIn = Math.min(1, this.timer / 8);
+        const fadeOut = progress > 0.75 ? Math.max(0, 1 - (progress - 0.75) / 0.25) : 1;
+        const alpha = fadeIn * fadeOut;
+
+        // 용이 감아 올라가는 기준 중심축: 캐릭터를 따라가며 위로 갈수록 살짝 위로 솟는 나선.
+        const baseX = this.attacker.x + 20;
+        const baseY = this.attacker.y + 20;
+        const spinSpeed = 0.55; // 회전 속도(라디안/프레임)
+        const riseHeight = 190; // 용이 솟구치는 최대 높이
+
+        // 파란 배경 오라(용 전체를 감싸는 은은한 발광)
+        ctx.globalAlpha = alpha * 0.35;
+        const auraGrad = ctx.createRadialGradient(baseX, baseY - riseHeight * 0.5, 0, baseX, baseY - riseHeight * 0.5, 120);
+        auraGrad.addColorStop(0, this.color);
+        auraGrad.addColorStop(1, 'rgba(56,189,248,0)');
+        ctx.fillStyle = auraGrad;
+        ctx.beginPath();
+        ctx.arc(baseX, baseY - riseHeight * 0.5, 120, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 용 몸통(나선형으로 감아 올라가는 마디들). t는 0(꼬리, 아래)~1(머리, 위)까지.
+        const points = [];
+        for (let i = 0; i < this.segments; i++) {
+          const t = i / (this.segments - 1);
+          const heightT = Math.max(0, Math.min(1, progress * 1.4 - t * 0.4)); // 아래에서 위로 순차적으로 나타남
+          if (heightT <= 0) continue;
+          const ang = t * Math.PI * 3.2 - this.timer * spinSpeed;
+          const radius = 34 * (1 - t * 0.35); // 위로 갈수록 살짝 좁아짐(용의 원근감)
+          const px = baseX + Math.cos(ang) * radius;
+          const py = baseY - t * riseHeight * heightT;
+          const pz = Math.sin(ang); // -1~1: 앞/뒤 깊이감(밝기와 크기에 사용)
+          points.push({ px, py, t, pz, heightT });
+        }
+
+        // 뒤쪽(pz<0, 화면 안쪽) 먼저, 앞쪽(pz>0) 나중에 그려서 입체적인 회전감을 준다.
+        const sorted = [...points].sort((a, b) => a.pz - b.pz);
+        sorted.forEach(pt => {
+          const size = (10 - pt.t * 4) * (0.6 + (pt.pz + 1) * 0.2);
+          const brightness = 0.5 + (pt.pz + 1) * 0.25;
+          ctx.globalAlpha = alpha * pt.heightT * brightness;
+          ctx.fillStyle = this.color;
+          ctx.shadowColor = this.color;
+          ctx.shadowBlur = 16;
+          ctx.beginPath();
+          ctx.ellipse(pt.px, pt.py, size, size * 0.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          // 비늘 하이라이트
+          ctx.globalAlpha = alpha * pt.heightT * brightness * 0.6;
+          ctx.fillStyle = '#e0f2fe';
+          ctx.beginPath();
+          ctx.ellipse(pt.px - size * 0.25, pt.py - size * 0.25, size * 0.35, size * 0.25, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // 용의 머리(맨 위 마디): 좀 더 크게 그리고 눈빛(붉은 점 2개) 추가로 포인트를 준다.
+        if (points.length > 0) {
+          const head = points[points.length - 1];
+          if (head.heightT > 0.3) {
+            ctx.globalAlpha = alpha * head.heightT;
+            ctx.fillStyle = this.color;
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 24;
+            ctx.beginPath();
+            ctx.ellipse(head.px, head.py, 16, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fef2f2';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff0055';
+            ctx.beginPath();
+            ctx.arc(head.px - 5, head.py - 2, 2.2, 0, Math.PI * 2);
+            ctx.arc(head.px + 5, head.py - 2, 2.2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        ctx.restore();
+      }
+    }
+
+    // 콤보 발동 지점에 알림 텍스트 + 불꽃 파티클을 함께 띄우는 헬퍼.
+    // isMaster가 true면 "고인물 콤보" 전용 대형 화염 폭발까지 추가로 발동한다.
+    function kairenShowCombo(attacker, text, isMaster = false) {
+      const cx = attacker.x + 20, cy = attacker.y + 20;
+      kairenComboTexts.push(new KairenComboText(cx, attacker.y - 30, text, attacker.config.aura));
+      kairenSpawnComboFlames(cx, cy, isMaster ? 28 : 14, isMaster ? 1.6 : 1);
+    }
+
+    // ===== 콤보 진행 상황 실시간 표시 =====
+    // 스킬을 하나 누를 때마다 화면 상단에 해당 콤보 시퀀스 중 몇 번째까지 맞았는지를
+    // 작은 숫자 칩으로 잠깐 보여준다. 진행도가 0으로 리셋되면(순서가 어긋나면) 표시하지 않는다.
+    // 콤보가 여러 개 동시에 진행될 수 있으므로 combo.uiRow로 세로 위치를 다르게 잡아 겹치지 않게 한다.
+    class KairenComboProgressUI {
+      constructor(x, y, combo, progress, aura) {
+        this.x = x; this.y = y; this.combo = combo; this.progress = progress; this.aura = aura;
+        this.timer = 0; this.maxTimer = 50;
+        this.markedForDeletion = false;
+      }
+      update() {
+        this.timer++;
+        this.y -= 0.25;
+        if (this.timer >= this.maxTimer) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        const fade = Math.max(0, 1 - this.timer / this.maxTimer);
+        ctx.globalAlpha = fade;
+        ctx.translate(this.x, this.y);
+        const seq = this.combo.sequence;
+        const chipW = seq.length > 5 ? 16 : 20;
+        const chipR = seq.length > 5 ? 6.5 : 8;
+        const totalW = chipW * seq.length;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `900 ${seq.length > 5 ? 11 : 13}px sans-serif`;
+        for (let i = 0; i < seq.length; i++) {
+          const cx = -totalW / 2 + chipW * i + chipW / 2;
+          const done = i < this.progress;
+          ctx.fillStyle = done ? this.aura : 'rgba(255,255,255,0.15)';
+          ctx.shadowColor = done ? this.aura : 'transparent';
+          ctx.shadowBlur = done ? 10 : 0;
+          ctx.beginPath();
+          ctx.arc(cx, 0, chipR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = done ? '#0f172a' : 'rgba(255,255,255,0.5)';
+          ctx.shadowBlur = 0;
+          const label = seq[i] === 4 ? 'U' : String(seq[i]);
+          ctx.fillText(label, cx, 1);
+        }
+        ctx.restore();
+      }
+    }
+    // 스킬 입력 시마다 호출되어 진행도 칩 UI를 새로 띄우는 헬퍼. progress가 0이면 표시하지 않는다.
+    function kairenUpdateComboProgressUI(player, combo, progress) {
+      if (progress <= 0) return;
+      const y = player.y - 55 - combo.uiRow * 18;
+      kairenComboTexts.push(new KairenComboProgressUI(player.x + 20, y, combo, progress, player.config.aura));
+    }
+
+
+    // [카이렌 2번 스킬] 검날을 앞으로 3번 발사. delay(프레임)만큼 대기했다가 날아간다.
+    class KairenBladeProjectile {
+      constructor(x, y, vx, owner, delay, comboBoost = false) {
+        this.x = x; this.y = y; this.vx = vx; this.owner = owner;
+        this.delay = delay || 0;
+        // "2+1 콤보"가 발동하면 검날의 판정 범위(히트박스)와 그림 크기를 모두 키워서 훨씬 맞추기 쉬워진다.
+        this.comboBoost = comboBoost;
+        this.width = comboBoost ? 58 : 34;
+        this.height = comboBoost ? 30 : 14;
+        this.aura = owner.config.aura;
+        this.markedForDeletion = false;
+      }
+      update() {
+        if (this.delay > 0) { this.delay--; return; }
+        this.x += this.vx;
+        spawnSparks(this.x, this.y, this.aura, this.comboBoost ? 2 : 1);
+
+        const enemy = this.owner.isPlayer1 ? p2 : p1;
+        const box = { x: this.x - this.width / 2, y: this.y - this.height / 2, baseWidth: this.width, baseHeight: this.height };
+        if (checkOverlap(box, enemy)) {
+          const dmg = this.comboBoost ? 20 : 15;
+          enemy.takeDamage(dmg);
+          kairenLifesteal(this.owner, dmg);
+          spawnSparks(enemy.x + 20, enemy.y + 20, this.aura, this.comboBoost ? 16 : 10);
+          kairenSpawnImpact(enemy.x + 20, enemy.y + 20, this.aura, this.comboBoost ? 1.3 : 0.9);
+          this.markedForDeletion = true;
+        }
+        if (this.x < -60 || this.x > canvas.width + 60) this.markedForDeletion = true;
+      }
+      draw() {
+        if (this.delay > 0) return;
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.vx > 0 ? 0 : Math.PI);
+        ctx.fillStyle = this.comboBoost ? '#f8fafc' : '#e5e7eb';
+        ctx.shadowColor = this.aura;
+        ctx.shadowBlur = this.comboBoost ? 26 : 18;
+        const w = this.comboBoost ? 30 : 17;
+        const h = this.comboBoost ? 13 : 6;
+        ctx.beginPath();
+        ctx.moveTo(-w, 0); ctx.lineTo(w * 0.7, -h); ctx.lineTo(w, 0); ctx.lineTo(w * 0.7, h);
+        ctx.closePath();
+        ctx.fill();
+        if (this.comboBoost) {
+          // 콤보로 커진 검날임을 알 수 있도록 아우라 색 테두리를 추가로 둘러준다.
+          ctx.strokeStyle = this.aura;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    // [카이렌 궁극기] 거대검 내리찍기: 준비 → 내리찍기(적중 시 3번기 쿨타임 초기화 + 1초 기절) → 뒤로 물러남
+    class KairenGiantSlamUlt {
+      constructor(attacker) {
+        this.attacker = attacker;
+        this.enemy = attacker.isPlayer1 ? p2 : p1;
+        this.dir = attacker.facingRight ? 1 : -1;
+        this.aura = attacker.config.aura;
+        this.timer = 0;
+        this.hasSlammed = false;
+        this.markedForDeletion = false;
+        attacker.isUltCasting = true;
+        attacker.vx = 0;
+      }
+      update() {
+        this.timer++;
+
+        if (this.timer === 22 && !this.hasSlammed) {
+          this.hasSlammed = true;
+          const reach = 150;
+          const hitBox = {
+            x: this.dir > 0 ? this.attacker.x + this.attacker.baseWidth : this.attacker.x - reach,
+            y: this.attacker.y - 20,
+            baseWidth: reach,
+            baseHeight: this.attacker.baseHeight + 40
+          };
+          shockwaves.push(new ShockwaveEffect(this.attacker.x + 20 + this.dir * 50, GROUND_Y, this.aura, 220));
+          spawnSparks(this.attacker.x + 20 + this.dir * 50, GROUND_Y - 20, this.aura, 40);
+
+          if (checkOverlap(hitBox, this.enemy)) {
+            this.enemy.takeDamage(70);
+            kairenLifesteal(this.attacker, 70);
+            this.attacker.cooldowns[3] = 0; // 적중 시 3번 스킬 쿨타임 초기화
+            this.enemy.isStunned = true;
+            setTimeout(() => { this.enemy.isStunned = false; }, 1000); // 1초 기절
+            spawnSparks(this.enemy.x + 20, this.enemy.y + 20, '#ff0055', 30);
+            kairenSpawnImpact(this.enemy.x + 20, this.enemy.y + 20, this.aura, 2.2);
+          }
+        }
+
+        // 내리찍은 뒤 뒤로 크게 물러난다(후퇴 사거리 확대)
+        if (this.timer > 22 && this.timer <= 42) {
+          this.attacker.x -= this.dir * 11;
+          if (this.attacker.x < 0) this.attacker.x = 0;
+          if (this.attacker.x + this.attacker.baseWidth > canvas.width) this.attacker.x = canvas.width - this.attacker.baseWidth;
+        }
+
+        if (this.timer >= 50) {
+          this.attacker.isUltCasting = false;
+          this.markedForDeletion = true;
+        }
+      }
+      draw() {
+        ctx.save();
+        const cx = this.attacker.x + 20 + this.dir * 20;
+        const cy = this.attacker.y + 20;
+
+        if (this.timer < 22) {
+          // 준비 동작: 거대한 검이 점점 커지며 하늘로 들어올려짐 (기존보다 훨씬 크고 눈에 띄게)
+          const grow = Math.min(1, this.timer / 22);
+          ctx.translate(cx, cy - 30 - grow * 70);
+          ctx.rotate(this.dir > 0 ? -0.6 : 0.6 + Math.PI);
+
+          const bladeLen = 150 * grow + 15;
+          const bladeWid = 20 * grow + 6;
+
+          // 칼날 본체
+          ctx.fillStyle = '#f1f5f9';
+          ctx.shadowColor = this.aura;
+          ctx.shadowBlur = 45;
+          ctx.beginPath();
+          ctx.moveTo(-bladeWid / 2, 0);
+          ctx.lineTo(-bladeWid / 2, -bladeLen);
+          ctx.lineTo(0, -bladeLen - 22 * grow);
+          ctx.lineTo(bladeWid / 2, -bladeLen);
+          ctx.lineTo(bladeWid / 2, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          // 손잡이/가드 (거대검 느낌)
+          ctx.fillStyle = this.aura;
+          ctx.shadowBlur = 25;
+          ctx.fillRect(-bladeWid * 1.4 / 2 - 4, -6, bladeWid * 1.4 + 8, 14);
+          ctx.fillRect(-bladeWid / 2 + 2, 0, bladeWid - 4, 26 * grow + 6);
+        } else if (this.timer < 34) {
+          // 내리찍은 직후 지면의 거대한 검광 잔상 (기존보다 훨씬 큼)
+          ctx.translate(cx, GROUND_Y - 10);
+          ctx.globalAlpha = Math.max(0, 1 - (this.timer - 22) / 12);
+          ctx.fillStyle = this.aura;
+          ctx.shadowColor = this.aura;
+          ctx.shadowBlur = 60;
+          ctx.fillRect(-130, -16, 260, 32);
+          ctx.fillStyle = '#f1f5f9';
+          ctx.globalAlpha = Math.max(0, 0.8 - (this.timer - 22) / 12);
+          ctx.fillRect(-130, -6, 260, 12);
+        }
+
+        ctx.restore();
+      }
+    }
+
     function drawVoxelWolf(ctx, x, y, scale, facingRight, auraColor, mouthOpen = 0) {
       ctx.save();
       ctx.translate(x, y);
@@ -9959,6 +11388,67 @@
         ctx.restore();
       }
 
+      if (config.charKey === 'kairen') {
+        // 색깔(아우라)에 따라 손잡이/검광 색이 바뀌는 "사무라이 검(카타나)" 스타일 무기.
+        // 캐릭터 몸통 쪽에서 손잡이(츠카) -> 코등이(츠바) -> 칼날 순으로 진행 방향(swordDir)을 향해 뻗어나가며,
+        // 칼날의 등(back edge)이 위로 볼록하게 휘어 실제 카타나처럼 보이도록 좌표를 명확히 잡는다.
+        ctx.save();
+        const handX = facingRight ? size - 4 : 4;
+        const handY = size / 2;
+        const swordDir = facingRight ? 1 : -1;
+
+        ctx.translate(handX, handY);
+        ctx.rotate(swordDir * 0.4);
+
+        // 손잡이(츠카): 캐릭터 몸통 쪽(진행 방향의 반대편)에 위치
+        ctx.fillStyle = '#1e293b';
+        ctx.shadowColor = auraColor;
+        ctx.shadowBlur = 8;
+        ctx.fillRect(swordDir > 0 ? -22 : 4, -4, 18, 8);
+        // 손잡이 감김 무늬
+        ctx.strokeStyle = auraColor;
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 3; i++) {
+          const gx = swordDir > 0 ? -19 + i * 6 : 7 + i * 6;
+          ctx.beginPath();
+          ctx.moveTo(gx, -4);
+          ctx.lineTo(gx + swordDir * 3, 4);
+          ctx.stroke();
+        }
+
+        // 코등이(츠바): 손잡이와 칼날 사이의 원형 가드
+        ctx.fillStyle = auraColor;
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        ctx.arc(0, 0, 7, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 칼날: 코등이(0)에서 진행 방향(swordDir)으로 뻗어나가는 완만한 곡선(외날) 형태.
+        // 등(바깥쪽, y가 음수인 위쪽)이 볼록하게 휘고 날(안쪽, y가 양수)은 거의 직선에 가깝게 유지한다.
+        const bladeLen = 70;
+        const tipX = swordDir * bladeLen;
+        const midX = swordDir * bladeLen * 0.55;
+        ctx.fillStyle = '#e5e7eb';
+        ctx.shadowColor = auraColor;
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.moveTo(swordDir * 4, -4);                              // 칼날 시작(코등이 옆, 등쪽)
+        ctx.quadraticCurveTo(midX, -11, tipX, 0);                   // 등쪽 곡선 -> 칼끝
+        ctx.quadraticCurveTo(midX, 2, swordDir * 4, 3.5);           // 칼끝 -> 날쪽 곡선(거의 직선) -> 시작점 근처
+        ctx.closePath();
+        ctx.fill();
+
+        // 칼날 등의 하이라이트 선(카타나 느낌 강조): 볼록한 등 곡선을 따라 그린다
+        ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(swordDir * 5, -4.5);
+        ctx.quadraticCurveTo(midX, -9.5, tipX - swordDir * 3, -1);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
       ctx.restore();
     }
 
@@ -9979,6 +11469,8 @@
         this.isDashing = false; this.dashSpeed = 0;
         this.dashDistanceLeft = 0; this.hasHitTargetThisDash = false;
         this.isStunned = false;
+        // 2층 포탈에 방금 도착한 직후 다시 같은 포탈에 빨려들어가지 않도록 하는 재진입 방지 타이머(프레임).
+        this.portalCooldown = 0;
 
         this.scaleX = 1;
         this.scaleY = 1;
@@ -9989,6 +11481,24 @@
         this.hasBeastBuff = false;
         this.isUltCasting = false;
         this.isInvisible = false;
+        // 카이렌 3번 스킬(발도술)의 "0.5초 정지" 준비 동작 등에 쓰이는 범용 채널링 상태.
+        // true인 동안에는 이동/입력/다른 스킬 사용이 모두 막힌다.
+        this.isChanneling = false;
+
+        // ===== 카이렌 전용 콤보 상태 =====
+        // kairenSkill2Active: 2번 스킬(검날 3연사)의 투사체가 아직 화면에 남아있는 동안 true.
+        //   이 상태에서 1번을 쓰면 "2+1 콤보"(2번 판정 범위 확대), 3번을 쓰면 "2+3 콤보"(발도 즉시 발동)가 발동한다.
+        this.kairenSkill2Active = false;
+        this.kairenSkill2ActiveUntil = 0;
+        // kairenDashComboQueued: 3번(발도) 돌진 도중 1번을 눌러 "발도+1 콤보"를 예약해둔 상태.
+        //   발도가 끝나는 순간 이 값을 보고 추가 3연속 베기를 발동시킨다.
+        this.kairenDashComboQueued = false;
+
+        // ===== 카이렌 전용 상급 콤보(KAIREN_COMBOS) 진행 상태 =====
+        // 스킬/궁극기를 사용할 때마다 kairenRecordComboInput()이 호출되어, 등록된 모든 콤보
+        // ("고인물 콤보" 3→1→4→2→3, "월광 콤보" 2→3→1→4→2→1→3→1 등)의 진행 인덱스를 함께 갱신한다.
+        // 콤보별로 { progress, lastTime }을 독립적으로 추적한다. 4는 궁극기를 의미한다.
+        this.kairenComboState = kairenCreateComboState();
       }
 
       update(enemy) {
@@ -10000,7 +11510,7 @@
         this.scaleX += (1 - this.scaleX) * 0.18;
         this.scaleY += (1 - this.scaleY) * 0.18;
 
-        if (this.isStunned || this.isUltCasting) return;
+        if (this.isStunned || this.isUltCasting || this.isChanneling) return;
 
         this.scytheAngle += (0 - this.scytheAngle) * 0.15;
 
@@ -10023,13 +11533,36 @@
                 setTimeout(() => { this.defenseBuff = 1; }, 2000);
                 radialBeamEffects.push(new RadialBeamsEffect(enemy.x + 20, enemy.y + 20));
                 shockwaves.push(new ShockwaveEffect(enemy.x + 20, enemy.y + 20, '#fbbf24', 100));
+              } else if (this.config.charKey === 'kairen') {
+                // 3번 스킬(발도술) 돌진 중 적중: 데미지 + 패시브 회복(적중 시 소량 회복)
+                enemy.takeDamage(42);
+                kairenLifesteal(this, 42);
+                shockwaves.push(new ShockwaveEffect(enemy.x + 20, enemy.y + 20, this.config.aura, 130));
+                spawnSparks(enemy.x + 20, enemy.y + 20, this.config.aura, 25);
+                kairenSpawnImpact(enemy.x + 20, enemy.y + 20, this.config.aura, 1.5);
               } else {
                 comboEffects.push(new SquareFustComboEffect(this, enemy));
               }
               this.addUlt(15);
             }
           }
-          if (this.dashDistanceLeft <= 0) this.isDashing = false;
+          if (this.dashDistanceLeft <= 0) {
+            this.isDashing = false;
+            // ===== 콤보: "발도 중 1번" 예약이 걸려 있었다면, 발도가 끝나는 이 순간
+            // 추가로 3연속 베기를 짧은 간격을 두고 발동시킨다. =====
+            if (this.kairenDashComboQueued) {
+              this.kairenDashComboQueued = false;
+              const comboAttacker = this;
+              const comboEnemyRef = enemy;
+              kairenShowCombo(this, '콤보! 연속베기 발동');
+              for (let i = 0; i < 3; i++) {
+                setTimeout(() => {
+                  if (comboAttacker.hp <= 0 || comboEnemyRef.hp <= 0) return;
+                  kairenSwings.push(new KairenSlashEffect(comboAttacker, comboEnemyRef, true));
+                }, i * 160);
+              }
+            }
+          }
 
         } else {
           this.x += this.vx; 
@@ -10037,8 +11570,8 @@
           this.y += this.vy;
 
           let onStairs = false;
-          if (mapStairs) {
-            onStairs = mapStairs.checkCollision(this);
+          if (mapFloor) {
+            onStairs = mapFloor.checkCollision(this);
           }
 
           if (!onStairs) {
@@ -10059,6 +11592,10 @@
             }
           }
 
+          // 좌/우 끝 포탈(1층 ↔ 2층) 겹침 판정: 겹치면 즉시 반대편 포탈로 순간이동한다.
+          if (mapFloor) mapFloor.checkPortals(this);
+          if (this.portalCooldown > 0) this.portalCooldown--;
+
           if (this.x < 0) this.x = 0;
           if (this.x + this.baseWidth > canvas.width) this.x = canvas.width - this.baseWidth;
         }
@@ -10073,7 +11610,7 @@
       }
 
       jump() {
-        if (this.isGrounded && !this.isDashing && !this.isStunned && !this.isUltCasting) {
+        if (this.isGrounded && !this.isDashing && !this.isStunned && !this.isUltCasting && !this.isChanneling) {
           this.vy = this.jumpPower; 
           this.isGrounded = false;
           this.scaleY = 1.4;
@@ -10089,7 +11626,40 @@
       }
 
       useSkill(skillNumber) {
-        if (this.hp <= 0 || this.cooldowns[skillNumber] > 0 || this.isDashing || this.isStunned || this.isUltCasting) return;
+        // ===== 카이렌 콤보를 위한 가드 예외 처리 =====
+        // 기본적으로는 대시/기절/궁극기시전/채널링 중엔 스킬을 못 쓰지만, 카이렌은 아래 상황들을 위해
+        // 예외적으로 허용한다. 그 외의 모든 경우엔 기존과 동일하게 막는다.
+        //  1) 발도(3번) 돌진 중에 1번을 누르는 경우  → "발도+1 콤보" 예약
+        //  2) 2번(검날 3연사) 이펙트가 아직 살아있는 동안 1번을 누르는 경우 → "2+1 콤보"(판정 확대)
+        //  3) 2번(검날 3연사) 이펙트가 아직 살아있는 동안 3번을 누르는 경우 → "2+3 콤보"(발도 즉시 발동)
+        //  4) 등록된 상급 콤보들(예: "고인물 콤보" 3→1→4→2→3, "월광 콤보" 2→3→1→4→2→1→3→1) 중
+        //     어느 하나라도 마지막으로 "3"만 남겨둔 상태라면, 3번 스킬의 남은 쿨타임을 무시하고
+        //     즉시 마무리할 수 있게 해준다. 그래야 궁극기가 상대를 못 맞춰서 쿨타임이 안 풀렸어도
+        //     콤보 자체는 매끄럽게 완성된다.
+        const isKairen = this.config.charKey === 'kairen';
+        const kairenComboCooldownSkip = isKairen && skillNumber === 3 &&
+          kairenNeedsComboCooldownSkip(this, 3);
+        const kairenComboAllowed = isKairen && (
+          (skillNumber === 1 && this.isDashing && this.dashSpeed !== 0) ||
+          (skillNumber === 1 && this.kairenSkill2Active) ||
+          (skillNumber === 3 && this.kairenSkill2Active) ||
+          kairenComboCooldownSkip
+        );
+        if (this.hp <= 0 || this.isStunned || this.isUltCasting) return;
+        if (!kairenComboAllowed) {
+          if (this.cooldowns[skillNumber] > 0 || this.isDashing || this.isChanneling) return;
+        } else if (skillNumber === 3 && this.cooldowns[3] > 0 && !kairenComboCooldownSkip) {
+          // "2+3 콤보"(즉시 발도)는 3번 스킬 자체 쿨타임이 남아있으면 여전히 막는다.
+          // 단, 어떤 상급 콤보든 마지막 "3"만 남긴 마무리 상황(위의 4번)은 쿨타임과 무관하게 항상 허용한다.
+          return;
+        }
+        // 그 외 카이렌 콤보(발도 중 1번 예약, 2+1 판정 확대)는 1번 스킬의 짧은 쿨타임과 무관하게 항상 허용한다.
+
+        // ===== 카이렌 상급 콤보 입력 기록 =====
+        // 실제로 스킬이 발동되는 이 시점에 입력 키(1/2/3)를 등록된 모든 콤보에 반영해 패턴을 검사한다.
+        // 궁극기(4)는 useUltimate()에서 별도로 기록한다.
+        if (isKairen) kairenRecordComboInput(this, skillNumber);
+
         if (slimeMode === 'online' && slimeOnlineRole === 'host') {
           // ※ 여기서 push하는 skill 값은 "0부터 시작하는 인덱스"여야 한다.
           // slimeReplaySkillEvents(게스트 쪽 재생 함수)가 useSkill(ev.skill + 1)로
@@ -10195,6 +11765,73 @@
             updateUI();
           }
 
+        } else if (this.config.charKey === 'kairen') {
+          if (skillNumber === 1) {
+            // ===== 콤보 우선 처리: "발도(3번) 돌진 중" 1번을 눌렀는가? =====
+            if (this.isDashing && this.dashSpeed !== 0 && !this.kairenDashComboQueued) {
+              // 발도가 끝나는 순간(대시 종료) 추가로 3연속 베기가 나가도록 예약만 해둔다.
+              // 실제 베기는 update()에서 대시가 끝나는 프레임에 발동시킨다.
+              this.kairenDashComboQueued = true;
+              spawnSparks(this.x + 20, this.y + 20, this.config.aura, 10);
+              kairenShowCombo(this, '콤보! 발도 연속베기');
+            } else if (this.kairenSkill2Active) {
+              // ===== 콤보 우선 처리: "2번(검날 3연사) 이펙트가 살아있는 동안" 1번을 눌렀는가? =====
+              // 이미 날아가고 있는 검날들의 판정 범위를 확대(comboBoost)한다.
+              this.cooldowns[1] = 0.35;
+              kairenBlades.forEach(kb => {
+                if (kb.owner === this && !kb.comboBoost) {
+                  kb.comboBoost = true;
+                  kb.width = 58; kb.height = 30;
+                }
+              });
+              kairenSwings.push(new KairenSlashEffect(this, enemy, true));
+              kairenShowCombo(this, '콤보! 검날 강화');
+            } else {
+              // 일반 1번: 칼 휘두르기 - 데미지는 적지만 쿨타임이 매우 짧은 즉발 근접 공격
+              this.cooldowns[1] = 0.35;
+              kairenSwings.push(new KairenSlashEffect(this, enemy));
+            }
+          } else if (skillNumber === 2) {
+            // 2번: 검날을 앞으로 3번 발사. 이펙트가 존재하는 동안(kairenSkill2Active)에는
+            // 1번(판정 확대 콤보) 또는 3번(발도 즉시발동 콤보)을 이어서 쓸 수 있다.
+            this.cooldowns[2] = 2.3;
+            this.kairenSkill2Active = true;
+            const activeDuration = 45; // 검날이 화면에 남아있는 대략적인 프레임 수(3연사 딜레이 + 비행시간)
+            this.kairenSkill2ActiveUntil = Date.now() + activeDuration * (1000 / 60);
+            for (let i = 0; i < 3; i++) {
+              kairenBlades.push(new KairenBladeProjectile(this.x + 20, this.y + 20, dir * 15, this, i * 8));
+            }
+            const caster2 = this;
+            setTimeout(() => { caster2.kairenSkill2Active = false; }, activeDuration * (1000 / 60));
+          } else if (skillNumber === 3) {
+            if (this.kairenSkill2Active) {
+              // ===== 콤보: "2번 도중 3번" → 0.5초 대기 없이 즉시 발도 발동 =====
+              this.cooldowns[3] = 4.2;
+              this.kairenSkill2Active = false;
+              this.isChanneling = false;
+              this.vx = 0;
+              this.isDashing = true; this.hasHitTargetThisDash = false;
+              this.dashDistanceLeft = 380; this.dashSpeed = dir * 22;
+              spawnSparks(this.x + 20, this.y + 20, this.config.aura, 18);
+              kairenSpawnImpact(this.x + 20, this.y + 20, this.config.aura, 1.1);
+              kairenShowCombo(this, '콤보! 즉시 발도');
+            } else {
+              // 일반 3번: 0.5초간 정지 후 앞으로 날아가며 발도술
+              this.cooldowns[3] = 4.2;
+              this.isChanneling = true;
+              this.vx = 0;
+              spawnSparks(this.x + 20, this.y + 20, this.config.aura, 12);
+              const caster = this;
+              setTimeout(() => {
+                if (caster.hp <= 0) { caster.isChanneling = false; return; }
+                caster.isChanneling = false;
+                caster.vx = 0;
+                caster.isDashing = true; caster.hasHitTargetThisDash = false;
+                caster.dashDistanceLeft = 380; caster.dashSpeed = dir * 22;
+              }, 500);
+            }
+          }
+
         } else {
           if (skillNumber === 1) {
             this.cooldowns[1] = 0.7;
@@ -10215,10 +11852,13 @@
       }
 
       useUltimate() {
-        if (this.ultGauge < 100 || this.hp <= 0 || this.isStunned || this.isUltCasting) return;
+        if (this.ultGauge < 100 || this.hp <= 0 || this.isStunned || this.isUltCasting || this.isChanneling) return;
         if (slimeMode === 'online' && slimeOnlineRole === 'host') {
           slimePendingSkillEvents.push({ isP1: this.isPlayer1, skill: 'ult' });
         }
+
+        // "고인물 콤보"(3→1→4→2→3)의 '4'는 궁극기 사용을 의미하므로 여기서도 기록한다.
+        if (this.config.charKey === 'kairen') kairenRecordComboInput(this, 4);
 
         this.ultGauge = 0;
         updateUI();
@@ -10240,6 +11880,8 @@
         } else if (this.config.charKey === 'time_reaper') {
           this.scytheAngle = (this.facingRight ? 1 : -1) * -3.14;
           gargantuaSlashes.push(new GargantuaSlashUlt(this.x + 20, this.y + 20, this.facingRight, this));
+        } else if (this.config.charKey === 'kairen') {
+          kairenSlams.push(new KairenGiantSlamUlt(this));
         } else {
           const enemy = this.isPlayer1 ? p2 : p1;
           blackHoles.push(new BlackHoleUltimate(enemy.x + 20, enemy.y + 20, this));
@@ -10272,7 +11914,7 @@
     }
 
     let p1, p2;
-    let mapStairs;
+    let mapFloor;
     let projectiles = [];
     let scytheWaves = [];
     let comboEffects = [];
@@ -10295,10 +11937,129 @@
     let dimensionRiftUlts = [];
     let dimensionOrbs = []; // 신규 스킬 1 이펙트 배열
     let leapSlashes = [];   // 신규 스킬 2 이펙트 배열
+    let kairenSwings = [];  // 카이렌 1번 스킬(칼 휘두르기) 잔상 이펙트 배열
+    let kairenBlades = [];  // 카이렌 2번 스킬(검날 3연사) 투사체 배열
+    let kairenSlams = [];   // 카이렌 궁극기(거대검 내리찍기) 이펙트 배열
+    let kairenImpacts = []; // 카이렌 모든 공격의 타격 임팩트(십자 섬광) 이펙트 배열
+    let kairenComboTexts = []; // "COMBO!" 등 콤보 발동 알림 텍스트 배열
+    let kairenComboFlames = []; // 콤보 발동 시 피어오르는 불꽃 파티클 배열
+    let kairenMasterBursts = []; // "고인물 콤보"(3-1-4-2-3) 전용 대형 화염 폭발 배열
+    let kairenMoonModeUntil = 0; // "월광 콤보" 발동 중 배경이 푸른 달로 바뀌는 종료 시각(Date.now() 기준, 0이면 비활성)
+    let kairenMoonPetals = [];   // "월광 콤보" 발동 중 화면에 흩날리는 꽃잎 파티클 배열
+    let slimeShakeTime = 0;    // 화면 흔들림 남은 프레임 수
+    let slimeShakePower = 0;   // 화면 흔들림 세기(픽셀)
+    // 화면 흔들림을 트리거하는 헬퍼. 타격감 있는 스킬(칼 휘두르기 등)에 사용한다.
+    function triggerScreenShake(power, time) {
+      slimeShakePower = Math.max(slimeShakePower, power);
+      slimeShakeTime = Math.max(slimeShakeTime, time);
+    }
     let sparks = [];
     let isGameOver = false;
 
+    // ===== "월광 콤보"(2-3-1-4-2-1-3-1) 전용: 배경이 푸른 달로 바뀌고 꽃잎이 흩날리는 연출 =====
+    // 콤보가 완성되는 순간 호출되어, 일정 시간(KAIREN_MOON_MODE_DURATION_MS) 동안 배경을 밤하늘+푸른
+    // 보름달로 바꾸고 꽃잎 파티클을 계속 흩뿌린다. 이미 발동 중이었다면 지속시간을 다시 갱신(연장)한다.
+    function kairenActivateMoonMode() {
+      kairenMoonModeUntil = Date.now() + KAIREN_MOON_MODE_DURATION_MS;
+      kairenSpawnMoonPetals(24); // 발동 즉시 화면 곳곳에 꽃잎을 왕창 흩뿌려 연출을 확실히 보여준다
+    }
+
+    // 화면 위쪽 랜덤한 위치에서 꽃잎 count개를 새로 생성해 흩날리기 시작한다.
+    function kairenSpawnMoonPetals(count = 1) {
+      for (let i = 0; i < count; i++) {
+        kairenMoonPetals.push(new KairenMoonPetal(
+          Math.random() * canvas.width,
+          -20 - Math.random() * 200
+        ));
+      }
+    }
+
+    // ===== "월광 콤보" 배경에서 흩날리는 꽃잎 한 장 =====
+    // 아래로 천천히 떨어지면서 좌우로 살랑살랑 흔들리고(sway), 제자리에서 회전(rotation)한다.
+    // 화면 바닥을 지나면 소멸 대상으로 표시된다.
+    class KairenMoonPetal {
+      constructor(x, y) {
+        this.x = x; this.y = y;
+        this.size = 5 + Math.random() * 5;
+        this.fallSpeed = 0.6 + Math.random() * 1.1;
+        this.swaySpeed = 0.015 + Math.random() * 0.02;
+        this.swayAmount = 15 + Math.random() * 25;
+        this.swayOffset = Math.random() * Math.PI * 2;
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotSpeed = (Math.random() - 0.5) * 0.06;
+        this.baseX = x;
+        this.timer = 0;
+        // 연한 벚꽃 분홍 ~ 흰색 사이의 색을 랜덤하게 섞어 단조롭지 않게 한다.
+        this.color = Math.random() < 0.5 ? '#fbcfe8' : '#fce7f3';
+        this.markedForDeletion = false;
+      }
+      update() {
+        this.timer++;
+        this.y += this.fallSpeed;
+        this.x = this.baseX + Math.sin(this.timer * this.swaySpeed + this.swayOffset) * this.swayAmount;
+        this.rotation += this.rotSpeed;
+        if (this.y > canvas.height + 20) this.markedForDeletion = true;
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.fillStyle = this.color;
+        ctx.globalAlpha = 0.85;
+        ctx.shadowColor = '#f9a8d4';
+        ctx.shadowBlur = 4;
+        // 작은 꽃잎 모양(타원 두 개를 겹쳐 살짝 하트형으로)
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.size, this.size * 0.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
     function drawGargantuaBackground() {
+      const moonModeActive = Date.now() < kairenMoonModeUntil;
+
+      if (moonModeActive) {
+        // ===== "월광 콤보" 전용 배경: 깊은 밤하늘 + 푸르게 빛나는 보름달 =====
+        const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        grad.addColorStop(0, '#0a1233');
+        grad.addColorStop(1, '#1e2a5e');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // 은은하게 반짝이는 별들
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        for (let i = 0; i < 40; i++) {
+          const sx = (i * 137.5) % canvas.width;
+          const sy = (i * 71.3) % 260;
+          ctx.globalAlpha = 0.3 + 0.4 * Math.abs(Math.sin(i + Date.now() / 900));
+          ctx.beginPath();
+          ctx.arc(sx, sy, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        ctx.save();
+        ctx.translate(canvas.width / 2, 170);
+        ctx.fillStyle = '#dbeafe';
+        ctx.shadowColor = '#60a5fa';
+        ctx.shadowBlur = 55;
+        ctx.beginPath();
+        ctx.arc(0, 0, 48, 0, Math.PI * 2);
+        ctx.fill();
+        // 달 표면의 은은한 음영 크레이터
+        ctx.globalAlpha = 0.18;
+        ctx.fillStyle = '#93c5fd';
+        ctx.beginPath(); ctx.arc(-14, -10, 9, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(12, 8, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(147, 197, 253, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(canvas.width, GROUND_Y); ctx.stroke();
+        return;
+      }
+
       ctx.fillStyle = '#020208';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -10336,13 +12097,20 @@
       spinScythes = []; gargantuaSlashes = []; shockwaves = []; radialBeamEffects = [];
       heavenlyRainUlts = []; wolves = []; bearClaws = []; stampedes = []; dragonUlts = [];
       phantomDecoys = []; dimensionRiftUlts = []; dimensionOrbs = []; leapSlashes = []; sparks = [];
+      kairenSwings = []; kairenBlades = []; kairenSlams = []; kairenImpacts = [];
+      kairenComboTexts = []; slimeShakeTime = 0; slimeShakePower = 0;
+      kairenComboFlames = []; kairenMasterBursts = [];
+      kairenMoonModeUntil = 0; kairenMoonPetals = [];
 
       p1 = new Player(150, p1Config, true);
       p2 = new Player(650, p2Config, false);
 
-      mapStairs = new MapStairs();
+      mapFloor = new MapPortalFloor();
 
       updateUI();
+      slimeApplySkillIcons();
+      slimeCdUiCache = { p1: [null, null, null], p2: [null, null, null] };
+      updateCooldownUI();
     }
 
     function updateUI() {
@@ -10355,6 +12123,49 @@
       document.getElementById('slime-p2-ult').style.width = p2.ultGauge + '%';
       document.getElementById('slime-p1-ult-text').innerText = `ULT ${Math.floor(p1.ultGauge)}%`;
       document.getElementById('slime-p2-ult-text').innerText = `ULT ${Math.floor(p2.ultGauge)}%`;
+    }
+
+    // 하단 쿨타임 표시 UI 갱신 (롤 스타일): 매 프레임 호출된다.
+    // - 내가 조작하는 캐릭터: 아이콘 위에 남은 쿨타임 비율만큼 어두운 오버레이가 덮이고, 숫자(초)도 함께 보여준다.
+    // - 상대 캐릭터: 오버레이(쿨타임 중인지 여부와 대략적인 진행 정도)만 보이고, 정확한 남은 시간(숫자)은 절대 노출하지 않는다.
+    // "내 캐릭터가 누구인지"는 온라인 게스트일 때만 p2, 그 외(로컬/AI/온라인호스트)에는 항상 p1이다.
+    function slimeIsMine(tag) {
+      const iAmGuest = (slimeMode === 'online' && slimeOnlineRole === 'guest');
+      return iAmGuest ? (tag === 'p2') : (tag === 'p1');
+    }
+
+    let slimeCdUiCache = { p1: [null, null, null], p2: [null, null, null] };
+    function updateCooldownUI() {
+      if (!p1 || !p2) return;
+      [[p1, 'p1'], [p2, 'p2']].forEach(([player, tag]) => {
+        const mine = slimeIsMine(tag);
+        const maxCd = { 1: 4.5, 2: 4.5, 3: 6 }; // 오버레이 비율 계산용 대략적 최대 쿨타임(캐릭터마다 달라 대략치 사용)
+
+        for (let i = 1; i <= 3; i++) {
+          let remain = Math.max(0, player.cooldowns[i] || 0);
+          let ready = remain <= 0;
+          // 캐시 키: 내 스킬은 0.1초 단위 숫자까지, 상대 스킬은 준비여부만 비교(불필요 DOM 갱신 방지)
+          let cacheVal = mine ? remain.toFixed(1) : (ready ? 'ready' : 'cd');
+          if (slimeCdUiCache[tag][i - 1] === cacheVal) continue;
+          slimeCdUiCache[tag][i - 1] = cacheVal;
+
+          let box = document.getElementById(`slime-${tag}-cd-${i}`);
+          if (!box) continue;
+          box.setAttribute('data-mine', mine ? '1' : '0');
+          box.classList.toggle('ready', ready);
+
+          const overlay = box.querySelector('.slime-cd-overlay');
+          if (overlay) {
+            // 남은 비율만큼 위에서부터 오버레이가 덮인다. 상대의 경우도 진행 정도는 보이되
+            // 정확한 초 단위 숫자는 절대 표시하지 않아 정밀한 타이밍 계산은 불가능하게 한다.
+            const ratio = ready ? 0 : Math.min(1, remain / maxCd[i]);
+            overlay.style.height = (ratio * 100) + '%';
+          }
+
+          const valEl = box.querySelector('.slime-cd-val');
+          if (valEl) valEl.textContent = mine ? (ready ? '' : remain.toFixed(1)) : '';
+        }
+      });
     }
 
     // ===== 온라인/AI 입력: 호스트(또는 AI모드의 나)는 P1을 직접 조작. 온라인 게스트는 자신의 입력을 P2로 로컬 예측 이동시키면서 호스트에게 전송. AI모드는 P2를 AI가 자동 조작 =====
@@ -10438,6 +12249,7 @@
         handleInput();
         applyRemoteSlimeSnapshotIfAny();
         renderSlimeOnlineGuestFrame();
+        updateCooldownUI();
         slimeAnimId = requestAnimationFrame(gameLoop);
         return;
       }
@@ -10447,6 +12259,7 @@
         slimeApplyRemoteGuestSkillInputs();
       }
       p1.update(p2); p2.update(p1);
+      if (mapFloor) mapFloor.update();
 
       projectiles.forEach((p) => {
         p.update();
@@ -10494,6 +12307,10 @@
       dimensionRiftUlts.forEach(dr => dr.update());
       dimensionOrbs.forEach(doObj => doObj.update());
       leapSlashes.forEach(ls => ls.update());
+      kairenSwings.forEach(ks => ks.update());
+      kairenBlades.forEach(kb => kb.update());
+      kairenSlams.forEach(kSlam => kSlam.update());
+      kairenImpacts.forEach(ki => ki.update());
 
       sparks.forEach(s => s.update());
       sparks = sparks.filter(s => s.life > 0);
@@ -10520,11 +12337,37 @@
       dimensionRiftUlts = dimensionRiftUlts.filter(dr => !dr.markedForDeletion);
       dimensionOrbs = dimensionOrbs.filter(doObj => !doObj.markedForDeletion);
       leapSlashes = leapSlashes.filter(ls => !ls.markedForDeletion);
+      kairenSwings = kairenSwings.filter(ks => !ks.markedForDeletion);
+      kairenBlades = kairenBlades.filter(kb => !kb.markedForDeletion);
+      kairenSlams = kairenSlams.filter(kSlam => !kSlam.markedForDeletion);
+      kairenImpacts = kairenImpacts.filter(ki => !ki.markedForDeletion);
+      kairenComboTexts.forEach(ct => ct.update());
+      kairenComboTexts = kairenComboTexts.filter(ct => !ct.markedForDeletion);
+      kairenComboFlames.forEach(kf => kf.update());
+      kairenComboFlames = kairenComboFlames.filter(kf => !kf.markedForDeletion);
+      kairenMasterBursts.forEach(mb => mb.update());
+      kairenMasterBursts = kairenMasterBursts.filter(mb => !mb.markedForDeletion);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // "월광 콤보" 지속시간 동안 꽃잎을 계속 흩뿌리고, 다 떨어진 꽃잎은 정리한다.
+      if (Date.now() < kairenMoonModeUntil && Math.random() < 0.5) {
+        kairenSpawnMoonPetals(1);
+      }
+      kairenMoonPetals.forEach(mp => mp.update());
+      kairenMoonPetals = kairenMoonPetals.filter(mp => !mp.markedForDeletion);
+
+      ctx.save();
+      if (slimeShakeTime > 0) {
+        slimeShakeTime--;
+        const sx = (Math.random() - 0.5) * 2 * slimeShakePower;
+        const sy = (Math.random() - 0.5) * 2 * slimeShakePower;
+        ctx.translate(sx, sy);
+        if (slimeShakeTime <= 0) slimeShakePower = 0;
+      }
+
+      ctx.clearRect(-20, -20, canvas.width + 40, canvas.height + 40);
       drawGargantuaBackground();
 
-      if (mapStairs) mapStairs.draw();
+      if (mapFloor) mapFloor.draw();
 
       blackHoles.forEach(bh => bh.draw());
       meteorStorms.forEach(ms => ms.draw());
@@ -10541,16 +12384,26 @@
       wolves.forEach(w => w.draw());
       scytheWaves.forEach(sw => sw.draw());
       daggers.forEach(d => d.draw());
+      kairenBlades.forEach(kb => kb.draw());
 
       p1.draw(); p2.draw();
 
       leapSlashes.forEach(ls => ls.draw());
       spinScythes.forEach(ss => ss.draw());
       gargantuaSlashes.forEach(gs => gs.draw());
+      kairenSlams.forEach(kSlam => kSlam.draw());
+      kairenSwings.forEach(ks => ks.draw());
       shockwaves.forEach(sw => sw.draw());
       radialBeamEffects.forEach(rb => rb.draw());
       comboEffects.forEach(ce => ce.draw());
       sparks.forEach(s => s.draw());
+      kairenImpacts.forEach(ki => ki.draw());
+      kairenMasterBursts.forEach(mb => mb.draw());
+      kairenComboFlames.forEach(kf => kf.draw());
+      kairenComboTexts.forEach(ct => ct.draw());
+      kairenMoonPetals.forEach(mp => mp.draw()); // 꽃잎은 가장 위(화면 전경)에 그려서 흩날리는 게 잘 보이게 한다
+
+      ctx.restore();
 
       if (p1.hp <= 0 || p2.hp <= 0) {
         isGameOver = true;
@@ -10561,6 +12414,8 @@
       if (slimeMode === 'online' && slimeOnlineRole === 'host') {
         broadcastSlimeHostStateThrottled();
       }
+
+      updateCooldownUI();
 
       slimeAnimId = requestAnimationFrame(gameLoop);
     }
@@ -10595,6 +12450,12 @@
             });
         }
         freezeStairsAntiCheatFunctions();
+    </script>
+    <script>
+    // 당구 게임 전체 HTML (base64, UTF-8 인코딩) - 별도 파일 없이 이 안에 통째로 내장됨
+    const BILLIARDS_HTML_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImtvIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiPgogIDxtZXRhIG5hbWU9InZpZXdwb3J0IiBjb250ZW50PSJ3aWR0aD1kZXZpY2Utd2lkdGgsIGluaXRpYWwtc2NhbGU9MS4wIj4KICA8dGl0bGU+7ZSE66as66+47JeEIDF2MSDri7nqtawg6rKM7J6EIC0g7ZSE66as67O8IOyLnOyKpO2FnCDsoIHsmqk8L3RpdGxlPgogIDxzdHlsZT4KICAgICogewogICAgICBib3gtc2l6aW5nOiBib3JkZXItYm94OwogICAgICBtYXJnaW46IDA7CiAgICAgIHBhZGRpbmc6IDA7CiAgICAgIHVzZXItc2VsZWN0OiBub25lOwogICAgfQoKICAgIGJvZHkgewogICAgICBiYWNrZ3JvdW5kOiByYWRpYWwtZ3JhZGllbnQoY2lyY2xlIGF0IGNlbnRlciwgIzFlMjkzYiAwJSwgIzBmMTcyYSAxMDAlKTsKICAgICAgY29sb3I6ICNmZmY7CiAgICAgIGZvbnQtZmFtaWx5OiAnUHJldGVuZGFyZCcsICdTZWdvZSBVSScsIFRhaG9tYSwgR2VuZXZhLCBWZXJkYW5hLCBzYW5zLXNlcmlmOwogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBmbGV4LWRpcmVjdGlvbjogY29sdW1uOwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgICAgbWluLWhlaWdodDogMTAwdmg7CiAgICAgIG92ZXJmbG93OiBoaWRkZW47CiAgICB9CgogICAgLyogPT09IFVJIE92ZXJsYXlzID09PSAqLwogICAgLmZ1bGwtc2NyZWVuLW92ZXJsYXkgewogICAgICBwb3NpdGlvbjogZml4ZWQ7CiAgICAgIGluc2V0OiAwOwogICAgICBiYWNrZ3JvdW5kOiAjMGYxNzJhOwogICAgICB6LWluZGV4OiAyMDAwOwogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBmbGV4LWRpcmVjdGlvbjogY29sdW1uOwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgICAgdHJhbnNpdGlvbjogb3BhY2l0eSAwLjVzIGVhc2UsIHZpc2liaWxpdHkgMC41czsKICAgIH0KCiAgICAuZnVsbC1zY3JlZW4tb3ZlcmxheS5oaWRkZW4gewogICAgICBvcGFjaXR5OiAwOwogICAgICB2aXNpYmlsaXR5OiBoaWRkZW47CiAgICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwogICAgfQoKICAgIC5sb2FkaW5nLXRpdGxlIHsKICAgICAgZm9udC1zaXplOiAyLjJyZW07CiAgICAgIGZvbnQtd2VpZ2h0OiA4MDA7CiAgICAgIGNvbG9yOiAjMzhiZGY4OwogICAgICBtYXJnaW4tYm90dG9tOiAyMHB4OwogICAgICBsZXR0ZXItc3BhY2luZzogMnB4OwogICAgICB0ZXh0LXNoYWRvdzogMCAwIDE1cHggcmdiYSg1NiwgMTg5LCAyNDgsIDAuNCk7CiAgICB9CgogICAgLnByb2dyZXNzLWJhci1jb250YWluZXIgewogICAgICB3aWR0aDogMzIwcHg7CiAgICAgIGhlaWdodDogMTBweDsKICAgICAgYmFja2dyb3VuZDogIzFlMjkzYjsKICAgICAgYm9yZGVyOiAxcHggc29saWQgIzMzNDE1NTsKICAgICAgYm9yZGVyLXJhZGl1czogMjBweDsKICAgICAgb3ZlcmZsb3c6IGhpZGRlbjsKICAgICAgYm94LXNoYWRvdzogaW5zZXQgMCAycHggNHB4IHJnYmEoMCwwLDAsMC41KTsKICAgIH0KCiAgICAucHJvZ3Jlc3MtZmlsbCB7CiAgICAgIHdpZHRoOiAwJTsKICAgICAgaGVpZ2h0OiAxMDAlOwogICAgICBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoOTBkZWcsICMzOGJkZjgsICM0YWRlODApOwogICAgICB0cmFuc2l0aW9uOiB3aWR0aCAwLjA1cyBsaW5lYXI7CiAgICB9CgogICAgLmxvYWRpbmctdGV4dCB7CiAgICAgIG1hcmdpbi10b3A6IDEycHg7CiAgICAgIGZvbnQtc2l6ZTogMC45cmVtOwogICAgICBjb2xvcjogIzk0YTNiODsKICAgIH0KCiAgICAjbWFpbi1tZW51LW92ZXJsYXkgewogICAgICBiYWNrZ3JvdW5kOiByZ2JhKDE1LCAyMywgNDIsIDAuOTUpOwogICAgICBiYWNrZHJvcC1maWx0ZXI6IGJsdXIoMTBweCk7CiAgICAgIHotaW5kZXg6IDE1MDA7CiAgICB9CgogICAgLm1lbnUtY2FyZCB7CiAgICAgIGJhY2tncm91bmQ6ICMxZTI5M2I7CiAgICAgIHBhZGRpbmc6IDQwcHg7CiAgICAgIGJvcmRlci1yYWRpdXM6IDIwcHg7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkICMzMzQxNTU7CiAgICAgIGJveC1zaGFkb3c6IDAgMjBweCA0MHB4IHJnYmEoMCwwLDAsMC42KTsKICAgICAgdGV4dC1hbGlnbjogY2VudGVyOwogICAgICBtYXgtd2lkdGg6IDQyMHB4OwogICAgICB3aWR0aDogOTAlOwogICAgfQoKICAgIC5tZW51LXRpdGxlIHsKICAgICAgZm9udC1zaXplOiAyLjVyZW07CiAgICAgIGZvbnQtd2VpZ2h0OiA5MDA7CiAgICAgIGJhY2tncm91bmQ6IGxpbmVhci1ncmFkaWVudCgxMzVkZWcsICNmNTllMGIsICNlZjQ0NDQpOwogICAgICAtd2Via2l0LWJhY2tncm91bmQtY2xpcDogdGV4dDsKICAgICAgLXdlYmtpdC10ZXh0LWZpbGwtY29sb3I6IHRyYW5zcGFyZW50OwogICAgICBtYXJnaW4tYm90dG9tOiAzMHB4OwogICAgfQoKICAgIC5tZW51LWJ0bi1ncm91cCB7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47CiAgICAgIGdhcDogMTVweDsKICAgIH0KCiAgICAubWVudS1idG4gewogICAgICBwYWRkaW5nOiAxNnB4OwogICAgICBmb250LXNpemU6IDEuMXJlbTsKICAgICAgZm9udC13ZWlnaHQ6IDcwMDsKICAgICAgYm9yZGVyOiBub25lOwogICAgICBib3JkZXItcmFkaXVzOiAxMnB4OwogICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgIHRyYW5zaXRpb246IGFsbCAwLjJzIGVhc2U7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgIGp1c3RpZnktY29udGVudDogY2VudGVyOwogICAgICBnYXA6IDEwcHg7CiAgICB9CgogICAgLm1lbnUtYnRuLXByaW1hcnkgewogICAgICBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCAjMTBiOTgxLCAjMDU5NjY5KTsKICAgICAgY29sb3I6IHdoaXRlOwogICAgICBib3gtc2hhZG93OiAwIDRweCAxNXB4IHJnYmEoMTYsIDE4NSwgMTI5LCAwLjMpOwogICAgfQoKICAgIC5tZW51LWJ0bi1wcmltYXJ5OmhvdmVyIHsKICAgICAgdHJhbnNmb3JtOiB0cmFuc2xhdGVZKC0ycHgpOwogICAgICBib3gtc2hhZG93OiAwIDZweCAyMHB4IHJnYmEoMTYsIDE4NSwgMTI5LCAwLjUpOwogICAgfQoKICAgIC5tZW51LWJ0bi1zZWNvbmRhcnkgewogICAgICBiYWNrZ3JvdW5kOiAjMzM0MTU1OwogICAgICBjb2xvcjogI2Y4ZmFmYzsKICAgIH0KCiAgICAubWVudS1idG4tc2Vjb25kYXJ5OmhvdmVyIHsKICAgICAgYmFja2dyb3VuZDogIzQ3NTU2OTsKICAgICAgdHJhbnNmb3JtOiB0cmFuc2xhdGVZKC0ycHgpOwogICAgfQoKICAgIC5tb2RhbC1vdmVybGF5IHsKICAgICAgcG9zaXRpb246IGZpeGVkOwogICAgICBpbnNldDogMDsKICAgICAgYmFja2dyb3VuZDogcmdiYSgwLCAwLCAwLCAwLjgpOwogICAgICBiYWNrZHJvcC1maWx0ZXI6IGJsdXIoNnB4KTsKICAgICAgei1pbmRleDogMjUwMDsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIG9wYWNpdHk6IDA7CiAgICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwogICAgICB0cmFuc2l0aW9uOiBvcGFjaXR5IDAuM3MgZWFzZTsKICAgIH0KCiAgICAubW9kYWwtb3ZlcmxheS5vcGVuIHsKICAgICAgb3BhY2l0eTogMTsKICAgICAgcG9pbnRlci1ldmVudHM6IGF1dG87CiAgICB9CgogICAgLm1vZGFsLWNvbnRlbnQgewogICAgICBiYWNrZ3JvdW5kOiAjMWUyOTNiOwogICAgICBib3JkZXI6IDFweCBzb2xpZCAjMzM0MTU1OwogICAgICBwYWRkaW5nOiAzMHB4OwogICAgICBib3JkZXItcmFkaXVzOiAxNnB4OwogICAgICBtYXgtd2lkdGg6IDU1MHB4OwogICAgICB3aWR0aDogOTAlOwogICAgICBjb2xvcjogI2UyZThmMDsKICAgICAgbWF4LWhlaWdodDogODV2aDsKICAgICAgb3ZlcmZsb3cteTogYXV0bzsKICAgIH0KCiAgICAubW9kYWwtY29udGVudCBoMiB7CiAgICAgIGNvbG9yOiAjZjU5ZTBiOwogICAgICBtYXJnaW4tYm90dG9tOiAxNnB4OwogICAgICBmb250LXNpemU6IDEuNXJlbTsKICAgICAgYm9yZGVyLWJvdHRvbTogMnB4IHNvbGlkICMzMzQxNTU7CiAgICAgIHBhZGRpbmctYm90dG9tOiA4cHg7CiAgICB9CgogICAgLm1vZGFsLWNvbnRlbnQgdWwgewogICAgICBtYXJnaW4tbGVmdDogMjBweDsKICAgICAgbGluZS1oZWlnaHQ6IDEuNzsKICAgICAgZm9udC1zaXplOiAwLjk1cmVtOwogICAgICBtYXJnaW4tYm90dG9tOiAyMHB4OwogICAgfQoKICAgIGhlYWRlciB7CiAgICAgIHdpZHRoOiA5ODBweDsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBtYXJnaW4tYm90dG9tOiAxMHB4OwogICAgICBwYWRkaW5nOiAxMHB4IDIwcHg7CiAgICAgIGJhY2tncm91bmQ6IHJnYmEoMzAsIDQxLCA1OSwgMC44KTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgIzMzNDE1NTsKICAgICAgYm9yZGVyLXJhZGl1czogMTJweDsKICAgIH0KCiAgICAuc2NvcmVib2FyZCB7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGdhcDogMjBweDsKICAgICAgZm9udC13ZWlnaHQ6IGJvbGQ7CiAgICB9CgogICAgLnBsYXllci1jYXJkIHsKICAgICAgcGFkZGluZzogOHB4IDE4cHg7CiAgICAgIGJvcmRlci1yYWRpdXM6IDIwcHg7CiAgICAgIGJhY2tncm91bmQ6ICMwZjE3MmE7CiAgICAgIGJvcmRlcjogMnB4IHNvbGlkIHRyYW5zcGFyZW50OwogICAgICB0cmFuc2l0aW9uOiBhbGwgMC4zczsKICAgIH0KCiAgICAucGxheWVyLWNhcmQuYWN0aXZlIHsKICAgICAgYm9yZGVyLWNvbG9yOiAjZjU5ZTBiOwogICAgICBib3gtc2hhZG93OiAwIDAgMTJweCByZ2JhKDI0NSwgMTU4LCAxMSwgMC40KTsKICAgIH0KCiAgICAjZ2FtZS1sYXlvdXQgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBnYXA6IDE1cHg7CiAgICAgIGFsaWduLWl0ZW1zOiBmbGV4LXN0YXJ0OwogICAgfQoKICAgICNnYW1lLWNvbnRhaW5lciB7CiAgICAgIHBvc2l0aW9uOiByZWxhdGl2ZTsKICAgIH0KCiAgICBjYW52YXMgewogICAgICBib3JkZXItcmFkaXVzOiAxNnB4OwogICAgICBib3gtc2hhZG93OiAwIDE1cHggMzVweCByZ2JhKDAsIDAsIDAsIDAuOCk7CiAgICAgIGN1cnNvcjogY3Jvc3NoYWlyOwogICAgfQoKICAgIC5jb250cm9sLXBhbmVsIHsKICAgICAgd2lkdGg6IDE3MHB4OwogICAgICBiYWNrZ3JvdW5kOiAjMWUyOTNiOwogICAgICBib3JkZXI6IDFweCBzb2xpZCAjMzM0MTU1OwogICAgICBib3JkZXItcmFkaXVzOiAxNnB4OwogICAgICBwYWRkaW5nOiAxNXB4OwogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBmbGV4LWRpcmVjdGlvbjogY29sdW1uOwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBnYXA6IDEwcHg7CiAgICAgIGJveC1zaGFkb3c6IDAgMTBweCAyNXB4IHJnYmEoMCwwLDAsMC41KTsKICAgIH0KCiAgICAucGFuZWwtdGl0bGUgewogICAgICBmb250LXNpemU6IDAuOHJlbTsKICAgICAgZm9udC13ZWlnaHQ6IDcwMDsKICAgICAgY29sb3I6ICM5NGEzYjg7CiAgICAgIHRleHQtdHJhbnNmb3JtOiB1cHBlcmNhc2U7CiAgICAgIGxldHRlci1zcGFjaW5nOiAxcHg7CiAgICB9CgogICAgLnNwaW4tc2VsZWN0b3IgewogICAgICBwb3NpdGlvbjogcmVsYXRpdmU7CiAgICAgIHdpZHRoOiA4MHB4OwogICAgICBoZWlnaHQ6IDgwcHg7CiAgICAgIGJvcmRlci1yYWRpdXM6IDUwJTsKICAgICAgYmFja2dyb3VuZDogcmFkaWFsLWdyYWRpZW50KGNpcmNsZSBhdCAzNSUgMzUlLCAjZmZmZmZmIDAlLCAjY2JkNWUxIDYwJSwgIzY0NzQ4YiAxMDAlKTsKICAgICAgYm94LXNoYWRvdzogaW5zZXQgMCAtM3B4IDZweCByZ2JhKDAsMCwwLDAuNCksIDAgNHB4IDEwcHggcmdiYSgwLDAsMCwwLjUpOwogICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgIGJvcmRlcjogMnB4IHNvbGlkICM0NzU1Njk7CiAgICB9CgogICAgLnNwaW4tY3Jvc3NoYWlyLXYsIC5zcGluLWNyb3NzaGFpci1oIHsgcG9zaXRpb246IGFic29sdXRlOyBiYWNrZ3JvdW5kOiByZ2JhKDAsMCwwLDAuMik7IH0KICAgIC5zcGluLWNyb3NzaGFpci12IHsgdG9wOiAwOyBib3R0b206IDA7IGxlZnQ6IDUwJTsgd2lkdGg6IDFweDsgdHJhbnNmb3JtOiB0cmFuc2xhdGVYKC01MCUpOyB9CiAgICAuc3Bpbi1jcm9zc2hhaXItaCB7IGxlZnQ6IDA7IHJpZ2h0OiAwOyB0b3A6IDUwJTsgaGVpZ2h0OiAxcHg7IHRyYW5zZm9ybTogdHJhbnNsYXRlWSgtNTAlKTsgfQoKICAgIC5zcGluLWRvdCB7CiAgICAgIHBvc2l0aW9uOiBhYnNvbHV0ZTsKICAgICAgd2lkdGg6IDEwcHg7CiAgICAgIGhlaWdodDogMTBweDsKICAgICAgYmFja2dyb3VuZDogI2VmNDQ0NDsKICAgICAgYm9yZGVyOiAycHggc29saWQgI2ZmZjsKICAgICAgYm9yZGVyLXJhZGl1czogNTAlOwogICAgICB0cmFuc2Zvcm06IHRyYW5zbGF0ZSgtNTAlLCAtNTAlKTsKICAgICAgdG9wOiA1MCU7CiAgICAgIGxlZnQ6IDUwJTsKICAgICAgcG9pbnRlci1ldmVudHM6IG5vbmU7CiAgICB9CgogICAgLnNwaW4taW5mbyB7CiAgICAgIGZvbnQtc2l6ZTogMC43cmVtOwogICAgICBjb2xvcjogI2NiZDVlMTsKICAgICAgdGV4dC1hbGlnbjogY2VudGVyOwogICAgICBsaW5lLWhlaWdodDogMS4yOwogICAgfQoKICAgIC5hbmdsZS1hZGp1c3QtYm94IHsKICAgICAgd2lkdGg6IDEwMCU7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGZsZXgtZGlyZWN0aW9uOiBjb2x1bW47CiAgICAgIGdhcDogNHB4OwogICAgfQoKICAgIC5hbmdsZS1idG4tZ3JvdXAgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBnYXA6IDRweDsKICAgICAgd2lkdGg6IDEwMCU7CiAgICB9CgogICAgLmFuZ2xlLWJ0biB7CiAgICAgIGZsZXg6IDE7CiAgICAgIHBhZGRpbmc6IDZweCAwOwogICAgICBiYWNrZ3JvdW5kOiAjMzM0MTU1OwogICAgICBjb2xvcjogd2hpdGU7CiAgICAgIGJvcmRlcjogbm9uZTsKICAgICAgYm9yZGVyLXJhZGl1czogNnB4OwogICAgICBmb250LXdlaWdodDogYm9sZDsKICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgICBmb250LXNpemU6IDAuNzVyZW07CiAgICB9CgogICAgLmFuZ2xlLWJ0bjpob3ZlciB7IGJhY2tncm91bmQ6ICM0NzU1Njk7IH0KCiAgICAubG9jay1idG4gewogICAgICB3aWR0aDogMTAwJTsKICAgICAgcGFkZGluZzogOHB4IDA7CiAgICAgIGJhY2tncm91bmQ6ICMzMzQxNTU7CiAgICAgIGNvbG9yOiB3aGl0ZTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgIzQ3NTU2OTsKICAgICAgYm9yZGVyLXJhZGl1czogNnB4OwogICAgICBmb250LXNpemU6IDAuNzVyZW07CiAgICAgIGZvbnQtd2VpZ2h0OiBib2xkOwogICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgIHRyYW5zaXRpb246IGFsbCAwLjJzOwogICAgfQoKICAgIC5sb2NrLWJ0bi5hY3RpdmUgewogICAgICBiYWNrZ3JvdW5kOiAjZGMyNjI2OwogICAgICBib3JkZXItY29sb3I6ICNlZjQ0NDQ7CiAgICAgIGJveC1zaGFkb3c6IDAgMCA4cHggcmdiYSgyMzksIDY4LCA2OCwgMC40KTsKICAgIH0KCiAgICAuYW5nbGUtZGlzcGxheSB7CiAgICAgIGZvbnQtc2l6ZTogMC44NXJlbTsKICAgICAgZm9udC13ZWlnaHQ6IGJvbGQ7CiAgICAgIGNvbG9yOiAjMzhiZGY4OwogICAgICBiYWNrZ3JvdW5kOiAjMGYxNzJhOwogICAgICBwYWRkaW5nOiA0cHggMTBweDsKICAgICAgYm9yZGVyLXJhZGl1czogMTBweDsKICAgICAgYm9yZGVyOiAxcHggc29saWQgIzMzNDE1NTsKICAgIH0KCiAgICAuYWN0aW9uLWJ0bi1ib3ggewogICAgICB3aWR0aDogMTAwJTsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgICAgZ2FwOiA2cHg7CiAgICAgIG1hcmdpbi10b3A6IDRweDsKICAgIH0KCiAgICAuc2hvb3QtYnRuIHsKICAgICAgd2lkdGg6IDEwMCU7CiAgICAgIHBhZGRpbmc6IDEwcHggMDsKICAgICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDEzNWRlZywgIzEwYjk4MSwgIzA1OTY2OSk7CiAgICAgIGNvbG9yOiB3aGl0ZTsKICAgICAgYm9yZGVyOiBub25lOwogICAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICAgIGZvbnQtc2l6ZTogMC44NXJlbTsKICAgICAgZm9udC13ZWlnaHQ6IDgwMDsKICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgICBib3gtc2hhZG93OiAwIDRweCAxMHB4IHJnYmEoMTYsIDE4NSwgMTI5LCAwLjMpOwogICAgICB0cmFuc2l0aW9uOiBhbGwgMC4yczsKICAgIH0KCiAgICAuc2hvb3QtYnRuOmhvdmVyIHsKICAgICAgdHJhbnNmb3JtOiBzY2FsZSgxLjAyKTsKICAgICAgYm94LXNoYWRvdzogMCA2cHggMTVweCByZ2JhKDE2LCAxODUsIDEyOSwgMC41KTsKICAgIH0KCiAgICAuY2FuY2VsLWJ0biB7CiAgICAgIHdpZHRoOiAxMDAlOwogICAgICBwYWRkaW5nOiA2cHggMDsKICAgICAgYmFja2dyb3VuZDogIzQ3NTU2OTsKICAgICAgY29sb3I6ICNjYmQ1ZTE7CiAgICAgIGJvcmRlcjogbm9uZTsKICAgICAgYm9yZGVyLXJhZGl1czogNnB4OwogICAgICBmb250LXNpemU6IDAuNzVyZW07CiAgICAgIGZvbnQtd2VpZ2h0OiBib2xkOwogICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICB9CgogICAgLmNhbmNlbC1idG46aG92ZXIgeyBiYWNrZ3JvdW5kOiAjNjQ3NDhiOyBjb2xvcjogd2hpdGU7IH0KCiAgICAucG93ZXItbWV0ZXItY29udGFpbmVyIHsKICAgICAgcG9zaXRpb246IGFic29sdXRlOwogICAgICBib3R0b206IDIwcHg7CiAgICAgIGxlZnQ6IDUwJTsKICAgICAgdHJhbnNmb3JtOiB0cmFuc2xhdGVYKC01MCUpOwogICAgICB3aWR0aDogMjgwcHg7CiAgICAgIGhlaWdodDogMTRweDsKICAgICAgYmFja2dyb3VuZDogcmdiYSgwLDAsMCwwLjcpOwogICAgICBib3JkZXI6IDFweCBzb2xpZCByZ2JhKDI1NSwyNTUsMjU1LDAuMyk7CiAgICAgIGJvcmRlci1yYWRpdXM6IDEwcHg7CiAgICAgIG92ZXJmbG93OiBoaWRkZW47CiAgICAgIGRpc3BsYXk6IG5vbmU7CiAgICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwogICAgfQoKICAgIC5wb3dlci1tZXRlci1maWxsIHsKICAgICAgaGVpZ2h0OiAxMDAlOwogICAgICB3aWR0aDogMCU7CiAgICAgIGJhY2tncm91bmQ6IGxpbmVhci1ncmFkaWVudCg5MGRlZywgIzJlY2M3MSAwJSwgI2YxYzQwZiA2MCUsICNlNzRjM2MgMTAwJSk7CiAgICB9CgogICAgLnN0YXR1cy1iYWRnZSB7CiAgICAgIHBvc2l0aW9uOiBhYnNvbHV0ZTsKICAgICAgdG9wOiAxNXB4OwogICAgICBsZWZ0OiA1MCU7CiAgICAgIHRyYW5zZm9ybTogdHJhbnNsYXRlWCgtNTAlKTsKICAgICAgYmFja2dyb3VuZDogcmdiYSgxNSwgMjMsIDQyLCAwLjg1KTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgIzM4YmRmODsKICAgICAgY29sb3I6ICMzOGJkZjg7CiAgICAgIHBhZGRpbmc6IDZweCAxNnB4OwogICAgICBib3JkZXItcmFkaXVzOiAyMHB4OwogICAgICBmb250LXNpemU6IDAuOHJlbTsKICAgICAgZm9udC13ZWlnaHQ6IGJvbGQ7CiAgICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwogICAgICBkaXNwbGF5OiBub25lOwogICAgICBib3gtc2hhZG93OiAwIDRweCAxMnB4IHJnYmEoMCwwLDAsMC41KTsKICAgICAgdGV4dC1hbGlnbjogY2VudGVyOwogICAgfQogIDwvc3R5bGU+CjwvaGVhZD4KPGJvZHk+CgogIDwhLS0gTG9hZGluZyBTY3JlZW4gLS0+CiAgPGRpdiBjbGFzcz0iZnVsbC1zY3JlZW4tb3ZlcmxheSIgaWQ9ImxvYWRpbmctc2NyZWVuIj4KICAgIDxkaXYgY2xhc3M9ImxvYWRpbmctdGl0bGUiPvCfjrEgQklMTElBUkRTIFBSTzwvZGl2PgogICAgPGRpdiBjbGFzcz0icHJvZ3Jlc3MtYmFyLWNvbnRhaW5lciI+CiAgICAgIDxkaXYgY2xhc3M9InByb2dyZXNzLWZpbGwiIGlkPSJwcm9ncmVzcy1maWxsIj48L2Rpdj4KICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0ibG9hZGluZy10ZXh0IiBpZD0ibG9hZGluZy10ZXh0Ij7qsozsnoQg66as7IaM7IqkIOuhnOuUqSDspJEuLi4gKDAlKTwvZGl2PgogIDwvZGl2PgoKICA8IS0tIE1haW4gTWVudSAtLT4KICA8ZGl2IGNsYXNzPSJmdWxsLXNjcmVlbi1vdmVybGF5IGhpZGRlbiIgaWQ9Im1haW4tbWVudS1vdmVybGF5Ij4KICAgIDxkaXYgY2xhc3M9Im1lbnUtY2FyZCI+CiAgICAgIDxkaXYgY2xhc3M9Im1lbnUtdGl0bGUiPvCfjrEgUkVBTCAxdjE8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0ibWVudS1idG4tZ3JvdXAiPgogICAgICAgIDxidXR0b24gY2xhc3M9Im1lbnUtYnRuIG1lbnUtYnRuLXByaW1hcnkiIGlkPSJidG4tc3RhcnQiPvCfjq4g6rKM7J6EIOyLnOyekTwvYnV0dG9uPgogICAgICAgIDxidXR0b24gY2xhc3M9Im1lbnUtYnRuIG1lbnUtYnRuLXNlY29uZGFyeSIgaWQ9ImJ0bi1ndWlkZSI+8J+TliDqsozsnoQg7KGw7J6R67KVPC9idXR0b24+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDwhLS0gSW5zdHJ1Y3Rpb25zIE1vZGFsIC0tPgogIDxkaXYgY2xhc3M9Im1vZGFsLW92ZXJsYXkiIGlkPSJtb2RhbC1pbnN0cnVjdGlvbnMiPgogICAgPGRpdiBjbGFzcz0ibW9kYWwtY29udGVudCI+CiAgICAgIDxoMj7wn5OWIOygleuwgCDsobDspIAgJiDqt5zsuZkg7JWI64K0PC9oMj4KICAgICAgPHVsPgogICAgICAgIDxsaT48c3Ryb25nPuKciyDtlITrpqzrs7wgKO2MjOyauCDqt5zsuZkpOjwvc3Ryb25nPgogICAgICAgICAgPHVsPgogICAgICAgICAgICA8bGk+7Z2wIOqzteydtCAqKuyWtOuWpCDqs7Xrj4Qg66ee7Z6I7KeAIOyViuqzoCDtj6zsvJPsl5Ag67mg7KeA66m0IO2MjOyauCoqIOyymOumrOuQqeuLiOuLpC48L2xpPgogICAgICAgICAgICA8bGk+64uk7J2MIO2UjOugiOydtOyWtOuKlCAqKu2FjOydtOu4lCDsm5DtlZjripQg7JyE7LmY66W8IO2BtOumrSoq7ZWY7JesIO2dsCDqs7XsnYQg7J6Q7Jyg66Gt6rKMIOuwsOy5mO2VoCDsiJgg7J6I7Iq164uI64ukLjwvbGk+CiAgICAgICAgICA8L3VsPgogICAgICAgIDwvbGk+CiAgICAgICAgPGxpPjxzdHJvbmc+8J+UkiDqsIHrj4Qg6rOg7KCVIOuqqOuTnCAoU3BhY2UpOjwvc3Ryb25nPgogICAgICAgICAgPHVsPgogICAgICAgICAgICA8bGk+6rCB64+E66W8IOqzoOygle2VmOuptCDrp4jsmrDsiqQg67KE7Yq87J2EIOuWvOyWtOuPhCDqs7XsnbQg67Cc7IKs65CY7KeAIOyViuyKteuLiOuLpC48L2xpPgogICAgICAgICAgICA8bGk+PHN0cm9uZz7rsJzsgqw6PC9zdHJvbmc+IFsgRW50ZXIgXSDtgqQg65iQ64qUIFsg8J+agCDsg7cg67Cc7IKsIF0g67KE7Yq8IO2BtOumrTwvbGk+CiAgICAgICAgICAgIDxsaT48c3Ryb25nPuy3qOyGjDo8L3N0cm9uZz4gWyBFU0MgXSDtgqQg65iQ64qUIOuniOyasOyKpCDsmrDtgbTrpq08L2xpPgogICAgICAgICAgPC91bD4KICAgICAgICA8L2xpPgogICAgICAgIDxsaT48c3Ryb25nPuuvuOyEuCDqsIHrj4Qg7KGw7KCIOjwvc3Ryb25nPiDrp4jsmrDsiqQg7ZygLCDrsKntlqXtgqQgW+KGkCAvIOKGkl0sIO2MqOuEkCDrsoTtirwg7IKs7JqpPC9saT4KICAgICAgPC91bD4KICAgICAgPGJ1dHRvbiBjbGFzcz0ibWVudS1idG4gbWVudS1idG4tc2Vjb25kYXJ5IiBpZD0iYnRuLWNsb3NlLW1vZGFsIiBzdHlsZT0id2lkdGg6MTAwJTsiPuuLq+q4sDwvYnV0dG9uPgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDwhLS0gR2FtZSBTY3JlZW4gLS0+CiAgPGhlYWRlcj4KICAgIDxkaXYgY2xhc3M9InNjb3JlYm9hcmQiPgogICAgICA8ZGl2IGlkPSJwMS1jYXJkIiBjbGFzcz0icGxheWVyLWNhcmQgYWN0aXZlIj48c3BhbiBpZD0icDEtc2NvcmUiPlBsYXllciAxOiAw7KCQPC9zcGFuPjwvZGl2PgogICAgICA8ZGl2IGlkPSJwMi1jYXJkIiBjbGFzcz0icGxheWVyLWNhcmQiPjxzcGFuIGlkPSJwMi1zY29yZSI+UGxheWVyIDI6IDDsoJA8L3NwYW4+PC9kaXY+CiAgICA8L2Rpdj4KICAgIDxkaXY+CiAgICAgIDxidXR0b24gY2xhc3M9ImFuZ2xlLWJ0biIgaWQ9ImJ0bi1pbi1nYW1lLWd1aWRlIiBzdHlsZT0icGFkZGluZzogOHB4IDE2cHg7Ij7qsozsnoQg7KGw7J6R67KVPC9idXR0b24+CiAgICAgIDxidXR0b24gY2xhc3M9ImFuZ2xlLWJ0biIgaWQ9ImJ0bi1tZW51IiBzdHlsZT0icGFkZGluZzogOHB4IDE2cHg7IGJhY2tncm91bmQ6I2UxMWQ0ODsiPuuplOuJtOuhnDwvYnV0dG9uPgogICAgPC9kaXY+CiAgPC9oZWFkZXI+CgogIDxkaXYgaWQ9ImdhbWUtbGF5b3V0Ij4KICAgIDxkaXYgaWQ9ImdhbWUtY29udGFpbmVyIj4KICAgICAgPGNhbnZhcyBpZD0iY2FudmFzIiB3aWR0aD0iODAwIiBoZWlnaHQ9IjQ2MCI+PC9jYW52YXM+CgogICAgICA8ZGl2IGNsYXNzPSJzdGF0dXMtYmFkZ2UiIGlkPSJzdGF0dXMtYmFkZ2UiPvCflJIg6rCB64+EIOqzoOyglSDspJE8L2Rpdj4KCiAgICAgIDxkaXYgY2xhc3M9InBvd2VyLW1ldGVyLWNvbnRhaW5lciIgaWQ9InBvd2VyLW1ldGVyIj4KICAgICAgICA8ZGl2IGNsYXNzPSJwb3dlci1tZXRlci1maWxsIiBpZD0icG93ZXItZmlsbCI+PC9kaXY+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CgogICAgPCEtLSBDb250cm9scyBQYW5lbCAtLT4KICAgIDxkaXYgY2xhc3M9ImNvbnRyb2wtcGFuZWwiPgogICAgICA8ZGl2IGNsYXNzPSJwYW5lbC10aXRsZSI+7KGw7KSAIOqwgeuPhDwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJhbmdsZS1kaXNwbGF5IiBpZD0iYW5nbGUtZGlzcGxheSI+MC4wwrA8L2Rpdj4KCiAgICAgIDxidXR0b24gY2xhc3M9ImxvY2stYnRuIiBpZD0iYnRuLWxvY2stYW5nbGUiPvCflJMg6rCB64+EIOqzoOyglSAoU3BhY2UpPC9idXR0b24+CgogICAgICA8ZGl2IGNsYXNzPSJhbmdsZS1hZGp1c3QtYm94Ij4KICAgICAgICA8ZGl2IGNsYXNzPSJhbmdsZS1idG4tZ3JvdXAiPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYW5nbGUtYnRuIiBpZD0iYW5nbGUtbGVmdC1mYXN0Ij7iiaogLTXCsDwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYW5nbGUtYnRuIiBpZD0iYW5nbGUtbGVmdCI+4peEIC0wLjXCsDwvYnV0dG9uPgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9ImFuZ2xlLWJ0bi1ncm91cCI+CiAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJhbmdsZS1idG4iIGlkPSJhbmdsZS1yaWdodCI+4pa6ICswLjXCsDwvYnV0dG9uPgogICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYW5nbGUtYnRuIiBpZD0iYW5nbGUtcmlnaHQtZmFzdCI+4omrICs1wrA8L2J1dHRvbj4KICAgICAgICA8L2Rpdj4KICAgICAgPC9kaXY+CgogICAgICA8aHIgc3R5bGU9IndpZHRoOjEwMCU7IGJvcmRlci1jb2xvcjojMzM0MTU1OyI+CgogICAgICA8ZGl2IGNsYXNzPSJwYW5lbC10aXRsZSI+64u57KCQIChTcGluKTwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJzcGluLXNlbGVjdG9yIiBpZD0ic3Bpbi1zZWxlY3RvciI+CiAgICAgICAgPGRpdiBjbGFzcz0ic3Bpbi1jcm9zc2hhaXItdiI+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ic3Bpbi1jcm9zc2hhaXItaCI+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ic3Bpbi1kb3QiIGlkPSJzcGluLWRvdCI+PC9kaXY+CiAgICAgIDwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJzcGluLWluZm8iIGlkPSJzcGluLWluZm8iPuykkeuLqCAoMCUgLyAwJSk8L2Rpdj4KCiAgICAgIDxociBzdHlsZT0id2lkdGg6MTAwJTsgYm9yZGVyLWNvbG9yOiMzMzQxNTU7Ij4KCiAgICAgIDxkaXYgY2xhc3M9ImFjdGlvbi1idG4tYm94Ij4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJzaG9vdC1idG4iIGlkPSJidG4tc2hvb3QiPvCfmoAg7IO3IOuwnOyCrCAoRW50ZXIpPC9idXR0b24+CiAgICAgICAgPGJ1dHRvbiBjbGFzcz0iY2FuY2VsLWJ0biIgaWQ9ImJ0bi1jYW5jZWwiPuKdjCDtjIzsm4wg7Leo7IaMIChFU0MpPC9idXR0b24+CiAgICAgIDwvZGl2PgogICAgPC9kaXY+CiAgPC9kaXY+CgogIDxzY3JpcHQ+CiAgICAvLyBVSSBFbGVtZW50cwogICAgY29uc3QgbG9hZGluZ1NjcmVlbiA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdsb2FkaW5nLXNjcmVlbicpOwogICAgY29uc3QgcHJvZ3Jlc3NGaWxsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3Byb2dyZXNzLWZpbGwnKTsKICAgIGNvbnN0IGxvYWRpbmdUZXh0ID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2xvYWRpbmctdGV4dCcpOwogICAgY29uc3QgbWFpbk1lbnVPdmVybGF5ID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ21haW4tbWVudS1vdmVybGF5Jyk7CiAgICBjb25zdCBtb2RhbEluc3RydWN0aW9ucyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdtb2RhbC1pbnN0cnVjdGlvbnMnKTsKICAgIAogICAgY29uc3QgYnRuU3RhcnQgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYnRuLXN0YXJ0Jyk7CiAgICBjb25zdCBidG5HdWlkZSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdidG4tZ3VpZGUnKTsKICAgIGNvbnN0IGJ0bkNsb3NlTW9kYWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYnRuLWNsb3NlLW1vZGFsJyk7CiAgICBjb25zdCBidG5JbkdhbWVHdWlkZSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdidG4taW4tZ2FtZS1ndWlkZScpOwogICAgY29uc3QgYnRuTWVudSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdidG4tbWVudScpOwoKICAgIGNvbnN0IGNhbnZhcyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjYW52YXMnKTsKICAgIGNvbnN0IGN0eCA9IGNhbnZhcy5nZXRDb250ZXh0KCcyZCcpOwogICAgY29uc3QgcG93ZXJNZXRlciA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwb3dlci1tZXRlcicpOwogICAgY29uc3QgcG93ZXJGaWxsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3Bvd2VyLWZpbGwnKTsKICAgIGNvbnN0IGFuZ2xlRGlzcGxheSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhbmdsZS1kaXNwbGF5Jyk7CiAgICBjb25zdCBidG5Mb2NrQW5nbGUgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYnRuLWxvY2stYW5nbGUnKTsKICAgIGNvbnN0IHN0YXR1c0JhZGdlID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3N0YXR1cy1iYWRnZScpOwoKICAgIGNvbnN0IGJ0blNob290ID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2J0bi1zaG9vdCcpOwogICAgY29uc3QgYnRuQ2FuY2VsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2J0bi1jYW5jZWwnKTsKCiAgICBjb25zdCBzcGluU2VsZWN0b3IgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc3Bpbi1zZWxlY3RvcicpOwogICAgY29uc3Qgc3BpbkRvdCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzcGluLWRvdCcpOwogICAgY29uc3Qgc3BpbkluZm8gPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc3Bpbi1pbmZvJyk7CgogICAgLy8gQXVkaW8gU3ludGhlc2l6ZXIKICAgIGNvbnN0IGF1ZGlvQ3R4ID0gbmV3ICh3aW5kb3cuQXVkaW9Db250ZXh0IHx8IHdpbmRvdy53ZWJraXRBdWRpb0NvbnRleHQpKCk7CiAgICBmdW5jdGlvbiBwbGF5U291bmQodHlwZSwgaW50ZW5zaXR5ID0gMSkgewogICAgICBpZiAoYXVkaW9DdHguc3RhdGUgPT09ICdzdXNwZW5kZWQnKSBhdWRpb0N0eC5yZXN1bWUoKTsKICAgICAgY29uc3Qgb3NjID0gYXVkaW9DdHguY3JlYXRlT3NjaWxsYXRvcigpOwogICAgICBjb25zdCBnYWluID0gYXVkaW9DdHguY3JlYXRlR2FpbigpOwogICAgICBvc2MuY29ubmVjdChnYWluKTsKICAgICAgZ2Fpbi5jb25uZWN0KGF1ZGlvQ3R4LmRlc3RpbmF0aW9uKTsKICAgICAgY29uc3Qgbm93ID0gYXVkaW9DdHguY3VycmVudFRpbWU7CgogICAgICBpZiAodHlwZSA9PT0gJ2hpdCcpIHsKICAgICAgICBvc2MudHlwZSA9ICd0cmlhbmdsZSc7CiAgICAgICAgb3NjLmZyZXF1ZW5jeS5zZXRWYWx1ZUF0VGltZSgxNDAgKyBpbnRlbnNpdHkgKiAxMDAsIG5vdyk7CiAgICAgICAgb3NjLmZyZXF1ZW5jeS5leHBvbmVudGlhbFJhbXBUb1ZhbHVlQXRUaW1lKDMwLCBub3cgKyAwLjA1KTsKICAgICAgICBnYWluLmdhaW4uc2V0VmFsdWVBdFRpbWUoTWF0aC5taW4oaW50ZW5zaXR5LCAxKSAqIDAuNSwgbm93KTsKICAgICAgICBnYWluLmdhaW4uZXhwb25lbnRpYWxSYW1wVG9WYWx1ZUF0VGltZSgwLjAxLCBub3cgKyAwLjA1KTsKICAgICAgICBvc2Muc3RhcnQobm93KTsgb3NjLnN0b3Aobm93ICsgMC4wNSk7CiAgICAgIH0gZWxzZSBpZiAodHlwZSA9PT0gJ2N1c2hpb24nKSB7CiAgICAgICAgb3NjLnR5cGUgPSAnc2luZSc7CiAgICAgICAgb3NjLmZyZXF1ZW5jeS5zZXRWYWx1ZUF0VGltZSg4MCwgbm93KTsKICAgICAgICBvc2MuZnJlcXVlbmN5LmV4cG9uZW50aWFsUmFtcFRvVmFsdWVBdFRpbWUoMjAsIG5vdyArIDAuMDgpOwogICAgICAgIGdhaW4uZ2Fpbi5zZXRWYWx1ZUF0VGltZShNYXRoLm1pbihpbnRlbnNpdHksIDEpICogMC40LCBub3cpOwogICAgICAgIGdhaW4uZ2Fpbi5leHBvbmVudGlhbFJhbXBUb1ZhbHVlQXRUaW1lKDAuMDEsIG5vdyArIDAuMDgpOwogICAgICAgIG9zYy5zdGFydChub3cpOyBvc2Muc3RvcChub3cgKyAwLjA4KTsKICAgICAgfSBlbHNlIGlmICh0eXBlID09PSAncG9ja2V0JykgewogICAgICAgIG9zYy50eXBlID0gJ3NpbmUnOwogICAgICAgIG9zYy5mcmVxdWVuY3kuc2V0VmFsdWVBdFRpbWUoMzIwLCBub3cpOwogICAgICAgIG9zYy5mcmVxdWVuY3kuZXhwb25lbnRpYWxSYW1wVG9WYWx1ZUF0VGltZSg5MCwgbm93ICsgMC4yKTsKICAgICAgICBnYWluLmdhaW4uc2V0VmFsdWVBdFRpbWUoMC42LCBub3cpOwogICAgICAgIGdhaW4uZ2Fpbi5leHBvbmVudGlhbFJhbXBUb1ZhbHVlQXRUaW1lKDAuMDEsIG5vdyArIDAuMik7CiAgICAgICAgb3NjLnN0YXJ0KG5vdyk7IG9zYy5zdG9wKG5vdyArIDAuMik7CiAgICAgIH0KICAgIH0KCiAgICAvLyBQaHlzaWNhbCBDb25zdGFudHMKICAgIGNvbnN0IENVU0hJT04gPSAzNDsKICAgIGNvbnN0IEJBTExfUkFESVVTID0gMTI7CiAgICBjb25zdCBQT0NLRVRfUkFESVVTID0gMjI7CiAgICBjb25zdCBGUklDVElPTiA9IDAuOTg4OwoKICAgIGxldCBnYW1lU3RhcnRlZCA9IGZhbHNlOwogICAgbGV0IGN1cnJlbnRQbGF5ZXIgPSAxOwogICAgbGV0IHNjb3JlcyA9IHsgMTogMCwgMjogMCB9OwogICAgbGV0IHR1cm5QZW5kaW5nID0gZmFsc2U7CiAgICBsZXQgYmFsbFNjb3JlZFRoaXNUdXJuID0gZmFsc2U7CgogICAgLy8gRm91bCAvIEJhbGwtaW4tSGFuZCBzdGF0ZQogICAgbGV0IGN1ZUJhbGxIaXRBbnlCYWxsID0gZmFsc2U7CiAgICBsZXQgY3VlQmFsbFNjcmF0Y2hOb0hpdCA9IGZhbHNlOwogICAgbGV0IGlzQmFsbEluSGFuZCA9IGZhbHNlOwogICAgbGV0IG1vdXNlQmFsbFBvcyA9IHsgeDogMjIwLCB5OiAyMzAgfTsKCiAgICBsZXQgc3BpblggPSAwOwogICAgbGV0IHNwaW5ZID0gMDsKCiAgICBsZXQgY3VycmVudEFuZ2xlID0gMDsgCiAgICBsZXQgYW5nbGVMb2NrZWQgPSBmYWxzZTsKICAgIGxldCBpc0RyYWdnaW5nID0gZmFsc2U7CiAgICBsZXQgaXNBaW1pbmcgPSBmYWxzZTsKICAgIGxldCBkcmFnU3RhcnQgPSB7IHg6IDAsIHk6IDAgfTsKICAgIGxldCBkcmFnQ3VycmVudCA9IHsgeDogMCwgeTogMCB9OwogICAgbGV0IGN1cnJlbnRQb3dlciA9IDA7CgogICAgY29uc3Qga2V5c1ByZXNzZWQgPSB7fTsKCiAgICBjb25zdCBwb2NrZXRzID0gWwogICAgICB7IHg6IENVU0hJT04sIHk6IENVU0hJT04gfSwKICAgICAgeyB4OiBjYW52YXMud2lkdGggLyAyLCB5OiBDVVNISU9OIC0gNiB9LAogICAgICB7IHg6IGNhbnZhcy53aWR0aCAtIENVU0hJT04sIHk6IENVU0hJT04gfSwKICAgICAgeyB4OiBDVVNISU9OLCB5OiBjYW52YXMuaGVpZ2h0IC0gQ1VTSElPTiB9LAogICAgICB7IHg6IGNhbnZhcy53aWR0aCAvIDIsIHk6IGNhbnZhcy5oZWlnaHQgLSBDVVNISU9OICsgNiB9LAogICAgICB7IHg6IGNhbnZhcy53aWR0aCAtIENVU0hJT04sIHk6IGNhbnZhcy5oZWlnaHQgLSBDVVNISU9OIH0KICAgIF07CgogICAgY29uc3QgYmFsbENvbG9ycyA9IFsnI2YxYzQwZicsICcjMjk4MGI5JywgJyNlNzRjM2MnLCAnIzhlNDRhZCcsICcjZTY3ZTIyJywgJyMyZWNjNzEnLCAnIzdmOGM4ZCcsICcjMmMzZTUwJywgJyNmMzljMTInXTsKCiAgICBjbGFzcyBCYWxsIHsKICAgICAgY29uc3RydWN0b3IoeCwgeSwgcmFkaXVzLCBjb2xvciwgbnVtYmVyID0gMCwgaXNDdWUgPSBmYWxzZSkgewogICAgICAgIHRoaXMueCA9IHg7CiAgICAgICAgdGhpcy55ID0geTsKICAgICAgICB0aGlzLnJhZGl1cyA9IHJhZGl1czsKICAgICAgICB0aGlzLmNvbG9yID0gY29sb3I7CiAgICAgICAgdGhpcy5udW1iZXIgPSBudW1iZXI7CiAgICAgICAgdGhpcy5pc0N1ZSA9IGlzQ3VlOwogICAgICAgIHRoaXMudnggPSAwOwogICAgICAgIHRoaXMudnkgPSAwOwogICAgICAgIHRoaXMuc3BpblggPSAwOwogICAgICAgIHRoaXMuc3BpblkgPSAwOwogICAgICAgIHRoaXMuYWN0aXZlID0gdHJ1ZTsKICAgICAgfQoKICAgICAgZHJhdygpIHsKICAgICAgICBpZiAoIXRoaXMuYWN0aXZlKSByZXR1cm47CgogICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICBjdHguYXJjKHRoaXMueCArIDIsIHRoaXMueSArIDMsIHRoaXMucmFkaXVzLCAwLCBNYXRoLlBJICogMik7CiAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICdyZ2JhKDAsIDAsIDAsIDAuMzUpJzsKICAgICAgICBjdHguZmlsbCgpOwoKICAgICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgICAgY3R4LmFyYyh0aGlzLngsIHRoaXMueSwgdGhpcy5yYWRpdXMsIDAsIE1hdGguUEkgKiAyKTsKICAgICAgICBjb25zdCBncmFkID0gY3R4LmNyZWF0ZVJhZGlhbEdyYWRpZW50KAogICAgICAgICAgdGhpcy54IC0gdGhpcy5yYWRpdXMgKiAwLjMsIHRoaXMueSAtIHRoaXMucmFkaXVzICogMC4zLCB0aGlzLnJhZGl1cyAqIDAuMSwKICAgICAgICAgIHRoaXMueCwgdGhpcy55LCB0aGlzLnJhZGl1cwogICAgICAgICk7CgogICAgICAgIGlmICh0aGlzLmlzQ3VlKSB7CiAgICAgICAgICBncmFkLmFkZENvbG9yU3RvcCgwLCAnI2ZmZmZmZicpOwogICAgICAgICAgZ3JhZC5hZGRDb2xvclN0b3AoMC44LCAnI2UyZThmMCcpOwogICAgICAgICAgZ3JhZC5hZGRDb2xvclN0b3AoMSwgJyM5NGEzYjgnKTsKICAgICAgICB9IGVsc2UgewogICAgICAgICAgZ3JhZC5hZGRDb2xvclN0b3AoMCwgJyNmZmZmZmYnKTsKICAgICAgICAgIGdyYWQuYWRkQ29sb3JTdG9wKDAuMiwgdGhpcy5jb2xvcik7CiAgICAgICAgICBncmFkLmFkZENvbG9yU3RvcCgxLCAnIzAwMDAwMCcpOwogICAgICAgIH0KCiAgICAgICAgY3R4LmZpbGxTdHlsZSA9IGdyYWQ7CiAgICAgICAgY3R4LmZpbGwoKTsKICAgICAgfQoKICAgICAgdXBkYXRlKCkgewogICAgICAgIGlmICghdGhpcy5hY3RpdmUpIHJldHVybjsKCiAgICAgICAgdGhpcy54ICs9IHRoaXMudng7CiAgICAgICAgdGhpcy55ICs9IHRoaXMudnk7CgogICAgICAgIHRoaXMudnggKj0gRlJJQ1RJT047CiAgICAgICAgdGhpcy52eSAqPSBGUklDVElPTjsKCiAgICAgICAgaWYgKE1hdGguYWJzKHRoaXMuc3BpblgpID4gMC4wMSkgdGhpcy5zcGluWCAqPSAwLjk3OwogICAgICAgIGlmIChNYXRoLmFicyh0aGlzLnNwaW5ZKSA+IDAuMDEpIHRoaXMuc3BpblkgKj0gMC45NzsKCiAgICAgICAgaWYgKE1hdGguaHlwb3QodGhpcy52eCwgdGhpcy52eSkgPCAwLjA0KSB7CiAgICAgICAgICB0aGlzLnZ4ID0gMDsKICAgICAgICAgIHRoaXMudnkgPSAwOwogICAgICAgIH0KCiAgICAgICAgY29uc3QgbWluWCA9IENVU0hJT04gKyB0aGlzLnJhZGl1czsKICAgICAgICBjb25zdCBtYXhYID0gY2FudmFzLndpZHRoIC0gQ1VTSElPTiAtIHRoaXMucmFkaXVzOwogICAgICAgIGNvbnN0IG1pblkgPSBDVVNISU9OICsgdGhpcy5yYWRpdXM7CiAgICAgICAgY29uc3QgbWF4WSA9IGNhbnZhcy5oZWlnaHQgLSBDVVNISU9OIC0gdGhpcy5yYWRpdXM7CgogICAgICAgIGxldCBib3VuY2VkID0gZmFsc2U7CgogICAgICAgIGlmICh0aGlzLnggPCBtaW5YKSB7IHRoaXMueCA9IG1pblg7IHRoaXMudnggKj0gLTAuOTU7IHRoaXMudnkgKz0gdGhpcy5zcGluWCAqIDEuNTsgYm91bmNlZCA9IHRydWU7IH0KICAgICAgICBpZiAodGhpcy54ID4gbWF4WCkgeyB0aGlzLnggPSBtYXhYOyB0aGlzLnZ4ICo9IC0wLjk1OyB0aGlzLnZ5IC09IHRoaXMuc3BpblggKiAxLjU7IGJvdW5jZWQgPSB0cnVlOyB9CiAgICAgICAgaWYgKHRoaXMueSA8IG1pblkpIHsgdGhpcy55ID0gbWluWTsgdGhpcy52eSAqPSAtMC45NTsgdGhpcy52eCAtPSB0aGlzLnNwaW5YICogMS41OyBib3VuY2VkID0gdHJ1ZTsgfQogICAgICAgIGlmICh0aGlzLnkgPiBtYXhZKSB7IHRoaXMueSA9IG1heFk7IHRoaXMudnkgKj0gLTAuOTU7IHRoaXMudnggKz0gdGhpcy5zcGluWCAqIDEuNTsgYm91bmNlZCA9IHRydWU7IH0KCiAgICAgICAgaWYgKGJvdW5jZWQpIHBsYXlTb3VuZCgnY3VzaGlvbicsIE1hdGguaHlwb3QodGhpcy52eCwgdGhpcy52eSkgLyA1KTsKCiAgICAgICAgcG9ja2V0cy5mb3JFYWNoKHAgPT4gewogICAgICAgICAgaWYgKE1hdGguaHlwb3QodGhpcy54IC0gcC54LCB0aGlzLnkgLSBwLnkpIDwgUE9DS0VUX1JBRElVUykgewogICAgICAgICAgICB0aGlzLmFjdGl2ZSA9IGZhbHNlOwogICAgICAgICAgICB0aGlzLnZ4ID0gMDsgdGhpcy52eSA9IDA7CiAgICAgICAgICAgIHBsYXlTb3VuZCgncG9ja2V0Jyk7CiAgICAgICAgICAgIG9uQmFsbFBvY2tldGVkKHRoaXMpOwogICAgICAgICAgfQogICAgICAgIH0pOwogICAgICB9CiAgICB9CgogICAgbGV0IGJhbGxzID0gW107CgogICAgZnVuY3Rpb24gaW5pdEdhbWUoKSB7CiAgICAgIGJhbGxzID0gW107CiAgICAgIGlzQWltaW5nID0gZmFsc2U7CiAgICAgIGlzQmFsbEluSGFuZCA9IGZhbHNlOwoKICAgICAgY29uc3QgY3VlQmFsbCA9IG5ldyBCYWxsKDIyMCwgY2FudmFzLmhlaWdodCAvIDIsIEJBTExfUkFESVVTLCAnI2ZmZmZmZicsIDAsIHRydWUpOwogICAgICBiYWxscy5wdXNoKGN1ZUJhbGwpOwoKICAgICAgY29uc3Qgc3RhcnRYID0gNTIwOwogICAgICBjb25zdCBzdGFydFkgPSBjYW52YXMuaGVpZ2h0IC8gMjsKICAgICAgbGV0IGJJZHggPSAwOwogICAgICBjb25zdCByb3dzID0gNDsKCiAgICAgIGZvciAobGV0IHIgPSAwOyByIDwgcm93czsgcisrKSB7CiAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPD0gcjsgaSsrKSB7CiAgICAgICAgICBjb25zdCB4ID0gc3RhcnRYICsgciAqIChCQUxMX1JBRElVUyAqIDIgKiAwLjg4KTsKICAgICAgICAgIGNvbnN0IHkgPSBzdGFydFkgLSAociAqIEJBTExfUkFESVVTKSArIChpICogQkFMTF9SQURJVVMgKiAyKTsKICAgICAgICAgIGJhbGxzLnB1c2gobmV3IEJhbGwoeCwgeSwgQkFMTF9SQURJVVMsIGJhbGxDb2xvcnNbYklkeCAlIGJhbGxDb2xvcnMubGVuZ3RoXSwgYklkeCArIDEpKTsKICAgICAgICAgIGJJZHgrKzsKICAgICAgICB9CiAgICAgIH0KICAgIH0KCiAgICBmdW5jdGlvbiBoYW5kbGVDb2xsaXNpb25zKCkgewogICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGJhbGxzLmxlbmd0aDsgaSsrKSB7CiAgICAgICAgZm9yIChsZXQgaiA9IGkgKyAxOyBqIDwgYmFsbHMubGVuZ3RoOyBqKyspIHsKICAgICAgICAgIGNvbnN0IGIxID0gYmFsbHNbaV07CiAgICAgICAgICBjb25zdCBiMiA9IGJhbGxzW2pdOwoKICAgICAgICAgIGlmICghYjEuYWN0aXZlIHx8ICFiMi5hY3RpdmUpIGNvbnRpbnVlOwoKICAgICAgICAgIGNvbnN0IGR4ID0gYjIueCAtIGIxLng7CiAgICAgICAgICBjb25zdCBkeSA9IGIyLnkgLSBiMS55OwogICAgICAgICAgY29uc3QgZGlzdCA9IE1hdGguaHlwb3QoZHgsIGR5KTsKCiAgICAgICAgICBpZiAoZGlzdCA8IGIxLnJhZGl1cyArIGIyLnJhZGl1cykgewogICAgICAgICAgICBpZiAoYjEuaXNDdWUgfHwgYjIuaXNDdWUpIHsKICAgICAgICAgICAgICBjdWVCYWxsSGl0QW55QmFsbCA9IHRydWU7CiAgICAgICAgICAgIH0KCiAgICAgICAgICAgIGNvbnN0IG92ZXJsYXAgPSAwLjUgKiAoYjEucmFkaXVzICsgYjIucmFkaXVzIC0gZGlzdCk7CiAgICAgICAgICAgIGNvbnN0IG54ID0gZHggLyBkaXN0OwogICAgICAgICAgICBjb25zdCBueSA9IGR5IC8gZGlzdDsKCiAgICAgICAgICAgIGIxLnggLT0gbnggKiBvdmVybGFwOyBiMS55IC09IG55ICogb3ZlcmxhcDsKICAgICAgICAgICAgYjIueCArPSBueCAqIG92ZXJsYXA7IGIyLnkgKz0gbnkgKiBvdmVybGFwOwoKICAgICAgICAgICAgY29uc3Qga3ggPSBiMS52eCAtIGIyLnZ4OwogICAgICAgICAgICBjb25zdCBreSA9IGIxLnZ5IC0gYjIudnk7CiAgICAgICAgICAgIGNvbnN0IHAgPSAyICogKG54ICoga3ggKyBueSAqIGt5KSAvIDI7CgogICAgICAgICAgICBiMS52eCAtPSBwICogbng7IGIxLnZ5IC09IHAgKiBueTsKICAgICAgICAgICAgYjIudnggKz0gcCAqIG54OyBiMi52eSArPSBwICogbnk7CgogICAgICAgICAgICBpZiAoYjEuaXNDdWUgJiYgTWF0aC5hYnMoYjEuc3BpblkpID4gMC4xKSB7CiAgICAgICAgICAgICAgYjEudnggKz0gbnggKiBiMS5zcGluWSAqIDMuNTsKICAgICAgICAgICAgICBiMS52eSArPSBueSAqIGIxLnNwaW5ZICogMy41OwogICAgICAgICAgICB9CgogICAgICAgICAgICBjb25zdCBzcGVlZCA9IE1hdGguaHlwb3QoYjEudngsIGIxLnZ5KSArIE1hdGguaHlwb3QoYjIudngsIGIyLnZ5KTsKICAgICAgICAgICAgcGxheVNvdW5kKCdoaXQnLCBzcGVlZCAvIDgpOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgfQoKICAgIGZ1bmN0aW9uIGlzVGFibGVNb3ZpbmcoKSB7CiAgICAgIHJldHVybiBiYWxscy5zb21lKGIgPT4gYi5hY3RpdmUgJiYgKE1hdGguYWJzKGIudngpID4gMCB8fCBNYXRoLmFicyhiLnZ5KSA+IDApKTsKICAgIH0KCiAgICBmdW5jdGlvbiBvbkJhbGxQb2NrZXRlZChiYWxsKSB7CiAgICAgIGlmIChiYWxsLmlzQ3VlKSB7CiAgICAgICAgaWYgKCFjdWVCYWxsSGl0QW55QmFsbCkgewogICAgICAgICAgLy8g7Ja065akIOqzteuPhCDslYgg66ee6rOgIO2YvOyekCDrk6TslrTqsJAgKO2MjOyauCDtlITrpqzrs7wpCiAgICAgICAgICBjdWVCYWxsU2NyYXRjaE5vSGl0ID0gdHJ1ZTsKICAgICAgICB9IGVsc2UgewogICAgICAgICAgLy8g7J2867CYIOyImOq1rCDtj6zsvJMKICAgICAgICAgIHNldFRpbWVvdXQoKCkgPT4gewogICAgICAgICAgICBiYWxsLnggPSAyMjA7IGJhbGwueSA9IGNhbnZhcy5oZWlnaHQgLyAyOwogICAgICAgICAgICBiYWxsLnZ4ID0gMDsgYmFsbC52eSA9IDA7CiAgICAgICAgICAgIGJhbGwuYWN0aXZlID0gdHJ1ZTsKICAgICAgICAgIH0sIDgwMCk7CiAgICAgICAgfQogICAgICB9IGVsc2UgewogICAgICAgIHNjb3Jlc1tjdXJyZW50UGxheWVyXSArPSAxOwogICAgICAgIGJhbGxTY29yZWRUaGlzVHVybiA9IHRydWU7CiAgICAgICAgdXBkYXRlVUkoKTsKICAgICAgfQogICAgfQoKICAgIGZ1bmN0aW9uIHVwZGF0ZVVJKCkgewogICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgncDEtc2NvcmUnKS5pbm5lclRleHQgPSBgUGxheWVyIDE6ICR7c2NvcmVzWzFdfeygkGA7CiAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwMi1zY29yZScpLmlubmVyVGV4dCA9IGBQbGF5ZXIgMjogJHtzY29yZXNbMl197KCQYDsKCiAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwMS1jYXJkJykuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgY3VycmVudFBsYXllciA9PT0gMSk7CiAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdwMi1jYXJkJykuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgY3VycmVudFBsYXllciA9PT0gMik7CiAgICB9CgogICAgZnVuY3Rpb24gc3dpdGNoVHVybigpIHsKICAgICAgaWYgKCFiYWxsU2NvcmVkVGhpc1R1cm4pIGN1cnJlbnRQbGF5ZXIgPSBjdXJyZW50UGxheWVyID09PSAxID8gMiA6IDE7CiAgICAgIGJhbGxTY29yZWRUaGlzVHVybiA9IGZhbHNlOwogICAgICB1cGRhdGVVSSgpOwogICAgfQoKICAgIGZ1bmN0aW9uIHVwZGF0ZUFuZ2xlRGlzcGxheSgpIHsKICAgICAgbGV0IGRlZyA9ICgoY3VycmVudEFuZ2xlICogMTgwIC8gTWF0aC5QSSkgJSAzNjApOwogICAgICBpZiAoZGVnIDwgMCkgZGVnICs9IDM2MDsKICAgICAgYW5nbGVEaXNwbGF5LmlubmVyVGV4dCA9IGAke2RlZy50b0ZpeGVkKDEpfcKwYDsKICAgIH0KCiAgICBmdW5jdGlvbiBnZXRDbGFtcGVkTW91c2VQb3MoZSkgewogICAgICBjb25zdCByZWN0ID0gY2FudmFzLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogICAgICBsZXQgeCA9IGUuY2xpZW50WCAtIHJlY3QubGVmdDsKICAgICAgbGV0IHkgPSBlLmNsaWVudFkgLSByZWN0LnRvcDsKCiAgICAgIGNvbnN0IG1pblggPSBDVVNISU9OICsgQkFMTF9SQURJVVM7CiAgICAgIGNvbnN0IG1heFggPSBjYW52YXMud2lkdGggLSBDVVNISU9OIC0gQkFMTF9SQURJVVM7CiAgICAgIGNvbnN0IG1pblkgPSBDVVNISU9OICsgQkFMTF9SQURJVVM7CiAgICAgIGNvbnN0IG1heFkgPSBjYW52YXMuaGVpZ2h0IC0gQ1VTSElPTiAtIEJBTExfUkFESVVTOwoKICAgICAgeCA9IE1hdGgubWF4KG1pblgsIE1hdGgubWluKG1heFgsIHgpKTsKICAgICAgeSA9IE1hdGgubWF4KG1pblksIE1hdGgubWluKG1heFksIHkpKTsKCiAgICAgIHJldHVybiB7IHgsIHkgfTsKICAgIH0KCiAgICBmdW5jdGlvbiBpc1ZhbGlkUGxhY2VtZW50KHgsIHkpIHsKICAgICAgcmV0dXJuICFiYWxscy5zb21lKGIgPT4gIWIuaXNDdWUgJiYgYi5hY3RpdmUgJiYgTWF0aC5oeXBvdChiLnggLSB4LCBiLnkgLSB5KSA8IEJBTExfUkFESVVTICogMik7CiAgICB9CgogICAgZnVuY3Rpb24gZHJhd0FkdmFuY2VkVHJhamVjdG9yeShjdWVCYWxsLCBhbmdsZSkgewogICAgICBjb25zdCBkaXJYID0gTWF0aC5jb3MoYW5nbGUpOwogICAgICBjb25zdCBkaXJZID0gTWF0aC5zaW4oYW5nbGUpOwoKICAgICAgbGV0IGNsb3Nlc3RIaXQgPSBudWxsOwogICAgICBsZXQgbWluRGlzdGFuY2UgPSBJbmZpbml0eTsKCiAgICAgIGJhbGxzLmZvckVhY2godGFyZ2V0ID0+IHsKICAgICAgICBpZiAoIXRhcmdldC5hY3RpdmUgfHwgdGFyZ2V0LmlzQ3VlKSByZXR1cm47CgogICAgICAgIGNvbnN0IHZ4ID0gdGFyZ2V0LnggLSBjdWVCYWxsLng7CiAgICAgICAgY29uc3QgdnkgPSB0YXJnZXQueSAtIGN1ZUJhbGwueTsKICAgICAgICBjb25zdCBwcm9qID0gdnggKiBkaXJYICsgdnkgKiBkaXJZOwoKICAgICAgICBpZiAocHJvaiA8PSAwKSByZXR1cm47CgogICAgICAgIGNvbnN0IHBlcnBEaXN0U3EgPSAodnggKiB2eCArIHZ5ICogdnkpIC0gKHByb2ogKiBwcm9qKTsKICAgICAgICBjb25zdCBtaW5EaXN0ID0gQkFMTF9SQURJVVMgKiAyOwoKICAgICAgICBpZiAocGVycERpc3RTcSA8IG1pbkRpc3QgKiBtaW5EaXN0KSB7CiAgICAgICAgICBjb25zdCBoaXREaXN0ID0gcHJvaiAtIE1hdGguc3FydChtaW5EaXN0ICogbWluRGlzdCAtIHBlcnBEaXN0U3EpOwogICAgICAgICAgaWYgKGhpdERpc3QgPiAwICYmIGhpdERpc3QgPCBtaW5EaXN0YW5jZSkgewogICAgICAgICAgICBtaW5EaXN0YW5jZSA9IGhpdERpc3Q7CiAgICAgICAgICAgIGNsb3Nlc3RIaXQgPSB7CiAgICAgICAgICAgICAgYmFsbDogdGFyZ2V0LAogICAgICAgICAgICAgIGdob3N0WDogY3VlQmFsbC54ICsgZGlyWCAqIGhpdERpc3QsCiAgICAgICAgICAgICAgZ2hvc3RZOiBjdWVCYWxsLnkgKyBkaXJZICogaGl0RGlzdAogICAgICAgICAgICB9OwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfSk7CgogICAgICBpZiAoY2xvc2VzdEhpdCkgewogICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICBjdHgubW92ZVRvKGN1ZUJhbGwueCwgY3VlQmFsbC55KTsKICAgICAgICBjdHgubGluZVRvKGNsb3Nlc3RIaXQuZ2hvc3RYLCBjbG9zZXN0SGl0Lmdob3N0WSk7CiAgICAgICAgY3R4LnN0cm9rZVN0eWxlID0gJ3JnYmEoMjU1LCAyNTUsIDI1NSwgMC42KSc7CiAgICAgICAgY3R4LmxpbmVXaWR0aCA9IDI7CiAgICAgICAgY3R4LnNldExpbmVEYXNoKFs0LCA0XSk7CiAgICAgICAgY3R4LnN0cm9rZSgpOwoKICAgICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgICAgY3R4LmFyYyhjbG9zZXN0SGl0Lmdob3N0WCwgY2xvc2VzdEhpdC5naG9zdFksIEJBTExfUkFESVVTLCAwLCBNYXRoLlBJICogMik7CiAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICdyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuMiknOwogICAgICAgIGN0eC5maWxsKCk7CiAgICAgICAgY3R4LnN0cm9rZVN0eWxlID0gJyMyZWNjNzEnOwogICAgICAgIGN0eC5saW5lV2lkdGggPSAyOwogICAgICAgIGN0eC5zZXRMaW5lRGFzaChbXSk7CiAgICAgICAgY3R4LnN0cm9rZSgpOwoKICAgICAgICBjb25zdCB0WCA9IGNsb3Nlc3RIaXQuYmFsbC54IC0gY2xvc2VzdEhpdC5naG9zdFg7CiAgICAgICAgY29uc3QgdFkgPSBjbG9zZXN0SGl0LmJhbGwueSAtIGNsb3Nlc3RIaXQuZ2hvc3RZOwogICAgICAgIGNvbnN0IGRpc3QgPSBNYXRoLmh5cG90KHRYLCB0WSk7CgogICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICBjdHgubW92ZVRvKGNsb3Nlc3RIaXQuYmFsbC54LCBjbG9zZXN0SGl0LmJhbGwueSk7CiAgICAgICAgY3R4LmxpbmVUbyhjbG9zZXN0SGl0LmJhbGwueCArICh0WCAvIGRpc3QpICogNTAsIGNsb3Nlc3RIaXQuYmFsbC55ICsgKHRZIC8gZGlzdCkgKiA1MCk7CiAgICAgICAgY3R4LnN0cm9rZVN0eWxlID0gJyNmMWM0MGYnOwogICAgICAgIGN0eC5saW5lV2lkdGggPSAyLjU7CiAgICAgICAgY3R4LnN0cm9rZSgpOwogICAgICB9IGVsc2UgewogICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICBjdHgubW92ZVRvKGN1ZUJhbGwueCwgY3VlQmFsbC55KTsKICAgICAgICBjdHgubGluZVRvKGN1ZUJhbGwueCArIGRpclggKiAyNTAsIGN1ZUJhbGwueSArIGRpclkgKiAyNTApOwogICAgICAgIGN0eC5zdHJva2VTdHlsZSA9ICdyZ2JhKDI1NSwgMjU1LCAyNTUsIDAuNCknOwogICAgICAgIGN0eC5saW5lV2lkdGggPSAyOwogICAgICAgIGN0eC5zZXRMaW5lRGFzaChbNSwgNV0pOwogICAgICAgIGN0eC5zdHJva2UoKTsKICAgICAgICBjdHguc2V0TGluZURhc2goW10pOwogICAgICB9CiAgICB9CgogICAgZnVuY3Rpb24gZHJhd0N1ZVN0aWNrKGN1ZUJhbGwsIGFuZ2xlLCB2aXN1YWxQb3dlcikgewogICAgICBjb25zdCBvZmZzZXQgPSBCQUxMX1JBRElVUyArIDY7CiAgICAgIGNvbnN0IHN0aWNrTGVuZ3RoID0gMjgwOwoKICAgICAgY29uc3Qgc3RhcnRYID0gY3VlQmFsbC54IC0gTWF0aC5jb3MoYW5nbGUpICogKG9mZnNldCArIHZpc3VhbFBvd2VyKTsKICAgICAgY29uc3Qgc3RhcnRZID0gY3VlQmFsbC55IC0gTWF0aC5zaW4oYW5nbGUpICogKG9mZnNldCArIHZpc3VhbFBvd2VyKTsKICAgICAgY29uc3QgZW5kWCA9IHN0YXJ0WCAtIE1hdGguY29zKGFuZ2xlKSAqIHN0aWNrTGVuZ3RoOwogICAgICBjb25zdCBlbmRZID0gc3RhcnRZIC0gTWF0aC5zaW4oYW5nbGUpICogc3RpY2tMZW5ndGg7CgogICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgIGN0eC5tb3ZlVG8oc3RhcnRYLCBzdGFydFkpOwogICAgICBjdHgubGluZVRvKGVuZFgsIGVuZFkpOwogICAgICBjdHgubGluZVdpZHRoID0gNjsKICAgICAgY3R4LnN0cm9rZVN0eWxlID0gJyNkOTc3MDYnOwogICAgICBjdHgubGluZUNhcCA9ICdyb3VuZCc7CiAgICAgIGN0eC5zdHJva2UoKTsKICAgIH0KCiAgICBmdW5jdGlvbiBkcmF3VGFibGUoKSB7CiAgICAgIGN0eC5maWxsU3R5bGUgPSAnIzFlMTEwNSc7CiAgICAgIGN0eC5maWxsUmVjdCgwLCAwLCBjYW52YXMud2lkdGgsIGNhbnZhcy5oZWlnaHQpOwoKICAgICAgY3R4LmZpbGxTdHlsZSA9ICcjMGY3MDMyJzsKICAgICAgY3R4LmZpbGxSZWN0KENVU0hJT04sIENVU0hJT04sIGNhbnZhcy53aWR0aCAtIENVU0hJT04gKiAyLCBjYW52YXMuaGVpZ2h0IC0gQ1VTSElPTiAqIDIpOwoKICAgICAgcG9ja2V0cy5mb3JFYWNoKHAgPT4gewogICAgICAgIGN0eC5iZWdpblBhdGgoKTsKICAgICAgICBjdHguYXJjKHAueCwgcC55LCBQT0NLRVRfUkFESVVTLCAwLCBNYXRoLlBJICogMik7CiAgICAgICAgY3R4LmZpbGxTdHlsZSA9ICcjMDUwNTA1JzsKICAgICAgICBjdHguZmlsbCgpOwogICAgICAgIGN0eC5zdHJva2VTdHlsZSA9ICcjMjIyJzsKICAgICAgICBjdHguc3Ryb2tlKCk7CiAgICAgIH0pOwogICAgfQoKICAgIC8vID09PSBDb250cm9scyAmIEFjdGlvbnMgPT09CgogICAgLy8gU3BpbiBTZWxlY3RvciBEcmFnZ2luZwogICAgbGV0IGlzU3BpbkRyYWdnaW5nID0gZmFsc2U7CiAgICBzcGluU2VsZWN0b3IuYWRkRXZlbnRMaXN0ZW5lcignbW91c2Vkb3duJywgKGUpID0+IHsgaXNTcGluRHJhZ2dpbmcgPSB0cnVlOyB1cGRhdGVTcGluKGUpOyB9KTsKICAgIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCdtb3VzZW1vdmUnLCAoZSkgPT4geyBpZiAoaXNTcGluRHJhZ2dpbmcpIHVwZGF0ZVNwaW4oZSk7IH0pOwogICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ21vdXNldXAnLCAoKSA9PiB7IGlzU3BpbkRyYWdnaW5nID0gZmFsc2U7IH0pOwoKICAgIGZ1bmN0aW9uIHVwZGF0ZVNwaW4oZSkgewogICAgICBjb25zdCByZWN0ID0gc3BpblNlbGVjdG9yLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogICAgICBsZXQgeCA9IGUuY2xpZW50WCAtIHJlY3QubGVmdCAtIHJlY3Qud2lkdGggLyAyOwogICAgICBsZXQgeSA9IGUuY2xpZW50WSAtIHJlY3QudG9wIC0gcmVjdC5oZWlnaHQgLyAyOwogICAgICBjb25zdCBtYXhSID0gcmVjdC53aWR0aCAvIDIgLSA2OwoKICAgICAgY29uc3QgZGlzdCA9IE1hdGguaHlwb3QoeCwgeSk7CiAgICAgIGlmIChkaXN0ID4gbWF4UikgewogICAgICAgIHggPSAoeCAvIGRpc3QpICogbWF4UjsKICAgICAgICB5ID0gKHkgLyBkaXN0KSAqIG1heFI7CiAgICAgIH0KCiAgICAgIHNwaW5Eb3Quc3R5bGUubGVmdCA9IGAkezUwICsgKHggLyBtYXhSKSAqIDQwfSVgOwogICAgICBzcGluRG90LnN0eWxlLnRvcCA9IGAkezUwICsgKHkgLyBtYXhSKSAqIDQwfSVgOwoKICAgICAgc3BpblggPSB4IC8gbWF4UjsKICAgICAgc3BpblkgPSAteSAvIG1heFI7CgogICAgICBsZXQgdHlwZVkgPSBzcGluWSA+IDAuMiA/ICfrsIDslrTsuZjquLAnIDogc3BpblkgPCAtMC4yID8gJ+uBjOyWtOy5mOq4sCcgOiAn7KSR64uoJzsKICAgICAgc3BpbkluZm8uaW5uZXJUZXh0ID0gYCR7dHlwZVl9XG4oJHtNYXRoLnJvdW5kKHNwaW5ZICogMTAwKX0lIC8gJHtNYXRoLnJvdW5kKHNwaW5YICogMTAwKX0lKWA7CiAgICB9CgogICAgLy8gTW91c2UgV2hlZWwgZmluZSBhZGp1c3RtZW50CiAgICBjYW52YXMuYWRkRXZlbnRMaXN0ZW5lcignd2hlZWwnLCAoZSkgPT4gewogICAgICBpZiAoIWdhbWVTdGFydGVkIHx8IGlzVGFibGVNb3ZpbmcoKSB8fCBpc0JhbGxJbkhhbmQpIHJldHVybjsKICAgICAgZS5wcmV2ZW50RGVmYXVsdCgpOwogICAgICBjb25zdCBkZWx0YUFuZ2xlID0gKGUuZGVsdGFZIDwgMCA/IC0wLjUgOiAwLjUpICogKE1hdGguUEkgLyAxODApOwogICAgICBjdXJyZW50QW5nbGUgKz0gZGVsdGFBbmdsZTsKICAgICAgdXBkYXRlQW5nbGVEaXNwbGF5KCk7CiAgICAgIGlzQWltaW5nID0gdHJ1ZTsKICAgIH0sIHsgcGFzc2l2ZTogZmFsc2UgfSk7CgogICAgLy8gQ2FudmFzIFNob290aW5nICYgQmFsbCBQbGFjZW1lbnQKICAgIGNhbnZhcy5hZGRFdmVudExpc3RlbmVyKCdtb3VzZWRvd24nLCAoZSkgPT4gewogICAgICBpZiAoIWdhbWVTdGFydGVkIHx8IGlzVGFibGVNb3ZpbmcoKSB8fCBlLmJ1dHRvbiAhPT0gMCkgcmV0dXJuOwoKICAgICAgLy8g7ZSE66as67O8IOyImOq1rCDrsLDsuZgg7YG066atCiAgICAgIGlmIChpc0JhbGxJbkhhbmQpIHsKICAgICAgICBjb25zdCBwb3MgPSBnZXRDbGFtcGVkTW91c2VQb3MoZSk7CiAgICAgICAgaWYgKGlzVmFsaWRQbGFjZW1lbnQocG9zLngsIHBvcy55KSkgewogICAgICAgICAgY29uc3QgY3VlQmFsbCA9IGJhbGxzLmZpbmQoYiA9PiBiLmlzQ3VlKTsKICAgICAgICAgIGN1ZUJhbGwueCA9IHBvcy54OwogICAgICAgICAgY3VlQmFsbC55ID0gcG9zLnk7CiAgICAgICAgICBjdWVCYWxsLnZ4ID0gMDsKICAgICAgICAgIGN1ZUJhbGwudnkgPSAwOwogICAgICAgICAgY3VlQmFsbC5hY3RpdmUgPSB0cnVlOwogICAgICAgICAgaXNCYWxsSW5IYW5kID0gZmFsc2U7CgogICAgICAgICAgaWYgKGFuZ2xlTG9ja2VkKSB7CiAgICAgICAgICAgIHN0YXR1c0JhZGdlLmlubmVyVGV4dCA9ICfwn5SSIOqwgeuPhCDqs6DsoJUg7KSRJzsKICAgICAgICAgICAgc3RhdHVzQmFkZ2Uuc3R5bGUuZGlzcGxheSA9ICdibG9jayc7CiAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBzdGF0dXNCYWRnZS5zdHlsZS5kaXNwbGF5ID0gJ25vbmUnOwogICAgICAgICAgfQogICAgICAgICAgcGxheVNvdW5kKCdoaXQnLCAwLjQpOwogICAgICAgIH0KICAgICAgICByZXR1cm47CiAgICAgIH0KCiAgICAgIGNvbnN0IHJlY3QgPSBjYW52YXMuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCk7CiAgICAgIGNvbnN0IG1vdXNlWCA9IGUuY2xpZW50WCAtIHJlY3QubGVmdDsKICAgICAgY29uc3QgbW91c2VZID0gZS5jbGllbnRZIC0gcmVjdC50b3A7CgogICAgICBjb25zdCBjdWVCYWxsID0gYmFsbHMuZmluZChiID0+IGIuaXNDdWUpOwogICAgICBpZiAoIWN1ZUJhbGwgfHwgIWN1ZUJhbGwuYWN0aXZlKSByZXR1cm47CgogICAgICBjb25zdCBkaXN0ID0gTWF0aC5oeXBvdChtb3VzZVggLSBjdWVCYWxsLngsIG1vdXNlWSAtIGN1ZUJhbGwueSk7CiAgICAgIGlmIChkaXN0IDwgQkFMTF9SQURJVVMgKiA0LjUgfHwgY3VycmVudFBvd2VyID4gMCkgewogICAgICAgIGlzRHJhZ2dpbmcgPSB0cnVlOwogICAgICAgIGlzQWltaW5nID0gZmFsc2U7CiAgICAgICAgZHJhZ1N0YXJ0ID0geyB4OiBjdWVCYWxsLngsIHk6IGN1ZUJhbGwueSB9OwogICAgICAgIGRyYWdDdXJyZW50ID0geyB4OiBtb3VzZVgsIHk6IG1vdXNlWSB9OwogICAgICAgIHBvd2VyTWV0ZXIuc3R5bGUuZGlzcGxheSA9ICdibG9jayc7CgogICAgICAgIGlmICghYW5nbGVMb2NrZWQpIHsKICAgICAgICAgIGNvbnN0IGR4ID0gZHJhZ1N0YXJ0LnggLSBkcmFnQ3VycmVudC54OwogICAgICAgICAgY29uc3QgZHkgPSBkcmFnU3RhcnQueSAtIGRyYWdDdXJyZW50Lnk7CiAgICAgICAgICBpZiAoTWF0aC5oeXBvdChkeCwgZHkpID4gMikgewogICAgICAgICAgICBjdXJyZW50QW5nbGUgPSBNYXRoLmF0YW4yKGR5LCBkeCk7CiAgICAgICAgICAgIHVwZGF0ZUFuZ2xlRGlzcGxheSgpOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgfSk7CgogICAgY2FudmFzLmFkZEV2ZW50TGlzdGVuZXIoJ21vdXNlbW92ZScsIChlKSA9PiB7CiAgICAgIGlmICghZ2FtZVN0YXJ0ZWQpIHJldHVybjsKCiAgICAgIGlmIChpc0JhbGxJbkhhbmQpIHsKICAgICAgICBtb3VzZUJhbGxQb3MgPSBnZXRDbGFtcGVkTW91c2VQb3MoZSk7CiAgICAgICAgcmV0dXJuOwogICAgICB9CgogICAgICBjb25zdCByZWN0ID0gY2FudmFzLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogICAgICBjb25zdCBtb3VzZVggPSBlLmNsaWVudFggLSByZWN0LmxlZnQ7CiAgICAgIGNvbnN0IG1vdXNlWSA9IGUuY2xpZW50WSAtIHJlY3QudG9wOwoKICAgICAgY29uc3QgY3VlQmFsbCA9IGJhbGxzLmZpbmQoYiA9PiBiLmlzQ3VlKTsKICAgICAgaWYgKCFjdWVCYWxsIHx8ICFjdWVCYWxsLmFjdGl2ZSB8fCBpc1RhYmxlTW92aW5nKCkpIHsKICAgICAgICBpc0FpbWluZyA9IGZhbHNlOwogICAgICAgIHJldHVybjsKICAgICAgfQoKICAgICAgaWYgKCFpc0RyYWdnaW5nKSB7CiAgICAgICAgY29uc3QgZGlzdEZyb21DdWVCYWxsID0gTWF0aC5oeXBvdChtb3VzZVggLSBjdWVCYWxsLngsIG1vdXNlWSAtIGN1ZUJhbGwueSk7CiAgICAgICAgaWYgKGRpc3RGcm9tQ3VlQmFsbCA8IEJBTExfUkFESVVTICogNC41KSB7CiAgICAgICAgICBpc0FpbWluZyA9IHRydWU7CiAgICAgICAgICBkcmFnQ3VycmVudCA9IHsgeDogbW91c2VYLCB5OiBtb3VzZVkgfTsKICAgICAgICAgIGlmICghYW5nbGVMb2NrZWQpIHsKICAgICAgICAgICAgY3VycmVudEFuZ2xlID0gTWF0aC5hdGFuMihkcmFnU3RhcnQueSAtIGRyYWdDdXJyZW50LnksIGRyYWdTdGFydC54IC0gZHJhZ0N1cnJlbnQueCk7CiAgICAgICAgICAgIHVwZGF0ZUFuZ2xlRGlzcGxheSgpOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfSBlbHNlIHsKICAgICAgICBkcmFnQ3VycmVudCA9IHsgeDogbW91c2VYLCB5OiBtb3VzZVkgfTsKICAgICAgICBjb25zdCBkeCA9IGRyYWdTdGFydC54IC0gZHJhZ0N1cnJlbnQueDsKICAgICAgICBjb25zdCBkeSA9IGRyYWdTdGFydC55IC0gZHJhZ0N1cnJlbnQueTsKCiAgICAgICAgaWYgKCFhbmdsZUxvY2tlZCkgewogICAgICAgICAgY3VycmVudEFuZ2xlID0gTWF0aC5hdGFuMihkeSwgZHgpOwogICAgICAgICAgdXBkYXRlQW5nbGVEaXNwbGF5KCk7CiAgICAgICAgfQoKICAgICAgICBjb25zdCByYXdQb3dlciA9IE1hdGguaHlwb3QoZHgsIGR5KTsKICAgICAgICBjdXJyZW50UG93ZXIgPSBNYXRoLm1pbihyYXdQb3dlciAqIDAuMTQsIDI1KTsKICAgICAgICBwb3dlckZpbGwuc3R5bGUud2lkdGggPSBgJHtNYXRoLm1pbigocmF3UG93ZXIgLyAxNjApICogMTAwLCAxMDApfSVgOwogICAgICB9CiAgICB9KTsKCiAgICB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcignbW91c2V1cCcsIChlKSA9PiB7CiAgICAgIGlmICghZ2FtZVN0YXJ0ZWQgfHwgIWlzRHJhZ2dpbmcgfHwgaXNCYWxsSW5IYW5kKSByZXR1cm47CiAgICAgIGlzRHJhZ2dpbmcgPSBmYWxzZTsKCiAgICAgIGlmIChhbmdsZUxvY2tlZCkgewogICAgICAgIGlzQWltaW5nID0gdHJ1ZTsKICAgICAgICByZXR1cm47CiAgICAgIH0KCiAgICAgIGV4ZWN1dGVTaG90KCk7CiAgICB9KTsKCiAgICB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcignY29udGV4dG1lbnUnLCAoZSkgPT4gewogICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgIGNhbmNlbFNob3QoKTsKICAgIH0pOwoKICAgIGZ1bmN0aW9uIGV4ZWN1dGVTaG90KCkgewogICAgICBjb25zdCBjdWVCYWxsID0gYmFsbHMuZmluZChiID0+IGIuaXNDdWUpOwogICAgICBpZiAoIWN1ZUJhbGwgfHwgaXNUYWJsZU1vdmluZygpIHx8IGlzQmFsbEluSGFuZCkgcmV0dXJuOwoKICAgICAgaWYgKGN1cnJlbnRQb3dlciA+IDAuNikgewogICAgICAgIGN1ZUJhbGxIaXRBbnlCYWxsID0gZmFsc2U7CiAgICAgICAgY3VlQmFsbFNjcmF0Y2hOb0hpdCA9IGZhbHNlOwogICAgICAgIGN1ZUJhbGwudnggPSBNYXRoLmNvcyhjdXJyZW50QW5nbGUpICogY3VycmVudFBvd2VyOwogICAgICAgIGN1ZUJhbGwudnkgPSBNYXRoLnNpbihjdXJyZW50QW5nbGUpICogY3VycmVudFBvd2VyOwogICAgICAgIGN1ZUJhbGwuc3BpblggPSBzcGluWDsKICAgICAgICBjdWVCYWxsLnNwaW5ZID0gc3Bpblk7CiAgICAgICAgdHVyblBlbmRpbmcgPSB0cnVlOwogICAgICAgIHBsYXlTb3VuZCgnaGl0JywgY3VycmVudFBvd2VyIC8gMTUpOwogICAgICB9CiAgICAgIAogICAgICBjdXJyZW50UG93ZXIgPSAwOwogICAgICBwb3dlck1ldGVyLnN0eWxlLmRpc3BsYXkgPSAnbm9uZSc7CiAgICAgIGlzQWltaW5nID0gZmFsc2U7CiAgICB9CgogICAgZnVuY3Rpb24gY2FuY2VsU2hvdCgpIHsKICAgICAgY3VycmVudFBvd2VyID0gMDsKICAgICAgaXNEcmFnZ2luZyA9IGZhbHNlOwogICAgICBwb3dlck1ldGVyLnN0eWxlLmRpc3BsYXkgPSAnbm9uZSc7CiAgICB9CgogICAgYnRuU2hvb3QuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCBleGVjdXRlU2hvdCk7CiAgICBidG5DYW5jZWwuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCBjYW5jZWxTaG90KTsKCiAgICBmdW5jdGlvbiB0b2dnbGVBbmdsZUxvY2soKSB7CiAgICAgIGFuZ2xlTG9ja2VkID0gIWFuZ2xlTG9ja2VkOwogICAgICBidG5Mb2NrQW5nbGUuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgYW5nbGVMb2NrZWQpOwogICAgICBidG5Mb2NrQW5nbGUuaW5uZXJUZXh0ID0gYW5nbGVMb2NrZWQgPyAn8J+UkiDqsIHrj4Qg6rOg7KCV65CoJyA6ICfwn5STIOqwgeuPhCDqs6DsoJUgKFNwYWNlKSc7CiAgICAgIGlmICghaXNCYWxsSW5IYW5kKSB7CiAgICAgICAgc3RhdHVzQmFkZ2UuaW5uZXJUZXh0ID0gJ/CflJIg6rCB64+EIOqzoOyglSDspJEnOwogICAgICAgIHN0YXR1c0JhZGdlLnN0eWxlLmRpc3BsYXkgPSBhbmdsZUxvY2tlZCA/ICdibG9jaycgOiAnbm9uZSc7CiAgICAgIH0KICAgIH0KCiAgICBidG5Mb2NrQW5nbGUuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCB0b2dnbGVBbmdsZUxvY2spOwoKICAgIGZ1bmN0aW9uIGFkanVzdEFuZ2xlKGRlbHRhRGVnKSB7CiAgICAgIGlmIChpc0JhbGxJbkhhbmQpIHJldHVybjsKICAgICAgY3VycmVudEFuZ2xlICs9IChkZWx0YURlZyAqIE1hdGguUEkpIC8gMTgwOwogICAgICB1cGRhdGVBbmdsZURpc3BsYXkoKTsKICAgICAgaXNBaW1pbmcgPSB0cnVlOwogICAgfQoKICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhbmdsZS1sZWZ0JykuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiBhZGp1c3RBbmdsZSgtMC41KSk7CiAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYW5nbGUtbGVmdC1mYXN0JykuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiBhZGp1c3RBbmdsZSgtNSkpOwogICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2FuZ2xlLXJpZ2h0JykuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiBhZGp1c3RBbmdsZSgwLjUpKTsKICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdhbmdsZS1yaWdodC1mYXN0JykuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiBhZGp1c3RBbmdsZSg1KSk7CgogICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ2tleWRvd24nLCAoZSkgPT4gewogICAgICBpZiAoIWdhbWVTdGFydGVkIHx8IGlzVGFibGVNb3ZpbmcoKSB8fCBpc0JhbGxJbkhhbmQpIHJldHVybjsKICAgICAgCiAgICAgIGlmIChlLmNvZGUgPT09ICdTcGFjZScpIHsKICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgdG9nZ2xlQW5nbGVMb2NrKCk7CiAgICAgIH0gZWxzZSBpZiAoZS5jb2RlID09PSAnRW50ZXInKSB7CiAgICAgICAgZS5wcmV2ZW50RGVmYXVsdCgpOwogICAgICAgIGV4ZWN1dGVTaG90KCk7CiAgICAgIH0gZWxzZSBpZiAoZS5jb2RlID09PSAnRXNjYXBlJykgewogICAgICAgIGUucHJldmVudERlZmF1bHQoKTsKICAgICAgICBjYW5jZWxTaG90KCk7CiAgICAgIH0KICAgICAgCiAgICAgIGtleXNQcmVzc2VkW2Uua2V5XSA9IHRydWU7CiAgICB9KTsKCiAgICB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigna2V5dXAnLCAoZSkgPT4gewogICAgICBrZXlzUHJlc3NlZFtlLmtleV0gPSBmYWxzZTsKICAgIH0pOwoKICAgIGZ1bmN0aW9uIHByb2Nlc3NDb250aW51b3VzS2V5cygpIHsKICAgICAgaWYgKCFnYW1lU3RhcnRlZCB8fCBpc1RhYmxlTW92aW5nKCkgfHwgaXNCYWxsSW5IYW5kKSByZXR1cm47CiAgICAgIGlmIChrZXlzUHJlc3NlZFsnQXJyb3dMZWZ0J10pIGFkanVzdEFuZ2xlKC0wLjQpOwogICAgICBpZiAoa2V5c1ByZXNzZWRbJ0Fycm93UmlnaHQnXSkgYWRqdXN0QW5nbGUoMC40KTsKICAgIH0KCiAgICBidG5TdGFydC5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsICgpID0+IHsKICAgICAgbWFpbk1lbnVPdmVybGF5LmNsYXNzTGlzdC5hZGQoJ2hpZGRlbicpOwogICAgICBnYW1lU3RhcnRlZCA9IHRydWU7CiAgICB9KTsKCiAgICBidG5HdWlkZS5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsICgpID0+IG1vZGFsSW5zdHJ1Y3Rpb25zLmNsYXNzTGlzdC5hZGQoJ29wZW4nKSk7CiAgICBidG5JbkdhbWVHdWlkZS5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsICgpID0+IG1vZGFsSW5zdHJ1Y3Rpb25zLmNsYXNzTGlzdC5hZGQoJ29wZW4nKSk7CiAgICBidG5DbG9zZU1vZGFsLmFkZEV2ZW50TGlzdGVuZXIoJ2NsaWNrJywgKCkgPT4gbW9kYWxJbnN0cnVjdGlvbnMuY2xhc3NMaXN0LnJlbW92ZSgnb3BlbicpKTsKICAgIAogICAgYnRuTWVudS5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsICgpID0+IHsKICAgICAgZ2FtZVN0YXJ0ZWQgPSBmYWxzZTsKICAgICAgbWFpbk1lbnVPdmVybGF5LmNsYXNzTGlzdC5yZW1vdmUoJ2hpZGRlbicpOwogICAgfSk7CgogICAgZnVuY3Rpb24gcnVuTG9hZGluZ1NjcmVlbigpIHsKICAgICAgbGV0IHByb2dyZXNzID0gMDsKICAgICAgY29uc3QgaW50ZXJ2YWwgPSBzZXRJbnRlcnZhbCgoKSA9PiB7CiAgICAgICAgcHJvZ3Jlc3MgKz0gTWF0aC5mbG9vcihNYXRoLnJhbmRvbSgpICogMTUpICsgNTsKICAgICAgICBpZiAocHJvZ3Jlc3MgPj0gMTAwKSB7CiAgICAgICAgICBwcm9ncmVzcyA9IDEwMDsKICAgICAgICAgIGNsZWFySW50ZXJ2YWwoaW50ZXJ2YWwpOwogICAgICAgICAgc2V0VGltZW91dCgoKSA9PiB7CiAgICAgICAgICAgIGxvYWRpbmdTY3JlZW4uY2xhc3NMaXN0LmFkZCgnaGlkZGVuJyk7CiAgICAgICAgICAgIG1haW5NZW51T3ZlcmxheS5jbGFzc0xpc3QucmVtb3ZlKCdoaWRkZW4nKTsKICAgICAgICAgIH0sIDMwMCk7CiAgICAgICAgfQogICAgICAgIHByb2dyZXNzRmlsbC5zdHlsZS53aWR0aCA9IGAke3Byb2dyZXNzfSVgOwogICAgICAgIGxvYWRpbmdUZXh0LmlubmVyVGV4dCA9IGDqsozsnoQg66as7IaM7IqkIOuhnOuUqSDspJEuLi4gKCR7cHJvZ3Jlc3N9JSlgOwogICAgICB9LCAxMDApOwogICAgfQoKICAgIC8vIE1haW4gUmVuZGVyIExvb3AKICAgIGZ1bmN0aW9uIGdhbWVMb29wKCkgewogICAgICBjdHguY2xlYXJSZWN0KDAsIDAsIGNhbnZhcy53aWR0aCwgY2FudmFzLmhlaWdodCk7CiAgICAgIGRyYXdUYWJsZSgpOwoKICAgICAgaWYgKGdhbWVTdGFydGVkKSB7CiAgICAgICAgcHJvY2Vzc0NvbnRpbnVvdXNLZXlzKCk7CiAgICAgICAgaGFuZGxlQ29sbGlzaW9ucygpOwogICAgICAgIGNvbnN0IG1vdmluZyA9IGlzVGFibGVNb3ZpbmcoKTsKCiAgICAgICAgaWYgKCFtb3ZpbmcgJiYgdHVyblBlbmRpbmcpIHsKICAgICAgICAgIHR1cm5QZW5kaW5nID0gZmFsc2U7CiAgICAgICAgICAKICAgICAgICAgIGlmIChjdWVCYWxsU2NyYXRjaE5vSGl0KSB7CiAgICAgICAgICAgIC8vIOustO2EsOy5mCDtj6zsvJMg7YyM7Jq4IOyymOumrAogICAgICAgICAgICBjdWVCYWxsU2NyYXRjaE5vSGl0ID0gZmFsc2U7CiAgICAgICAgICAgIGJhbGxTY29yZWRUaGlzVHVybiA9IGZhbHNlOwogICAgICAgICAgICBzd2l0Y2hUdXJuKCk7CiAgICAgICAgICAgIAogICAgICAgICAgICBpc0JhbGxJbkhhbmQgPSB0cnVlOwogICAgICAgICAgICBzdGF0dXNCYWRnZS5pbm5lclRleHQgPSBg4pyLIFBsYXllciAke2N1cnJlbnRQbGF5ZXJ9IO2UhOumrOuzvCEg7YG066at7ZWY7JesIO2dsCDqs7XsnYQg67Cw7LmY7ZWY7IS47JqULmA7CiAgICAgICAgICAgIHN0YXR1c0JhZGdlLnN0eWxlLmRpc3BsYXkgPSAnYmxvY2snOwogICAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgc3dpdGNoVHVybigpOwogICAgICAgICAgICBpZiAoYW5nbGVMb2NrZWQpIHsKICAgICAgICAgICAgICBzdGF0dXNCYWRnZS5pbm5lclRleHQgPSAn8J+UkiDqsIHrj4Qg6rOg7KCVIOykkSc7CiAgICAgICAgICAgICAgc3RhdHVzQmFkZ2Uuc3R5bGUuZGlzcGxheSA9ICdibG9jayc7CiAgICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgICAgc3RhdHVzQmFkZ2Uuc3R5bGUuZGlzcGxheSA9ICdub25lJzsKICAgICAgICAgICAgfQogICAgICAgICAgfQogICAgICAgIH0KCiAgICAgICAgYmFsbHMuZm9yRWFjaChiID0+IHsgYi51cGRhdGUoKTsgYi5kcmF3KCk7IH0pOwoKICAgICAgICBjb25zdCBjdWVCYWxsID0gYmFsbHMuZmluZChiID0+IGIuaXNDdWUpOwoKICAgICAgICAvLyDtlITrpqzrs7wg67Cw7LmYIOykkSDsnbwg65WMCiAgICAgICAgaWYgKGlzQmFsbEluSGFuZCkgewogICAgICAgICAgY29uc3QgdmFsaWQgPSBpc1ZhbGlkUGxhY2VtZW50KG1vdXNlQmFsbFBvcy54LCBtb3VzZUJhbGxQb3MueSk7CiAgICAgICAgICBjdHguYmVnaW5QYXRoKCk7CiAgICAgICAgICBjdHguYXJjKG1vdXNlQmFsbFBvcy54LCBtb3VzZUJhbGxQb3MueSwgQkFMTF9SQURJVVMsIDAsIE1hdGguUEkgKiAyKTsKICAgICAgICAgIGN0eC5maWxsU3R5bGUgPSB2YWxpZCA/ICdyZ2JhKDU2LCAxODksIDI0OCwgMC42KScgOiAncmdiYSgyMzksIDY4LCA2OCwgMC42KSc7CiAgICAgICAgICBjdHguZmlsbCgpOwogICAgICAgICAgY3R4LnN0cm9rZVN0eWxlID0gdmFsaWQgPyAnIzM4YmRmOCcgOiAnI2VmNDQ0NCc7CiAgICAgICAgICBjdHgubGluZVdpZHRoID0gMjsKICAgICAgICAgIGN0eC5zdHJva2UoKTsKICAgICAgICB9IAogICAgICAgIGVsc2UgaWYgKCFtb3ZpbmcgJiYgY3VlQmFsbCAmJiAoaXNEcmFnZ2luZyB8fCBpc0FpbWluZyB8fCBjdXJyZW50UG93ZXIgPiAwKSkgewogICAgICAgICAgZHJhd0FkdmFuY2VkVHJhamVjdG9yeShjdWVCYWxsLCBjdXJyZW50QW5nbGUpOwogICAgICAgICAgY29uc3QgdmlzdWFsUG93ZXIgPSBNYXRoLm1pbihjdXJyZW50UG93ZXIgKiAzLjIsIDgwKTsKICAgICAgICAgIGRyYXdDdWVTdGljayhjdWVCYWxsLCBjdXJyZW50QW5nbGUsIHZpc3VhbFBvd2VyKTsKICAgICAgICB9CiAgICAgIH0gZWxzZSB7CiAgICAgICAgYmFsbHMuZm9yRWFjaChiID0+IGIuZHJhdygpKTsKICAgICAgfQoKICAgICAgcmVxdWVzdEFuaW1hdGlvbkZyYW1lKGdhbWVMb29wKTsKICAgIH0KCiAgICBpbml0R2FtZSgpOwogICAgcnVuTG9hZGluZ1NjcmVlbigpOwogICAgZ2FtZUxvb3AoKTsKICA8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+";
+    // 지뢰찾기 게임 전체 HTML (base64, UTF-8 인코딩) - 별도 파일 없이 이 안에 통째로 내장됨
+    const MINESWEEPER_HTML_B64 = "PCFET0NUWVBFIGh0bWw+CjxodG1sIGxhbmc9ImtvIj4KPGhlYWQ+CiAgPG1ldGEgY2hhcnNldD0iVVRGLTgiPgogIDxtZXRhIG5hbWU9InZpZXdwb3J0IiBjb250ZW50PSJ3aWR0aD1kZXZpY2Utd2lkdGgsIGluaXRpYWwtc2NhbGU9MS4wIj4KICA8dGl0bGU+7ZSE66as66+47JeEIOyngOuisCDssL7quLA6IO2PreuwnCDsnbXsiqTtirjrprwgKE1pbmVzd2VlcGVyIEV4dHJlbWUpPC90aXRsZT4KICA8c3R5bGU+CiAgICA6cm9vdCB7CiAgICAgIC0tYmctY29sb3I6ICMwYjBmMTk7CiAgICAgIC0tY2FyZC1iZzogIzE4MjIzMjsKICAgICAgLS1ib3JkZXItY29sb3I6ICMyZTNkNTI7CiAgICAgIC0tYWNjZW50LWNvbG9yOiAjMzhiZGY4OwogICAgICAtLWFjY2VudC1maXJlOiAjZjk3MzE2OwogICAgICAtLWNlbGwtdW5vcGVuZWQ6ICMyODM1NDg7CiAgICAgIC0tY2VsbC11bm9wZW5lZC1ob3ZlcjogIzNiNGQ2NjsKICAgICAgLS1jZWxsLW9wZW5lZDogIzBkMTMxZDsKICAgICAgLS10ZXh0LW11dGVkOiAjOTRhM2I4OwogICAgfQoKICAgICogewogICAgICBib3gtc2l6aW5nOiBib3JkZXItYm94OwogICAgICBtYXJnaW46IDA7CiAgICAgIHBhZGRpbmc6IDA7CiAgICAgIHVzZXItc2VsZWN0OiBub25lOwogICAgICAtd2Via2l0LXVzZXItc2VsZWN0OiBub25lOwogICAgfQoKICAgIGJvZHkgewogICAgICBiYWNrZ3JvdW5kOiByYWRpYWwtZ3JhZGllbnQoY2lyY2xlIGF0IGNlbnRlciwgIzFlMjkzYiAwJSwgIzA5MGQxNiAxMDAlKTsKICAgICAgY29sb3I6ICNmOGZhZmM7CiAgICAgIGZvbnQtZmFtaWx5OiAnUHJldGVuZGFyZCcsIC1hcHBsZS1zeXN0ZW0sIEJsaW5rTWFjU3lzdGVtRm9udCwgJ1NlZ29lIFVJJywgUm9ib3RvLCBzYW5zLXNlcmlmOwogICAgICBtaW4taGVpZ2h0OiAxMDB2aDsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIHBhZGRpbmc6IDIwcHggMTBweDsKICAgICAgb3ZlcmZsb3cteDogaGlkZGVuOwogICAgfQoKICAgIC8qID09PSBGdWxsc2NyZWVuIEZYIE92ZXJsYXkgPT09ICovCiAgICAjZngtY2FudmFzIHsKICAgICAgcG9zaXRpb246IGZpeGVkOwogICAgICBpbnNldDogMDsKICAgICAgd2lkdGg6IDEwMHZ3OwogICAgICBoZWlnaHQ6IDEwMHZoOwogICAgICBwb2ludGVyLWV2ZW50czogbm9uZTsKICAgICAgei1pbmRleDogOTk5OwogICAgfQoKICAgIC5mbGFzaC1vdmVybGF5IHsKICAgICAgcG9zaXRpb246IGZpeGVkOwogICAgICBpbnNldDogMDsKICAgICAgYmFja2dyb3VuZDogcmFkaWFsLWdyYWRpZW50KGNpcmNsZSwgcmdiYSgyNDksIDExNSwgMjIsIDAuODUpIDAlLCByZ2JhKDIyMCwgMzgsIDM4LCAwLjk1KSAxMDAlKTsKICAgICAgcG9pbnRlci1ldmVudHM6IG5vbmU7CiAgICAgIHotaW5kZXg6IDk5ODsKICAgICAgb3BhY2l0eTogMDsKICAgICAgdHJhbnNpdGlvbjogb3BhY2l0eSAwLjA4cyBlYXNlLW91dDsKICAgIH0KCiAgICAuZmxhc2gtb3ZlcmxheS5hY3RpdmUgewogICAgICBvcGFjaXR5OiAxOwogICAgfQoKICAgIC8qID09PSBDYW1lcmEgLyBCb2FyZCBTaGFrZSA9PT0gKi8KICAgIEBrZXlmcmFtZXMgaW50ZW5zZS1zaGFrZSB7CiAgICAgIDAlIHsgdHJhbnNmb3JtOiB0cmFuc2xhdGUoMCwgMCkgcm90YXRlKDBkZWcpIHNjYWxlKDEpOyB9CiAgICAgIDEwJSB7IHRyYW5zZm9ybTogdHJhbnNsYXRlKC0xNHB4LCAxMHB4KSByb3RhdGUoLTIuNWRlZykgc2NhbGUoMS4wMik7IH0KICAgICAgMjAlIHsgdHJhbnNmb3JtOiB0cmFuc2xhdGUoMTZweCwgLTEycHgpIHJvdGF0ZSgzZGVnKSBzY2FsZSgwLjk5KTsgfQogICAgICAzMCUgeyB0cmFuc2Zvcm06IHRyYW5zbGF0ZSgtMTJweCwgMTRweCkgcm90YXRlKC0yZGVnKSBzY2FsZSgxLjAxKTsgfQogICAgICA0MCUgeyB0cmFuc2Zvcm06IHRyYW5zbGF0ZSgxNHB4LCAtMTBweCkgcm90YXRlKDEuNWRlZykgc2NhbGUoMSk7IH0KICAgICAgNTAlIHsgdHJhbnNmb3JtOiB0cmFuc2xhdGUoLTEwcHgsIDhweCkgcm90YXRlKC0xZGVnKTsgfQogICAgICA2MCUgeyB0cmFuc2Zvcm06IHRyYW5zbGF0ZSg4cHgsIC02cHgpIHJvdGF0ZSgwLjhkZWcpOyB9CiAgICAgIDcwJSB7IHRyYW5zZm9ybTogdHJhbnNsYXRlKC01cHgsIDRweCkgcm90YXRlKC0wLjRkZWcpOyB9CiAgICAgIDgwJSB7IHRyYW5zZm9ybTogdHJhbnNsYXRlKDNweCwgLTJweCkgcm90YXRlKDAuMmRlZyk7IH0KICAgICAgMTAwJSB7IHRyYW5zZm9ybTogdHJhbnNsYXRlKDAsIDApIHJvdGF0ZSgwZGVnKSBzY2FsZSgxKTsgfQogICAgfQoKICAgIC5zaGFrZS1pbXBhY3QgewogICAgICBhbmltYXRpb246IGludGVuc2Utc2hha2UgMC43NXMgY3ViaWMtYmV6aWVyKC4zNiwuMDcsLjE5LC45NykgYm90aDsKICAgIH0KCiAgICAvKiA9PT0gTWFpbiBDb250YWluZXIgPT09ICovCiAgICAuZ2FtZS1jb250YWluZXIgewogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1jYXJkLWJnKTsKICAgICAgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyLWNvbG9yKTsKICAgICAgYm9yZGVyLXJhZGl1czogMThweDsKICAgICAgcGFkZGluZzogMjRweDsKICAgICAgYm94LXNoYWRvdzogMCAyMHB4IDYwcHggcmdiYSgwLCAwLCAwLCAwLjcpLCAwIDAgMzBweCByZ2JhKDU2LCAxODksIDI0OCwgMC4xKTsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAgbWF4LXdpZHRoOiAxMDAlOwogICAgICBwb3NpdGlvbjogcmVsYXRpdmU7CiAgICAgIHotaW5kZXg6IDEwOwogICAgICB0cmFuc2l0aW9uOiBib3gtc2hhZG93IDAuM3M7CiAgICB9CgogICAgLmdhbWUtY29udGFpbmVyLmV4cGxvZGVkIHsKICAgICAgYm94LXNoYWRvdzogMCAwIDUwcHggcmdiYSgyMzksIDY4LCA2OCwgMC41KSwgaW5zZXQgMCAwIDIwcHggcmdiYSgyMzksIDY4LCA2OCwgMC4zKTsKICAgIH0KCiAgICAvKiBIZWFkZXIgJiBEaWZmaWN1bHR5ICovCiAgICAudGl0bGUgewogICAgICBmb250LXNpemU6IDEuOHJlbTsKICAgICAgZm9udC13ZWlnaHQ6IDkwMDsKICAgICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDEzNWRlZywgIzM4YmRmOCwgI2Y5NzMxNik7CiAgICAgIC13ZWJraXQtYmFja2dyb3VuZC1jbGlwOiB0ZXh0OwogICAgICAtd2Via2l0LXRleHQtZmlsbC1jb2xvcjogdHJhbnNwYXJlbnQ7CiAgICAgIGxldHRlci1zcGFjaW5nOiAycHg7CiAgICAgIG1hcmdpbi1ib3R0b206IDE2cHg7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgIGdhcDogMTBweDsKICAgIH0KCiAgICAuZGlmZmljdWx0eS1iYXIgewogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBnYXA6IDhweDsKICAgICAgbWFyZ2luLWJvdHRvbTogMjBweDsKICAgICAgZmxleC13cmFwOiB3cmFwOwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgIH0KCiAgICAuZGlmZi1idG4gewogICAgICBiYWNrZ3JvdW5kOiAjMGYxNzJhOwogICAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXItY29sb3IpOwogICAgICBjb2xvcjogdmFyKC0tdGV4dC1tdXRlZCk7CiAgICAgIHBhZGRpbmc6IDhweCAxNnB4OwogICAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICAgIGZvbnQtd2VpZ2h0OiA3MDA7CiAgICAgIGZvbnQtc2l6ZTogMC44NXJlbTsKICAgICAgY3Vyc29yOiBwb2ludGVyOwogICAgICB0cmFuc2l0aW9uOiBhbGwgMC4ycyBlYXNlOwogICAgfQoKICAgIC5kaWZmLWJ0bjpob3ZlciB7CiAgICAgIGJhY2tncm91bmQ6IHZhcigtLWJvcmRlci1jb2xvcik7CiAgICAgIGNvbG9yOiAjZmZmOwogICAgfQoKICAgIC5kaWZmLWJ0bi5hY3RpdmUgewogICAgICBiYWNrZ3JvdW5kOiBsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCAjMDI4NGM3LCAjMDM2OWExKTsKICAgICAgY29sb3I6ICNmZmY7CiAgICAgIGJvcmRlci1jb2xvcjogdmFyKC0tYWNjZW50LWNvbG9yKTsKICAgICAgYm94LXNoYWRvdzogMCAycHggMTJweCByZ2JhKDU2LCAxODksIDI0OCwgMC40KTsKICAgIH0KCiAgICAvKiBTdGF0dXMgQmFyICovCiAgICAuc3RhdHVzLWJhciB7CiAgICAgIHdpZHRoOiAxMDAlOwogICAgICBiYWNrZ3JvdW5kOiAjMGQxMzFkOwogICAgICBib3JkZXI6IDJweCBzb2xpZCB2YXIoLS1ib3JkZXItY29sb3IpOwogICAgICBib3JkZXItcmFkaXVzOiAxMnB4OwogICAgICBwYWRkaW5nOiAxMHB4IDIwcHg7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGp1c3RpZnktY29udGVudDogc3BhY2UtYmV0d2VlbjsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAgbWFyZ2luLWJvdHRvbTogMjBweDsKICAgIH0KCiAgICAubGNkLWRpc3BsYXkgewogICAgICBiYWNrZ3JvdW5kOiAjMDQwODEwOwogICAgICBib3JkZXI6IDFweCBzb2xpZCAjMWUyOTNiOwogICAgICBjb2xvcjogI2VmNDQ0NDsKICAgICAgZm9udC1mYW1pbHk6ICdDb3VyaWVyIE5ldycsIENvdXJpZXIsIG1vbm9zcGFjZTsKICAgICAgZm9udC1zaXplOiAxLjhyZW07CiAgICAgIGZvbnQtd2VpZ2h0OiA5MDA7CiAgICAgIHBhZGRpbmc6IDRweCAxMnB4OwogICAgICBib3JkZXItcmFkaXVzOiA2cHg7CiAgICAgIGxldHRlci1zcGFjaW5nOiAycHg7CiAgICAgIGJveC1zaGFkb3c6IGluc2V0IDAgMCA4cHggcmdiYSgyMzksIDY4LCA2OCwgMC4zKTsKICAgICAgbWluLXdpZHRoOiA4MHB4OwogICAgICB0ZXh0LWFsaWduOiBjZW50ZXI7CiAgICB9CgogICAgLmZhY2UtYnRuIHsKICAgICAgZm9udC1zaXplOiAxLjhyZW07CiAgICAgIGJhY2tncm91bmQ6IHZhcigtLWNhcmQtYmcpOwogICAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXItY29sb3IpOwogICAgICB3aWR0aDogNTBweDsKICAgICAgaGVpZ2h0OiA1MHB4OwogICAgICBib3JkZXItcmFkaXVzOiA1MCU7CiAgICAgIGN1cnNvcjogcG9pbnRlcjsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIHRyYW5zaXRpb246IHRyYW5zZm9ybSAwLjFzLCBib3gtc2hhZG93IDAuMnM7CiAgICAgIGJveC1zaGFkb3c6IDAgNHB4IDEycHggcmdiYSgwLDAsMCwwLjQpOwogICAgfQoKICAgIC5mYWNlLWJ0bjpob3ZlciB7CiAgICAgIHRyYW5zZm9ybTogc2NhbGUoMS4wNSk7CiAgICB9CgogICAgLmZhY2UtYnRuOmFjdGl2ZSB7CiAgICAgIHRyYW5zZm9ybTogc2NhbGUoMC45Mik7CiAgICB9CgogICAgLyogQm9hcmQgQXJlYSAqLwogICAgLmJvYXJkLXdyYXBwZXIgewogICAgICBtYXgtd2lkdGg6IDEwMCU7CiAgICAgIG1heC1oZWlnaHQ6IDY4dmg7CiAgICAgIG92ZXJmbG93OiBhdXRvOwogICAgICBib3JkZXItcmFkaXVzOiAxMnB4OwogICAgICBib3JkZXI6IDJweCBzb2xpZCB2YXIoLS1ib3JkZXItY29sb3IpOwogICAgICBiYWNrZ3JvdW5kOiAjMDgwYzE0OwogICAgICBwYWRkaW5nOiA4cHg7CiAgICAgIGJveC1zaGFkb3c6IGluc2V0IDAgMCAyMHB4IHJnYmEoMCwwLDAsMC44KTsKICAgICAgcG9zaXRpb246IHJlbGF0aXZlOwogICAgfQoKICAgIC5ib2FyZCB7CiAgICAgIGRpc3BsYXk6IGdyaWQ7CiAgICAgIGdhcDogM3B4OwogICAgICBtYXJnaW46IDAgYXV0bzsKICAgIH0KCiAgICAvKiBDZWxsIERlc2lnbiAqLwogICAgLmNlbGwgewogICAgICB3aWR0aDogMzJweDsKICAgICAgaGVpZ2h0OiAzMnB4OwogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1jZWxsLXVub3BlbmVkKTsKICAgICAgYm9yZGVyLXJhZGl1czogNHB4OwogICAgICBkaXNwbGF5OiBmbGV4OwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgICAgZm9udC13ZWlnaHQ6IDgwMDsKICAgICAgZm9udC1zaXplOiAxLjFyZW07CiAgICAgIGN1cnNvcjogcG9pbnRlcjsKICAgICAgYm94LXNoYWRvdzogaW5zZXQgMXB4IDFweCAwIHJnYmEoMjU1LCAyNTUsIDI1NSwgMC4xNSksIGluc2V0IC0xcHggLTFweCAwIHJnYmEoMCwgMCwgMCwgMC40KTsKICAgICAgdHJhbnNpdGlvbjogYmFja2dyb3VuZC1jb2xvciAwLjFzLCB0cmFuc2Zvcm0gMC4wNXMsIGJvcmRlci1jb2xvciAwLjJzOwogICAgfQoKICAgIC5jZWxsOmhvdmVyOm5vdCgub3BlbmVkKTpub3QoLmZsYWdnZWQpIHsKICAgICAgYmFja2dyb3VuZDogdmFyKC0tY2VsbC11bm9wZW5lZC1ob3Zlcik7CiAgICB9CgogICAgLmNlbGw6YWN0aXZlOm5vdCgub3BlbmVkKTpub3QoLmZsYWdnZWQpIHsKICAgICAgdHJhbnNmb3JtOiBzY2FsZSgwLjk1KTsKICAgIH0KCiAgICAuY2VsbC5vcGVuZWQgewogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1jZWxsLW9wZW5lZCk7CiAgICAgIGJveC1zaGFkb3c6IGluc2V0IDFweCAxcHggM3B4IHJnYmEoMCwgMCwgMCwgMC43KTsKICAgICAgY3Vyc29yOiBkZWZhdWx0OwogICAgfQoKICAgIC5jZWxsLmZsYWdnZWQgewogICAgICBjb2xvcjogI2VmNDQ0NDsKICAgIH0KCiAgICAvKiBFeHBsb3NpdmUgRGVzdHJ1Y3Rpb24gU3R5bGVzICovCiAgICAuY2VsbC5taW5lLWV4cGxvZGVkIHsKICAgICAgYmFja2dyb3VuZDogbGluZWFyLWdyYWRpZW50KDEzNWRlZywgI2RjMjYyNiwgIzdmMWQxZCkgIWltcG9ydGFudDsKICAgICAgYm94LXNoYWRvdzogMCAwIDIwcHggI2VmNDQ0NCwgaW5zZXQgMCAwIDEwcHggI2ZhY2MxNSAhaW1wb3J0YW50OwogICAgICBib3JkZXI6IDFweCBzb2xpZCAjZjk3MzE2ICFpbXBvcnRhbnQ7CiAgICAgIGFuaW1hdGlvbjogY2VsbC1idXJuIDAuOHMgaW5maW5pdGUgYWx0ZXJuYXRlIGVhc2UtaW4tb3V0OwogICAgICB6LWluZGV4OiA1OwogICAgfQoKICAgIC5jZWxsLm1pbmUtY2FzY2FkZSB7CiAgICAgIGJhY2tncm91bmQ6ICM0NTBhMGEgIWltcG9ydGFudDsKICAgICAgYm94LXNoYWRvdzogaW5zZXQgMCAwIDhweCAjZGMyNjI2OwogICAgICBhbmltYXRpb246IG1pbmktcG9wIDAuMzVzIGVhc2Utb3V0OwogICAgfQoKICAgIC5jZWxsLm1pbmUtd3JvbmcgewogICAgICBiYWNrZ3JvdW5kOiAjMzYxNzA1OwogICAgICB0ZXh0LWRlY29yYXRpb246IGxpbmUtdGhyb3VnaDsKICAgIH0KCiAgICBAa2V5ZnJhbWVzIGNlbGwtYnVybiB7CiAgICAgIDAlIHsgdHJhbnNmb3JtOiBzY2FsZSgxKTsgYm94LXNoYWRvdzogMCAwIDEwcHggI2VmNDQ0NDsgfQogICAgICAxMDAlIHsgdHJhbnNmb3JtOiBzY2FsZSgxLjEyKTsgYm94LXNoYWRvdzogMCAwIDI1cHggI2Y5NzMxNiwgMCAwIDEwcHggI2ZhY2MxNTsgfQogICAgfQoKICAgIEBrZXlmcmFtZXMgbWluaS1wb3AgewogICAgICAwJSB7IHRyYW5zZm9ybTogc2NhbGUoMS4zNSk7IGZpbHRlcjogYnJpZ2h0bmVzcygyLjUpOyB9CiAgICAgIDEwMCUgeyB0cmFuc2Zvcm06IHNjYWxlKDEpOyBmaWx0ZXI6IGJyaWdodG5lc3MoMSk7IH0KICAgIH0KCiAgICAvKiBOdW1iZXIgQ29sb3JzICovCiAgICAuY2VsbFtkYXRhLW51bT0iMSJdIHsgY29sb3I6ICMzOGJkZjg7IH0KICAgIC5jZWxsW2RhdGEtbnVtPSIyIl0geyBjb2xvcjogIzRhZGU4MDsgfQogICAgLmNlbGxbZGF0YS1udW09IjMiXSB7IGNvbG9yOiAjZjg3MTcxOyB9CiAgICAuY2VsbFtkYXRhLW51bT0iNCJdIHsgY29sb3I6ICNjMDg0ZmM7IH0KICAgIC5jZWxsW2RhdGEtbnVtPSI1Il0geyBjb2xvcjogI2ZiYmYyNDsgfQogICAgLmNlbGxbZGF0YS1udW09IjYiXSB7IGNvbG9yOiAjMmRkNGJmOyB9CiAgICAuY2VsbFtkYXRhLW51bT0iNyJdIHsgY29sb3I6ICNmNDcyYjY7IH0KICAgIC5jZWxsW2RhdGEtbnVtPSI4Il0geyBjb2xvcjogIzk0YTNiODsgfQoKICAgIC8qIEJvdHRvbSBDb250cm9scyAqLwogICAgLmJvdHRvbS1iYXIgewogICAgICBtYXJnaW4tdG9wOiAyMHB4OwogICAgICB3aWR0aDogMTAwJTsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAganVzdGlmeS1jb250ZW50OiBzcGFjZS1iZXR3ZWVuOwogICAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAgICBmbGV4LXdyYXA6IHdyYXA7CiAgICAgIGdhcDogMTJweDsKICAgIH0KCiAgICAudG9nZ2xlLWJ0biB7CiAgICAgIGJhY2tncm91bmQ6ICMwZjE3MmE7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWJvcmRlci1jb2xvcik7CiAgICAgIGNvbG9yOiB2YXIoLS10ZXh0LW11dGVkKTsKICAgICAgcGFkZGluZzogOHB4IDE0cHg7CiAgICAgIGJvcmRlci1yYWRpdXM6IDhweDsKICAgICAgZm9udC1zaXplOiAwLjg1cmVtOwogICAgICBmb250LXdlaWdodDogNzAwOwogICAgICBjdXJzb3I6IHBvaW50ZXI7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICAgIGdhcDogNnB4OwogICAgfQoKICAgIC50b2dnbGUtYnRuLmFjdGl2ZSB7CiAgICAgIGJhY2tncm91bmQ6ICNmNTllMGI7CiAgICAgIGNvbG9yOiAjMGYxNzJhOwogICAgICBib3JkZXItY29sb3I6ICNmYmJmMjQ7CiAgICB9CgogICAgLmJlc3QtdGltZSB7CiAgICAgIGZvbnQtc2l6ZTogMC44NXJlbTsKICAgICAgY29sb3I6IHZhcigtLXRleHQtbXV0ZWQpOwogICAgICBiYWNrZ3JvdW5kOiAjMGYxNzJhOwogICAgICBwYWRkaW5nOiA2cHggMTJweDsKICAgICAgYm9yZGVyLXJhZGl1czogNnB4OwogICAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXItY29sb3IpOwogICAgfQoKICAgIC5iZXN0LXRpbWUgc3BhbiB7CiAgICAgIGNvbG9yOiAjZjU5ZTBiOwogICAgICBmb250LXdlaWdodDogYm9sZDsKICAgIH0KCiAgICAvKiBNb2RhbCAqLwogICAgLm1vZGFsIHsKICAgICAgcG9zaXRpb246IGZpeGVkOwogICAgICBpbnNldDogMDsKICAgICAgYmFja2dyb3VuZDogcmdiYSgwLCAwLCAwLCAwLjgpOwogICAgICBiYWNrZHJvcC1maWx0ZXI6IGJsdXIoNXB4KTsKICAgICAgZGlzcGxheTogZmxleDsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICAgIHotaW5kZXg6IDEwMDA7CiAgICAgIG9wYWNpdHk6IDA7CiAgICAgIHBvaW50ZXItZXZlbnRzOiBub25lOwogICAgICB0cmFuc2l0aW9uOiBvcGFjaXR5IDAuMnMgZWFzZTsKICAgIH0KCiAgICAubW9kYWwub3BlbiB7CiAgICAgIG9wYWNpdHk6IDE7CiAgICAgIHBvaW50ZXItZXZlbnRzOiBhdXRvOwogICAgfQoKICAgIC5tb2RhbC1jYXJkIHsKICAgICAgYmFja2dyb3VuZDogdmFyKC0tY2FyZC1iZyk7CiAgICAgIGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWJvcmRlci1jb2xvcik7CiAgICAgIHBhZGRpbmc6IDI0cHg7CiAgICAgIGJvcmRlci1yYWRpdXM6IDE2cHg7CiAgICAgIHdpZHRoOiAzMjBweDsKICAgICAgYm94LXNoYWRvdzogMCAxMHB4IDQwcHggcmdiYSgwLDAsMCwwLjkpOwogICAgfQoKICAgIC5tb2RhbC1jYXJkIGgzIHsKICAgICAgY29sb3I6IHZhcigtLWFjY2VudC1jb2xvcik7CiAgICAgIG1hcmdpbi1ib3R0b206IDE2cHg7CiAgICAgIGZvbnQtc2l6ZTogMS4ycmVtOwogICAgfQoKICAgIC5pbnB1dC1ncm91cCB7CiAgICAgIG1hcmdpbi1ib3R0b206IDEycHg7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGp1c3RpZnktY29udGVudDogc3BhY2UtYmV0d2VlbjsKICAgICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgIH0KCiAgICAuaW5wdXQtZ3JvdXAgbGFiZWwgewogICAgICBmb250LXNpemU6IDAuOXJlbTsKICAgICAgY29sb3I6IHZhcigtLXRleHQtbXV0ZWQpOwogICAgfQoKICAgIC5pbnB1dC1ncm91cCBpbnB1dCB7CiAgICAgIHdpZHRoOiA4MHB4OwogICAgICBiYWNrZ3JvdW5kOiAjMGYxNzJhOwogICAgICBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXItY29sb3IpOwogICAgICBjb2xvcjogI2ZmZjsKICAgICAgcGFkZGluZzogNnB4OwogICAgICBib3JkZXItcmFkaXVzOiA2cHg7CiAgICAgIHRleHQtYWxpZ246IGNlbnRlcjsKICAgICAgZm9udC13ZWlnaHQ6IGJvbGQ7CiAgICB9CgogICAgLm1vZGFsLWJ0bi1ncm91cCB7CiAgICAgIGRpc3BsYXk6IGZsZXg7CiAgICAgIGdhcDogMTBweDsKICAgICAgbWFyZ2luLXRvcDogMjBweDsKICAgIH0KCiAgICAubW9kYWwtYnRuIHsKICAgICAgZmxleDogMTsKICAgICAgcGFkZGluZzogOHB4OwogICAgICBib3JkZXI6IG5vbmU7CiAgICAgIGJvcmRlci1yYWRpdXM6IDhweDsKICAgICAgZm9udC13ZWlnaHQ6IGJvbGQ7CiAgICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIH0KCiAgICAubW9kYWwtYnRuLWFwcGx5IHsKICAgICAgYmFja2dyb3VuZDogdmFyKC0tYWNjZW50LWNvbG9yKTsKICAgICAgY29sb3I6ICMwZjE3MmE7CiAgICB9CgogICAgLm1vZGFsLWJ0bi1jYW5jZWwgewogICAgICBiYWNrZ3JvdW5kOiB2YXIoLS1ib3JkZXItY29sb3IpOwogICAgICBjb2xvcjogI2ZmZjsKICAgIH0KICA8L3N0eWxlPgo8L2hlYWQ+Cjxib2R5PgoKICA8IS0tIFNjcmVlbiBGbGFzaCAmIFBhcnRpY2xlIENhbnZhcyAtLT4KICA8ZGl2IGNsYXNzPSJmbGFzaC1vdmVybGF5IiBpZD0iZmxhc2gtb3ZlcmxheSI+PC9kaXY+CiAgPGNhbnZhcyBpZD0iZngtY2FudmFzIj48L2NhbnZhcz4KCiAgPGRpdiBjbGFzcz0iZ2FtZS1jb250YWluZXIiIGlkPSJnYW1lLWNvbnRhaW5lciI+CiAgICA8IS0tIFRpdGxlIC0tPgogICAgPGRpdiBjbGFzcz0idGl0bGUiPgogICAgICA8c3Bhbj7wn5KlPC9zcGFuPiBNSU5FU1dFRVBFUiBFWFRSRU1FCiAgICA8L2Rpdj4KCiAgICA8IS0tIERpZmZpY3VsdHkgU2VsZWN0b3IgLS0+CiAgICA8ZGl2IGNsYXNzPSJkaWZmaWN1bHR5LWJhciI+CiAgICAgIDxidXR0b24gY2xhc3M9ImRpZmYtYnRuIGFjdGl2ZSIgZGF0YS1kaWZmPSJiZWdpbm5lciI+7LSI6riJICg5eDkpPC9idXR0b24+CiAgICAgIDxidXR0b24gY2xhc3M9ImRpZmYtYnRuIiBkYXRhLWRpZmY9ImludGVybWVkaWF0ZSI+7KSR6riJICgxNngxNik8L2J1dHRvbj4KICAgICAgPGJ1dHRvbiBjbGFzcz0iZGlmZi1idG4iIGRhdGEtZGlmZj0iZXhwZXJ0Ij7sg4HquIkgKDMweDE2KTwvYnV0dG9uPgogICAgICA8YnV0dG9uIGNsYXNzPSJkaWZmLWJ0biIgZGF0YS1kaWZmPSJjdXN0b20iPuyCrOyaqeyekCDsp4DsoJU8L2J1dHRvbj4KICAgIDwvZGl2PgoKICAgIDwhLS0gU3RhdHVzIEhlYWRlciAtLT4KICAgIDxkaXYgY2xhc3M9InN0YXR1cy1iYXIiPgogICAgICA8ZGl2IGNsYXNzPSJsY2QtZGlzcGxheSIgaWQ9Im1pbmUtY291bnRlciI+MDEwPC9kaXY+CiAgICAgIDxidXR0b24gY2xhc3M9ImZhY2UtYnRuIiBpZD0iYnRuLXJlc2V0IiB0aXRsZT0i7IOIIOqyjOyehCDsi5zsnpEiPvCfmIo8L2J1dHRvbj4KICAgICAgPGRpdiBjbGFzcz0ibGNkLWRpc3BsYXkiIGlkPSJ0aW1lciI+MDAwPC9kaXY+CiAgICA8L2Rpdj4KCiAgICA8IS0tIE1pbmVzd2VlcGVyIEJvYXJkIC0tPgogICAgPGRpdiBjbGFzcz0iYm9hcmQtd3JhcHBlciI+CiAgICAgIDxkaXYgY2xhc3M9ImJvYXJkIiBpZD0iYm9hcmQiPjwvZGl2PgogICAgPC9kaXY+CgogICAgPCEtLSBCb3R0b20gQ29udHJvbHMgLS0+CiAgICA8ZGl2IGNsYXNzPSJib3R0b20tYmFyIj4KICAgICAgPGJ1dHRvbiBjbGFzcz0idG9nZ2xlLWJ0biIgaWQ9ImJ0bi1mbGFnLW1vZGUiPgogICAgICAgIDxzcGFuPvCfmqk8L3NwYW4+IOq5g+uwnCDrqqjrk5w6IDxzdHJvbmcgaWQ9ImZsYWctbW9kZS1zdGF0dXMiPk9GRjwvc3Ryb25nPgogICAgICA8L2J1dHRvbj4KCiAgICAgIDxidXR0b24gY2xhc3M9InRvZ2dsZS1idG4iIGlkPSJidG4tc291bmQiPgogICAgICAgIDxzcGFuIGlkPSJzb3VuZC1pY29uIj7wn5SKPC9zcGFuPiDshozrpqwKICAgICAgPC9idXR0b24+CgogICAgICA8ZGl2IGNsYXNzPSJiZXN0LXRpbWUiPgogICAgICAgIPCfj4Yg7LWc6rOgIOq4sOuhnTogPHNwYW4gaWQ9ImJlc3QtdGltZS1kaXNwbGF5Ij4tPC9zcGFuPuy0iAogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogIDwvZGl2PgoKICA8IS0tIEN1c3RvbSBEaWZmaWN1bHR5IE1vZGFsIC0tPgogIDxkaXYgY2xhc3M9Im1vZGFsIiBpZD0iY3VzdG9tLW1vZGFsIj4KICAgIDxkaXYgY2xhc3M9Im1vZGFsLWNhcmQiPgogICAgICA8aDM+8J+boO+4jyDsgqzsmqnsnpAg7KeA7KCVIOyEpOyglTwvaDM+CiAgICAgIDxkaXYgY2xhc3M9ImlucHV0LWdyb3VwIj4KICAgICAgICA8bGFiZWwgZm9yPSJjdXN0b20tcm93cyI+7IS466GcIOy5uOyImCAoOH4zMCk6PC9sYWJlbD4KICAgICAgICA8aW5wdXQgdHlwZT0ibnVtYmVyIiBpZD0iY3VzdG9tLXJvd3MiIHZhbHVlPSIxMiIgbWluPSI4IiBtYXg9IjMwIj4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImlucHV0LWdyb3VwIj4KICAgICAgICA8bGFiZWwgZm9yPSJjdXN0b20tY29scyI+6rCA66GcIOy5uOyImCAoOH40MCk6PC9sYWJlbD4KICAgICAgICA8aW5wdXQgdHlwZT0ibnVtYmVyIiBpZD0iY3VzdG9tLWNvbHMiIHZhbHVlPSIxMiIgbWluPSI4IiBtYXg9IjQwIj4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImlucHV0LWdyb3VwIj4KICAgICAgICA8bGFiZWwgZm9yPSJjdXN0b20tbWluZXMiPuyngOuisCDsiJggKDF+MzAwKTo8L2xhYmVsPgogICAgICAgIDxpbnB1dCB0eXBlPSJudW1iZXIiIGlkPSJjdXN0b20tbWluZXMiIHZhbHVlPSIyMCIgbWluPSIxIiBtYXg9IjMwMCI+CiAgICAgIDwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJtb2RhbC1idG4tZ3JvdXAiPgogICAgICAgIDxidXR0b24gY2xhc3M9Im1vZGFsLWJ0biBtb2RhbC1idG4tY2FuY2VsIiBpZD0iYnRuLWN1c3RvbS1jYW5jZWwiPuy3qOyGjDwvYnV0dG9uPgogICAgICAgIDxidXR0b24gY2xhc3M9Im1vZGFsLWJ0biBtb2RhbC1idG4tYXBwbHkiIGlkPSJidG4tY3VzdG9tLWFwcGx5Ij7soIHsmqk8L2J1dHRvbj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KICA8L2Rpdj4KCiAgPHNjcmlwdD4KICAgIC8qID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgICAgMS4gQ0FOVkFTIFBBUlRJQ0xFICYgRVhQTE9TSU9OIEZYIEVOR0lORQogICAgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICovCiAgICBjb25zdCBjYW52YXMgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZngtY2FudmFzJyk7CiAgICBjb25zdCBjdHggPSBjYW52YXMuZ2V0Q29udGV4dCgnMmQnKTsKICAgIGxldCBwYXJ0aWNsZXMgPSBbXTsKICAgIGxldCBzaG9ja3dhdmVzID0gW107CgogICAgZnVuY3Rpb24gcmVzaXplQ2FudmFzKCkgewogICAgICBjYW52YXMud2lkdGggPSB3aW5kb3cuaW5uZXJXaWR0aDsKICAgICAgY2FudmFzLmhlaWdodCA9IHdpbmRvdy5pbm5lckhlaWdodDsKICAgIH0KICAgIHdpbmRvdy5hZGRFdmVudExpc3RlbmVyKCdyZXNpemUnLCByZXNpemVDYW52YXMpOwogICAgcmVzaXplQ2FudmFzKCk7CgogICAgY2xhc3MgUGFydGljbGUgewogICAgICBjb25zdHJ1Y3Rvcih4LCB5LCBpc0JpZyA9IGZhbHNlKSB7CiAgICAgICAgdGhpcy54ID0geDsKICAgICAgICB0aGlzLnkgPSB5OwogICAgICAgIGNvbnN0IHNwZWVkTXVsdGlwbGllciA9IGlzQmlnID8gMTggOiAxMDsKICAgICAgICB0aGlzLnZ4ID0gKE1hdGgucmFuZG9tKCkgLSAwLjUpICogKE1hdGgucmFuZG9tKCkgKiBzcGVlZE11bHRpcGxpZXIgKyA0KTsKICAgICAgICB0aGlzLnZ5ID0gKE1hdGgucmFuZG9tKCkgLSAwLjUpICogKE1hdGgucmFuZG9tKCkgKiBzcGVlZE11bHRpcGxpZXIgKyA0KSAtIChpc0JpZyA/IDQgOiAyKTsKICAgICAgICB0aGlzLnNpemUgPSBNYXRoLnJhbmRvbSgpICogKGlzQmlnID8gMTIgOiA2KSArIDM7CgogICAgICAgIGNvbnN0IGNvbG9ycyA9IFsnI2VmNDQ0NCcsICcjZjk3MzE2JywgJyNmYWNjMTUnLCAnI2Y4NzE3MScsICcjMzM0MTU1JywgJyMxZTI5M2InLCAnI2ZmZmZmZiddOwogICAgICAgIHRoaXMuY29sb3IgPSBjb2xvcnNbTWF0aC5mbG9vcihNYXRoLnJhbmRvbSgpICogY29sb3JzLmxlbmd0aCldOwoKICAgICAgICB0aGlzLmxpZmUgPSAxLjA7CiAgICAgICAgdGhpcy5kZWNheSA9IE1hdGgucmFuZG9tKCkgKiAwLjAyICsgMC4wMTU7CiAgICAgICAgdGhpcy5ncmF2aXR5ID0gMC4yMjsKICAgICAgICB0aGlzLnJvdGF0aW9uID0gTWF0aC5yYW5kb20oKSAqIE1hdGguUEkgKiAyOwogICAgICAgIHRoaXMudlJvdCA9IChNYXRoLnJhbmRvbSgpIC0gMC41KSAqIDAuMzsKICAgICAgfQoKICAgICAgdXBkYXRlKCkgewogICAgICAgIHRoaXMueCArPSB0aGlzLnZ4OwogICAgICAgIHRoaXMueSArPSB0aGlzLnZ5OwogICAgICAgIHRoaXMudnkgKz0gdGhpcy5ncmF2aXR5OwogICAgICAgIHRoaXMubGlmZSAtPSB0aGlzLmRlY2F5OwogICAgICAgIHRoaXMucm90YXRpb24gKz0gdGhpcy52Um90OwogICAgICB9CgogICAgICBkcmF3KGN0eCkgewogICAgICAgIGlmICh0aGlzLmxpZmUgPD0gMCkgcmV0dXJuOwogICAgICAgIGN0eC5zYXZlKCk7CiAgICAgICAgY3R4Lmdsb2JhbEFscGhhID0gTWF0aC5tYXgoMCwgdGhpcy5saWZlKTsKICAgICAgICBjdHgudHJhbnNsYXRlKHRoaXMueCwgdGhpcy55KTsKICAgICAgICBjdHgucm90YXRlKHRoaXMucm90YXRpb24pOwogICAgICAgIGN0eC5maWxsU3R5bGUgPSB0aGlzLmNvbG9yOwogICAgICAgIGN0eC5maWxsUmVjdCgtdGhpcy5zaXplLzIsIC10aGlzLnNpemUvMiwgdGhpcy5zaXplLCB0aGlzLnNpemUpOwogICAgICAgIGN0eC5yZXN0b3JlKCk7CiAgICAgIH0KICAgIH0KCiAgICBjbGFzcyBTaG9ja3dhdmUgewogICAgICBjb25zdHJ1Y3Rvcih4LCB5LCBtYXhSID0gMTIwKSB7CiAgICAgICAgdGhpcy54ID0geDsKICAgICAgICB0aGlzLnkgPSB5OwogICAgICAgIHRoaXMucmFkaXVzID0gNDsKICAgICAgICB0aGlzLm1heFJhZGl1cyA9IG1heFI7CiAgICAgICAgdGhpcy5saWZlID0gMS4wOwogICAgICAgIHRoaXMuc3BlZWQgPSBNYXRoLnJhbmRvbSgpICogOCArIDEwOwogICAgICB9CgogICAgICB1cGRhdGUoKSB7CiAgICAgICAgdGhpcy5yYWRpdXMgKz0gdGhpcy5zcGVlZDsKICAgICAgICB0aGlzLmxpZmUgPSAxIC0gKHRoaXMucmFkaXVzIC8gdGhpcy5tYXhSYWRpdXMpOwogICAgICB9CgogICAgICBkcmF3KGN0eCkgewogICAgICAgIGlmICh0aGlzLmxpZmUgPD0gMCkgcmV0dXJuOwogICAgICAgIGN0eC5zYXZlKCk7CiAgICAgICAgY3R4LmJlZ2luUGF0aCgpOwogICAgICAgIGN0eC5hcmModGhpcy54LCB0aGlzLnksIHRoaXMucmFkaXVzLCAwLCBNYXRoLlBJICogMik7CiAgICAgICAgY3R4LnN0cm9rZVN0eWxlID0gYHJnYmEoMjQ5LCAxMTUsIDIyLCAke01hdGgubWF4KDAsIHRoaXMubGlmZSl9KWA7CiAgICAgICAgY3R4LmxpbmVXaWR0aCA9IDUgKiB0aGlzLmxpZmU7CiAgICAgICAgY3R4LnN0cm9rZSgpOwogICAgICAgIGN0eC5yZXN0b3JlKCk7CiAgICAgIH0KICAgIH0KCiAgICBmdW5jdGlvbiBjcmVhdGVFeHBsb3Npb24oeCwgeSwgY291bnQgPSA1MCwgaXNCaWcgPSBmYWxzZSkgewogICAgICBzaG9ja3dhdmVzLnB1c2gobmV3IFNob2Nrd2F2ZSh4LCB5LCBpc0JpZyA/IDI1MCA6IDgwKSk7CiAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgY291bnQ7IGkrKykgewogICAgICAgIHBhcnRpY2xlcy5wdXNoKG5ldyBQYXJ0aWNsZSh4LCB5LCBpc0JpZykpOwogICAgICB9CiAgICB9CgogICAgZnVuY3Rpb24gYW5pbWF0ZUZYKCkgewogICAgICBjdHguY2xlYXJSZWN0KDAsIDAsIGNhbnZhcy53aWR0aCwgY2FudmFzLmhlaWdodCk7CgogICAgICBmb3IgKGxldCBpID0gc2hvY2t3YXZlcy5sZW5ndGggLSAxOyBpID49IDA7IGktLSkgewogICAgICAgIHNob2Nrd2F2ZXNbaV0udXBkYXRlKCk7CiAgICAgICAgc2hvY2t3YXZlc1tpXS5kcmF3KGN0eCk7CiAgICAgICAgaWYgKHNob2Nrd2F2ZXNbaV0ubGlmZSA8PSAwKSBzaG9ja3dhdmVzLnNwbGljZShpLCAxKTsKICAgICAgfQoKICAgICAgZm9yIChsZXQgaSA9IHBhcnRpY2xlcy5sZW5ndGggLSAxOyBpID49IDA7IGktLSkgewogICAgICAgIHBhcnRpY2xlc1tpXS51cGRhdGUoKTsKICAgICAgICBwYXJ0aWNsZXNbaV0uZHJhdyhjdHgpOwogICAgICAgIGlmIChwYXJ0aWNsZXNbaV0ubGlmZSA8PSAwKSBwYXJ0aWNsZXMuc3BsaWNlKGksIDEpOwogICAgICB9CgogICAgICByZXF1ZXN0QW5pbWF0aW9uRnJhbWUoYW5pbWF0ZUZYKTsKICAgIH0KICAgIGFuaW1hdGVGWCgpOwoKCiAgICAvKiA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICAgIDIuIFNZTlRIRVNJWkVEIEFVRElPIEVOR0lORSAoV0VCIEFVRElPIEFQSSkKICAgID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAqLwogICAgY29uc3QgYXVkaW9DdHggPSBuZXcgKHdpbmRvdy5BdWRpb0NvbnRleHQgfHwgd2luZG93LndlYmtpdEF1ZGlvQ29udGV4dCkoKTsKICAgIGxldCBzb3VuZEVuYWJsZWQgPSB0cnVlOwoKICAgIGZ1bmN0aW9uIHBsYXlTb3VuZCh0eXBlKSB7CiAgICAgIGlmICghc291bmRFbmFibGVkKSByZXR1cm47CiAgICAgIGlmIChhdWRpb0N0eC5zdGF0ZSA9PT0gJ3N1c3BlbmRlZCcpIGF1ZGlvQ3R4LnJlc3VtZSgpOwoKICAgICAgY29uc3Qgbm93ID0gYXVkaW9DdHguY3VycmVudFRpbWU7CgogICAgICBpZiAodHlwZSA9PT0gJ2NsaWNrJykgewogICAgICAgIGNvbnN0IG9zYyA9IGF1ZGlvQ3R4LmNyZWF0ZU9zY2lsbGF0b3IoKTsKICAgICAgICBjb25zdCBnYWluID0gYXVkaW9DdHguY3JlYXRlR2FpbigpOwogICAgICAgIG9zYy5jb25uZWN0KGdhaW4pOyBnYWluLmNvbm5lY3QoYXVkaW9DdHguZGVzdGluYXRpb24pOwogICAgICAgIG9zYy50eXBlID0gJ3NpbmUnOwogICAgICAgIG9zYy5mcmVxdWVuY3kuc2V0VmFsdWVBdFRpbWUoNDUwLCBub3cpOwogICAgICAgIG9zYy5mcmVxdWVuY3kuZXhwb25lbnRpYWxSYW1wVG9WYWx1ZUF0VGltZSgxMjAsIG5vdyArIDAuMDQpOwogICAgICAgIGdhaW4uZ2Fpbi5zZXRWYWx1ZUF0VGltZSgwLjE1LCBub3cpOwogICAgICAgIGdhaW4uZ2Fpbi5leHBvbmVudGlhbFJhbXBUb1ZhbHVlQXRUaW1lKDAuMDEsIG5vdyArIDAuMDQpOwogICAgICAgIG9zYy5zdGFydChub3cpOyBvc2Muc3RvcChub3cgKyAwLjA0KTsKICAgICAgfQogICAgICBlbHNlIGlmICh0eXBlID09PSAnZmxhZycpIHsKICAgICAgICBjb25zdCBvc2MgPSBhdWRpb0N0eC5jcmVhdGVPc2NpbGxhdG9yKCk7CiAgICAgICAgY29uc3QgZ2FpbiA9IGF1ZGlvQ3R4LmNyZWF0ZUdhaW4oKTsKICAgICAgICBvc2MuY29ubmVjdChnYWluKTsgZ2Fpbi5jb25uZWN0KGF1ZGlvQ3R4LmRlc3RpbmF0aW9uKTsKICAgICAgICBvc2MudHlwZSA9ICd0cmlhbmdsZSc7CiAgICAgICAgb3NjLmZyZXF1ZW5jeS5zZXRWYWx1ZUF0VGltZSg1NTAsIG5vdyk7CiAgICAgICAgb3NjLmZyZXF1ZW5jeS5zZXRWYWx1ZUF0VGltZSg4NTAsIG5vdyArIDAuMDMpOwogICAgICAgIGdhaW4uZ2Fpbi5zZXRWYWx1ZUF0VGltZSgwLjE1LCBub3cpOwogICAgICAgIGdhaW4uZ2Fpbi5leHBvbmVudGlhbFJhbXBUb1ZhbHVlQXRUaW1lKDAuMDEsIG5vdyArIDAuMDYpOwogICAgICAgIG9zYy5zdGFydChub3cpOyBvc2Muc3RvcChub3cgKyAwLjA2KTsKICAgICAgfQogICAgICBlbHNlIGlmICh0eXBlID09PSAndW5mbGFnJykgewogICAgICAgIGNvbnN0IG9zYyA9IGF1ZGlvQ3R4LmNyZWF0ZU9zY2lsbGF0b3IoKTsKICAgICAgICBjb25zdCBnYWluID0gYXVkaW9DdHguY3JlYXRlR2FpbigpOwogICAgICAgIG9zYy5jb25uZWN0KGdhaW4pOyBnYWluLmNvbm5lY3QoYXVkaW9DdHguZGVzdGluYXRpb24pOwogICAgICAgIG9zYy50eXBlID0gJ3RyaWFuZ2xlJzsKICAgICAgICBvc2MuZnJlcXVlbmN5LnNldFZhbHVlQXRUaW1lKDc1MCwgbm93KTsKICAgICAgICBvc2MuZnJlcXVlbmN5LnNldFZhbHVlQXRUaW1lKDQ1MCwgbm93ICsgMC4wMyk7CiAgICAgICAgZ2Fpbi5nYWluLnNldFZhbHVlQXRUaW1lKDAuMTUsIG5vdyk7CiAgICAgICAgZ2Fpbi5nYWluLmV4cG9uZW50aWFsUmFtcFRvVmFsdWVBdFRpbWUoMC4wMSwgbm93ICsgMC4wNik7CiAgICAgICAgb3NjLnN0YXJ0KG5vdyk7IG9zYy5zdG9wKG5vdyArIDAuMDYpOwogICAgICB9CiAgICAgIGVsc2UgaWYgKHR5cGUgPT09ICdwb3AnKSB7CiAgICAgICAgLy8gTWluaSBleHBsb3Npb24gcG9wIHNvdW5kCiAgICAgICAgY29uc3Qgb3NjID0gYXVkaW9DdHguY3JlYXRlT3NjaWxsYXRvcigpOwogICAgICAgIGNvbnN0IGdhaW4gPSBhdWRpb0N0eC5jcmVhdGVHYWluKCk7CiAgICAgICAgb3NjLmNvbm5lY3QoZ2Fpbik7IGdhaW4uY29ubmVjdChhdWRpb0N0eC5kZXN0aW5hdGlvbik7CiAgICAgICAgb3NjLnR5cGUgPSAnc2F3dG9vdGgnOwogICAgICAgIG9zYy5mcmVxdWVuY3kuc2V0VmFsdWVBdFRpbWUoMjAwLCBub3cpOwogICAgICAgIG9zYy5mcmVxdWVuY3kuZXhwb25lbnRpYWxSYW1wVG9WYWx1ZUF0VGltZSgzMCwgbm93ICsgMC4wOCk7CiAgICAgICAgZ2Fpbi5nYWluLnNldFZhbHVlQXRUaW1lKDAuMiwgbm93KTsKICAgICAgICBnYWluLmdhaW4uZXhwb25lbnRpYWxSYW1wVG9WYWx1ZUF0VGltZSgwLjAxLCBub3cgKyAwLjA4KTsKICAgICAgICBvc2Muc3RhcnQobm93KTsgb3NjLnN0b3Aobm93ICsgMC4wOCk7CiAgICAgIH0KICAgICAgZWxzZSBpZiAodHlwZSA9PT0gJ2V4cGxvZGUnKSB7CiAgICAgICAgLy8gRGVlcCBzdWItYmFzcyBkcm9wICsgaGVhdnkgbm9pc2UgYnVyc3QKICAgICAgICBjb25zdCBidWZmZXJTaXplID0gYXVkaW9DdHguc2FtcGxlUmF0ZSAqIDAuODsKICAgICAgICBjb25zdCBidWZmZXIgPSBhdWRpb0N0eC5jcmVhdGVCdWZmZXIoMSwgYnVmZmVyU2l6ZSwgYXVkaW9DdHguc2FtcGxlUmF0ZSk7CiAgICAgICAgY29uc3QgZGF0YSA9IGJ1ZmZlci5nZXRDaGFubmVsRGF0YSgwKTsKICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGJ1ZmZlclNpemU7IGkrKykgewogICAgICAgICAgZGF0YVtpXSA9IE1hdGgucmFuZG9tKCkgKiAyIC0gMTsKICAgICAgICB9CiAgICAgICAgY29uc3Qgbm9pc2UgPSBhdWRpb0N0eC5jcmVhdGVCdWZmZXJTb3VyY2UoKTsKICAgICAgICBub2lzZS5idWZmZXIgPSBidWZmZXI7CgogICAgICAgIGNvbnN0IGZpbHRlciA9IGF1ZGlvQ3R4LmNyZWF0ZUJpcXVhZEZpbHRlcigpOwogICAgICAgIGZpbHRlci50eXBlID0gJ2xvd3Bhc3MnOwogICAgICAgIGZpbHRlci5mcmVxdWVuY3kuc2V0VmFsdWVBdFRpbWUoMTAwMCwgbm93KTsKICAgICAgICBmaWx0ZXIuZnJlcXVlbmN5LmV4cG9uZW50aWFsUmFtcFRvVmFsdWVBdFRpbWUoNDAsIG5vdyArIDAuNyk7CgogICAgICAgIGNvbnN0IG5vaXNlR2FpbiA9IGF1ZGlvQ3R4LmNyZWF0ZUdhaW4oKTsKICAgICAgICBub2lzZUdhaW4uZ2Fpbi5zZXRWYWx1ZUF0VGltZSgwLjYsIG5vdyk7CiAgICAgICAgbm9pc2VHYWluLmdhaW4uZXhwb25lbnRpYWxSYW1wVG9WYWx1ZUF0VGltZSgwLjAxLCBub3cgKyAwLjcpOwoKICAgICAgICBub2lzZS5jb25uZWN0KGZpbHRlcik7CiAgICAgICAgZmlsdGVyLmNvbm5lY3Qobm9pc2VHYWluKTsKICAgICAgICBub2lzZUdhaW4uY29ubmVjdChhdWRpb0N0eC5kZXN0aW5hdGlvbik7CiAgICAgICAgbm9pc2Uuc3RhcnQobm93KTsKCiAgICAgICAgLy8gU3ViIGJhc3Mgb3NjaWxsYXRvcgogICAgICAgIGNvbnN0IHN1Yk9zYyA9IGF1ZGlvQ3R4LmNyZWF0ZU9zY2lsbGF0b3IoKTsKICAgICAgICBjb25zdCBzdWJHYWluID0gYXVkaW9DdHguY3JlYXRlR2FpbigpOwogICAgICAgIHN1Yk9zYy50eXBlID0gJ3NpbmUnOwogICAgICAgIHN1Yk9zYy5mcmVxdWVuY3kuc2V0VmFsdWVBdFRpbWUoMTIwLCBub3cpOwogICAgICAgIHN1Yk9zYy5mcmVxdWVuY3kuZXhwb25lbnRpYWxSYW1wVG9WYWx1ZUF0VGltZSgyNSwgbm93ICsgMC42KTsKICAgICAgICBzdWJHYWluLmdhaW4uc2V0VmFsdWVBdFRpbWUoMC41LCBub3cpOwogICAgICAgIHN1YkdhaW4uZ2Fpbi5leHBvbmVudGlhbFJhbXBUb1ZhbHVlQXRUaW1lKDAuMDEsIG5vdyArIDAuNik7CiAgICAgICAgc3ViT3NjLmNvbm5lY3Qoc3ViR2Fpbik7CiAgICAgICAgc3ViR2Fpbi5jb25uZWN0KGF1ZGlvQ3R4LmRlc3RpbmF0aW9uKTsKICAgICAgICBzdWJPc2Muc3RhcnQobm93KTsgc3ViT3NjLnN0b3Aobm93ICsgMC42KTsKICAgICAgfQogICAgICBlbHNlIGlmICh0eXBlID09PSAnd2luJykgewogICAgICAgIGNvbnN0IG5vdGVzID0gWzUyMy4yNSwgNjU5LjI1LCA3ODMuOTksIDEwNDYuNTBdOwogICAgICAgIG5vdGVzLmZvckVhY2goKGZyZXEsIGlkeCkgPT4gewogICAgICAgICAgY29uc3Qgbm90ZU9zYyA9IGF1ZGlvQ3R4LmNyZWF0ZU9zY2lsbGF0b3IoKTsKICAgICAgICAgIGNvbnN0IG5vdGVHYWluID0gYXVkaW9DdHguY3JlYXRlR2FpbigpOwogICAgICAgICAgbm90ZU9zYy50eXBlID0gJ3RyaWFuZ2xlJzsKICAgICAgICAgIG5vdGVPc2MuZnJlcXVlbmN5LnNldFZhbHVlQXRUaW1lKGZyZXEsIG5vdyArIGlkeCAqIDAuMDgpOwogICAgICAgICAgbm90ZUdhaW4uZ2Fpbi5zZXRWYWx1ZUF0VGltZSgwLjIsIG5vdyArIGlkeCAqIDAuMDgpOwogICAgICAgICAgbm90ZUdhaW4uZ2Fpbi5leHBvbmVudGlhbFJhbXBUb1ZhbHVlQXRUaW1lKDAuMDEsIG5vdyArIGlkeCAqIDAuMDggKyAwLjI1KTsKICAgICAgICAgIG5vdGVPc2MuY29ubmVjdChub3RlR2Fpbik7CiAgICAgICAgICBub3RlR2Fpbi5jb25uZWN0KGF1ZGlvQ3R4LmRlc3RpbmF0aW9uKTsKICAgICAgICAgIG5vdGVPc2Muc3RhcnQobm93ICsgaWR4ICogMC4wOCk7CiAgICAgICAgICBub3RlT3NjLnN0b3Aobm93ICsgaWR4ICogMC4wOCArIDAuMjUpOwogICAgICAgIH0pOwogICAgICB9CiAgICB9CgoKICAgIC8qID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQogICAgICAgMy4gTUlORVNXRUVQRVIgTE9HSUMKICAgID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSAqLwogICAgY29uc3QgUFJFU0VUUyA9IHsKICAgICAgYmVnaW5uZXI6IHsgcm93czogOSwgY29sczogOSwgbWluZXM6IDEwIH0sCiAgICAgIGludGVybWVkaWF0ZTogeyByb3dzOiAxNiwgY29sczogMTYsIG1pbmVzOiA0MCB9LAogICAgICBleHBlcnQ6IHsgcm93czogMTYsIGNvbHM6IDMwLCBtaW5lczogOTkgfQogICAgfTsKCiAgICBsZXQgY3VycmVudERpZmYgPSAnYmVnaW5uZXInOwogICAgbGV0IGNvbmZpZyA9IHsgLi4uUFJFU0VUUy5iZWdpbm5lciB9OwogICAgbGV0IGJvYXJkU3RhdGUgPSBbXTsKICAgIGxldCBnYW1lU3RhdGUgPSAnUkVBRFknOwogICAgbGV0IGZsYWdzQ291bnQgPSAwOwogICAgbGV0IHJldmVhbGVkQ291bnQgPSAwOwogICAgbGV0IHRpbWVFbGFwc2VkID0gMDsKICAgIGxldCB0aW1lckludGVydmFsID0gbnVsbDsKICAgIGxldCBpc01vYmlsZUZsYWdNb2RlID0gZmFsc2U7CgogICAgLy8gRE9NIEVsZW1lbnRzCiAgICBjb25zdCBib2FyZEVsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2JvYXJkJyk7CiAgICBjb25zdCBtaW5lQ291bnRlckVsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ21pbmUtY291bnRlcicpOwogICAgY29uc3QgdGltZXJFbCA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCd0aW1lcicpOwogICAgY29uc3QgYnRuUmVzZXQgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYnRuLXJlc2V0Jyk7CiAgICBjb25zdCBidG5GbGFnTW9kZSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdidG4tZmxhZy1tb2RlJyk7CiAgICBjb25zdCBmbGFnTW9kZVN0YXR1cyA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdmbGFnLW1vZGUtc3RhdHVzJyk7CiAgICBjb25zdCBiZXN0VGltZURpc3BsYXkgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYmVzdC10aW1lLWRpc3BsYXknKTsKICAgIGNvbnN0IGJ0blNvdW5kID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2J0bi1zb3VuZCcpOwogICAgY29uc3Qgc291bmRJY29uID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3NvdW5kLWljb24nKTsKICAgIGNvbnN0IGdhbWVDb250YWluZXIgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZ2FtZS1jb250YWluZXInKTsKICAgIGNvbnN0IGZsYXNoT3ZlcmxheSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdmbGFzaC1vdmVybGF5Jyk7CgogICAgY29uc3QgY3VzdG9tTW9kYWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY3VzdG9tLW1vZGFsJyk7CiAgICBjb25zdCBidG5DdXN0b21BcHBseSA9IGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdidG4tY3VzdG9tLWFwcGx5Jyk7CiAgICBjb25zdCBidG5DdXN0b21DYW5jZWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnYnRuLWN1c3RvbS1jYW5jZWwnKTsKCiAgICBmdW5jdGlvbiBpbml0R2FtZSgpIHsKICAgICAgY2xlYXJJbnRlcnZhbCh0aW1lckludGVydmFsKTsKICAgICAgdGltZXJJbnRlcnZhbCA9IG51bGw7CiAgICAgIHRpbWVFbGFwc2VkID0gMDsKICAgICAgZ2FtZVN0YXRlID0gJ1JFQURZJzsKICAgICAgZmxhZ3NDb3VudCA9IDA7CiAgICAgIHJldmVhbGVkQ291bnQgPSAwOwoKICAgICAgZ2FtZUNvbnRhaW5lci5jbGFzc0xpc3QucmVtb3ZlKCdleHBsb2RlZCcpOwogICAgICB1cGRhdGVMQ0QodGltZXJFbCwgMCk7CiAgICAgIHVwZGF0ZUxDRChtaW5lQ291bnRlckVsLCBjb25maWcubWluZXMpOwogICAgICBidG5SZXNldC5pbm5lclRleHQgPSAn8J+Yiic7CgogICAgICBib2FyZFN0YXRlID0gW107CiAgICAgIGJvYXJkRWwuaW5uZXJIVE1MID0gJyc7CiAgICAgIGJvYXJkRWwuc3R5bGUuZ3JpZFRlbXBsYXRlQ29sdW1ucyA9IGByZXBlYXQoJHtjb25maWcuY29sc30sIDMycHgpYDsKCiAgICAgIGZvciAobGV0IHIgPSAwOyByIDwgY29uZmlnLnJvd3M7IHIrKykgewogICAgICAgIGNvbnN0IHJvdyA9IFtdOwogICAgICAgIGZvciAobGV0IGMgPSAwOyBjIDwgY29uZmlnLmNvbHM7IGMrKykgewogICAgICAgICAgY29uc3QgY2VsbE9iaiA9IHsKICAgICAgICAgICAgcm93OiByLCBjb2w6IGMsCiAgICAgICAgICAgIGlzTWluZTogZmFsc2UsIGlzT3BlbmVkOiBmYWxzZSwgaXNGbGFnZ2VkOiBmYWxzZSwKICAgICAgICAgICAgbmVpZ2hib3JNaW5lczogMCwgZWw6IG51bGwKICAgICAgICAgIH07CgogICAgICAgICAgY29uc3QgZWwgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTsKICAgICAgICAgIGVsLmNsYXNzTGlzdC5hZGQoJ2NlbGwnKTsKICAgICAgICAgIGVsLmRhdGFzZXQucm93ID0gcjsKICAgICAgICAgIGVsLmRhdGFzZXQuY29sID0gYzsKCiAgICAgICAgICBlbC5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsIChlKSA9PiBoYW5kbGVDZWxsQ2xpY2sociwgYywgZSkpOwogICAgICAgICAgZWwuYWRkRXZlbnRMaXN0ZW5lcignY29udGV4dG1lbnUnLCAoZSkgPT4gewogICAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7CiAgICAgICAgICAgIGhhbmRsZVJpZ2h0Q2xpY2sociwgYyk7CiAgICAgICAgICB9KTsKICAgICAgICAgIGVsLmFkZEV2ZW50TGlzdGVuZXIoJ2RibGNsaWNrJywgKCkgPT4gaGFuZGxlQ2hvcmQociwgYykpOwoKICAgICAgICAgIGNlbGxPYmouZWwgPSBlbDsKICAgICAgICAgIHJvdy5wdXNoKGNlbGxPYmopOwogICAgICAgICAgYm9hcmRFbC5hcHBlbmRDaGlsZChlbCk7CiAgICAgICAgfQogICAgICAgIGJvYXJkU3RhdGUucHVzaChyb3cpOwogICAgICB9CgogICAgICBsb2FkQmVzdFRpbWUoKTsKICAgIH0KCiAgICBmdW5jdGlvbiB1cGRhdGVMQ0QoZWxlbWVudCwgdmFsKSB7CiAgICAgIGxldCBjbGFtcGVkID0gTWF0aC5tYXgoLTk5LCBNYXRoLm1pbig5OTksIHZhbCkpOwogICAgICBpZiAoY2xhbXBlZCA+PSAwKSB7CiAgICAgICAgZWxlbWVudC5pbm5lclRleHQgPSBTdHJpbmcoY2xhbXBlZCkucGFkU3RhcnQoMywgJzAnKTsKICAgICAgfSBlbHNlIHsKICAgICAgICBlbGVtZW50LmlubmVyVGV4dCA9ICctJyArIFN0cmluZyhNYXRoLmFicyhjbGFtcGVkKSkucGFkU3RhcnQoMiwgJzAnKTsKICAgICAgfQogICAgfQoKICAgIGZ1bmN0aW9uIGdlbmVyYXRlTWluZXMoc3RhcnRSLCBzdGFydEMpIHsKICAgICAgbGV0IHBsYWNlZCA9IDA7CiAgICAgIGNvbnN0IHNhZmVab25lID0gbmV3IFNldCgpOwoKICAgICAgZm9yIChsZXQgZHIgPSAtMTsgZHIgPD0gMTsgZHIrKykgewogICAgICAgIGZvciAobGV0IGRjID0gLTE7IGRjIDw9IDE7IGRjKyspIHsKICAgICAgICAgIGNvbnN0IG5yID0gc3RhcnRSICsgZHI7CiAgICAgICAgICBjb25zdCBuYyA9IHN0YXJ0QyArIGRjOwogICAgICAgICAgaWYgKG5yID49IDAgJiYgbnIgPCBjb25maWcucm93cyAmJiBuYyA+PSAwICYmIG5jIDwgY29uZmlnLmNvbHMpIHsKICAgICAgICAgICAgc2FmZVpvbmUuYWRkKGAke25yfSwke25jfWApOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQoKICAgICAgd2hpbGUgKHBsYWNlZCA8IGNvbmZpZy5taW5lcykgewogICAgICAgIGNvbnN0IHIgPSBNYXRoLmZsb29yKE1hdGgucmFuZG9tKCkgKiBjb25maWcucm93cyk7CiAgICAgICAgY29uc3QgYyA9IE1hdGguZmxvb3IoTWF0aC5yYW5kb20oKSAqIGNvbmZpZy5jb2xzKTsKICAgICAgICBjb25zdCBrZXkgPSBgJHtyfSwke2N9YDsKCiAgICAgICAgaWYgKCFzYWZlWm9uZS5oYXMoa2V5KSAmJiAhYm9hcmRTdGF0ZVtyXVtjXS5pc01pbmUpIHsKICAgICAgICAgIGJvYXJkU3RhdGVbcl1bY10uaXNNaW5lID0gdHJ1ZTsKICAgICAgICAgIHBsYWNlZCsrOwogICAgICAgIH0KICAgICAgfQoKICAgICAgZm9yIChsZXQgciA9IDA7IHIgPCBjb25maWcucm93czsgcisrKSB7CiAgICAgICAgZm9yIChsZXQgYyA9IDA7IGMgPCBjb25maWcuY29sczsgYysrKSB7CiAgICAgICAgICBpZiAoYm9hcmRTdGF0ZVtyXVtjXS5pc01pbmUpIGNvbnRpbnVlOwogICAgICAgICAgbGV0IGNvdW50ID0gMDsKICAgICAgICAgIGdldE5laWdoYm9ycyhyLCBjKS5mb3JFYWNoKG4gPT4gewogICAgICAgICAgICBpZiAobi5pc01pbmUpIGNvdW50Kys7CiAgICAgICAgICB9KTsKICAgICAgICAgIGJvYXJkU3RhdGVbcl1bY10ubmVpZ2hib3JNaW5lcyA9IGNvdW50OwogICAgICAgIH0KICAgICAgfQogICAgfQoKICAgIGZ1bmN0aW9uIGdldE5laWdoYm9ycyhyLCBjKSB7CiAgICAgIGNvbnN0IG5laWdoYm9ycyA9IFtdOwogICAgICBmb3IgKGxldCBkciA9IC0xOyBkciA8PSAxOyBkcisrKSB7CiAgICAgICAgZm9yIChsZXQgZGMgPSAtMTsgZGMgPD0gMTsgZGMrKykgewogICAgICAgICAgaWYgKGRyID09PSAwICYmIGRjID09PSAwKSBjb250aW51ZTsKICAgICAgICAgIGNvbnN0IG5yID0gciArIGRyOwogICAgICAgICAgY29uc3QgbmMgPSBjICsgZGM7CiAgICAgICAgICBpZiAobnIgPj0gMCAmJiBuciA8IGNvbmZpZy5yb3dzICYmIG5jID49IDAgJiYgbmMgPCBjb25maWcuY29scykgewogICAgICAgICAgICBuZWlnaGJvcnMucHVzaChib2FyZFN0YXRlW25yXVtuY10pOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgfQogICAgICByZXR1cm4gbmVpZ2hib3JzOwogICAgfQoKICAgIGZ1bmN0aW9uIHN0YXJ0VGltZXIoKSB7CiAgICAgIGlmICh0aW1lckludGVydmFsKSByZXR1cm47CiAgICAgIHRpbWVySW50ZXJ2YWwgPSBzZXRJbnRlcnZhbCgoKSA9PiB7CiAgICAgICAgdGltZUVsYXBzZWQrKzsKICAgICAgICB1cGRhdGVMQ0QodGltZXJFbCwgdGltZUVsYXBzZWQpOwogICAgICAgIGlmICh0aW1lRWxhcHNlZCA+PSA5OTkpIGNsZWFySW50ZXJ2YWwodGltZXJJbnRlcnZhbCk7CiAgICAgIH0sIDEwMDApOwogICAgfQoKICAgIGZ1bmN0aW9uIGhhbmRsZUNlbGxDbGljayhyLCBjLCBldmVudCkgewogICAgICBpZiAoZ2FtZVN0YXRlID09PSAnV09OJyB8fCBnYW1lU3RhdGUgPT09ICdHQU1FT1ZFUicpIHJldHVybjsKCiAgICAgIGlmIChpc01vYmlsZUZsYWdNb2RlKSB7CiAgICAgICAgaGFuZGxlUmlnaHRDbGljayhyLCBjKTsKICAgICAgICByZXR1cm47CiAgICAgIH0KCiAgICAgIGNvbnN0IGNlbGwgPSBib2FyZFN0YXRlW3JdW2NdOwogICAgICBpZiAoY2VsbC5pc0ZsYWdnZWQpIHJldHVybjsKCiAgICAgIGlmIChjZWxsLmlzT3BlbmVkKSB7CiAgICAgICAgaGFuZGxlQ2hvcmQociwgYyk7CiAgICAgICAgcmV0dXJuOwogICAgICB9CgogICAgICBpZiAoZ2FtZVN0YXRlID09PSAnUkVBRFknKSB7CiAgICAgICAgZ2FtZVN0YXRlID0gJ1BMQVlJTkcnOwogICAgICAgIGdlbmVyYXRlTWluZXMociwgYyk7CiAgICAgICAgc3RhcnRUaW1lcigpOwogICAgICB9CgogICAgICBpZiAoY2VsbC5pc01pbmUpIHsKICAgICAgICB0cmlnZ2VyR2FtZU92ZXIoY2VsbCk7CiAgICAgICAgcmV0dXJuOwogICAgICB9CgogICAgICByZXZlYWxDZWxsKGNlbGwpOwogICAgICBwbGF5U291bmQoJ2NsaWNrJyk7CiAgICAgIGNoZWNrV2luKCk7CiAgICB9CgogICAgZnVuY3Rpb24gaGFuZGxlUmlnaHRDbGljayhyLCBjKSB7CiAgICAgIGlmIChnYW1lU3RhdGUgPT09ICdXT04nIHx8IGdhbWVTdGF0ZSA9PT0gJ0dBTUVPVkVSJykgcmV0dXJuOwoKICAgICAgY29uc3QgY2VsbCA9IGJvYXJkU3RhdGVbcl1bY107CiAgICAgIGlmIChjZWxsLmlzT3BlbmVkKSByZXR1cm47CgogICAgICBjZWxsLmlzRmxhZ2dlZCA9ICFjZWxsLmlzRmxhZ2dlZDsKCiAgICAgIGlmIChjZWxsLmlzRmxhZ2dlZCkgewogICAgICAgIGNlbGwuZWwuY2xhc3NMaXN0LmFkZCgnZmxhZ2dlZCcpOwogICAgICAgIGNlbGwuZWwuaW5uZXJUZXh0ID0gJ/CfmqknOwogICAgICAgIGZsYWdzQ291bnQrKzsKICAgICAgICBwbGF5U291bmQoJ2ZsYWcnKTsKICAgICAgfSBlbHNlIHsKICAgICAgICBjZWxsLmVsLmNsYXNzTGlzdC5yZW1vdmUoJ2ZsYWdnZWQnKTsKICAgICAgICBjZWxsLmVsLmlubmVyVGV4dCA9ICcnOwogICAgICAgIGZsYWdzQ291bnQtLTsKICAgICAgICBwbGF5U291bmQoJ3VuZmxhZycpOwogICAgICB9CgogICAgICB1cGRhdGVMQ0QobWluZUNvdW50ZXJFbCwgY29uZmlnLm1pbmVzIC0gZmxhZ3NDb3VudCk7CiAgICB9CgogICAgZnVuY3Rpb24gaGFuZGxlQ2hvcmQociwgYykgewogICAgICBjb25zdCBjZWxsID0gYm9hcmRTdGF0ZVtyXVtjXTsKICAgICAgaWYgKCFjZWxsLmlzT3BlbmVkIHx8IGNlbGwubmVpZ2hib3JNaW5lcyA9PT0gMCkgcmV0dXJuOwoKICAgICAgY29uc3QgbmVpZ2hib3JzID0gZ2V0TmVpZ2hib3JzKHIsIGMpOwogICAgICBjb25zdCBmbGFnZ2VkQ291bnQgPSBuZWlnaGJvcnMuZmlsdGVyKG4gPT4gbi5pc0ZsYWdnZWQpLmxlbmd0aDsKCiAgICAgIGlmIChmbGFnZ2VkQ291bnQgPT09IGNlbGwubmVpZ2hib3JNaW5lcykgewogICAgICAgIGxldCBoaXRNaW5lID0gZmFsc2U7CiAgICAgICAgbmVpZ2hib3JzLmZvckVhY2gobiA9PiB7CiAgICAgICAgICBpZiAoIW4uaXNGbGFnZ2VkICYmICFuLmlzT3BlbmVkKSB7CiAgICAgICAgICAgIGlmIChuLmlzTWluZSkgewogICAgICAgICAgICAgIGhpdE1pbmUgPSB0cnVlOwogICAgICAgICAgICAgIHRyaWdnZXJHYW1lT3ZlcihuKTsKICAgICAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgICByZXZlYWxDZWxsKG4pOwogICAgICAgICAgICB9CiAgICAgICAgICB9CiAgICAgICAgfSk7CgogICAgICAgIGlmICghaGl0TWluZSkgewogICAgICAgICAgcGxheVNvdW5kKCdjbGljaycpOwogICAgICAgICAgY2hlY2tXaW4oKTsKICAgICAgICB9CiAgICAgIH0KICAgIH0KCiAgICBmdW5jdGlvbiByZXZlYWxDZWxsKGNlbGwpIHsKICAgICAgaWYgKGNlbGwuaXNPcGVuZWQgfHwgY2VsbC5pc0ZsYWdnZWQpIHJldHVybjsKCiAgICAgIGNlbGwuaXNPcGVuZWQgPSB0cnVlOwogICAgICBjZWxsLmVsLmNsYXNzTGlzdC5hZGQoJ29wZW5lZCcpOwogICAgICByZXZlYWxlZENvdW50Kys7CgogICAgICBpZiAoY2VsbC5uZWlnaGJvck1pbmVzID4gMCkgewogICAgICAgIGNlbGwuZWwuaW5uZXJUZXh0ID0gY2VsbC5uZWlnaGJvck1pbmVzOwogICAgICAgIGNlbGwuZWwuZGF0YXNldC5udW0gPSBjZWxsLm5laWdoYm9yTWluZXM7CiAgICAgIH0gZWxzZSB7CiAgICAgICAgY29uc3QgcXVldWUgPSBbY2VsbF07CiAgICAgICAgd2hpbGUgKHF1ZXVlLmxlbmd0aCA+IDApIHsKICAgICAgICAgIGNvbnN0IGN1cnIgPSBxdWV1ZS5zaGlmdCgpOwogICAgICAgICAgY29uc3QgbmVpZ2hib3JzID0gZ2V0TmVpZ2hib3JzKGN1cnIucm93LCBjdXJyLmNvbCk7CgogICAgICAgICAgbmVpZ2hib3JzLmZvckVhY2gobiA9PiB7CiAgICAgICAgICAgIGlmICghbi5pc09wZW5lZCAmJiAhbi5pc0ZsYWdnZWQpIHsKICAgICAgICAgICAgICBuLmlzT3BlbmVkID0gdHJ1ZTsKICAgICAgICAgICAgICBuLmVsLmNsYXNzTGlzdC5hZGQoJ29wZW5lZCcpOwogICAgICAgICAgICAgIHJldmVhbGVkQ291bnQrKzsKCiAgICAgICAgICAgICAgaWYgKG4ubmVpZ2hib3JNaW5lcyA+IDApIHsKICAgICAgICAgICAgICAgIG4uZWwuaW5uZXJUZXh0ID0gbi5uZWlnaGJvck1pbmVzOwogICAgICAgICAgICAgICAgbi5lbC5kYXRhc2V0Lm51bSA9IG4ubmVpZ2hib3JNaW5lczsKICAgICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgcXVldWUucHVzaChuKTsKICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0KICAgICAgICAgIH0pOwogICAgICAgIH0KICAgICAgfQogICAgfQoKCiAgICAvKiA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KICAgICAgIDQuIEVYVFJFTUUgRlVMTC1CT0FSRCBFWFBMT1NJT04gSU1QQUNUIEVGRkVDVAogICAgPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09ICovCiAgICBmdW5jdGlvbiB0cmlnZ2VyR2FtZU92ZXIoZXhwbG9kZWRDZWxsKSB7CiAgICAgIGdhbWVTdGF0ZSA9ICdHQU1FT1ZFUic7CiAgICAgIGNsZWFySW50ZXJ2YWwodGltZXJJbnRlcnZhbCk7CiAgICAgIGJ0blJlc2V0LmlubmVyVGV4dCA9ICfwn5KlJzsKCiAgICAgIC8vIDEuIEZ1bGxzY3JlZW4gUmVkL09yYW5nZSBGbGFzaCBPdmVybGF5CiAgICAgIGZsYXNoT3ZlcmxheS5jbGFzc0xpc3QuYWRkKCdhY3RpdmUnKTsKICAgICAgc2V0VGltZW91dCgoKSA9PiBmbGFzaE92ZXJsYXkuY2xhc3NMaXN0LnJlbW92ZSgnYWN0aXZlJyksIDIwMCk7CgogICAgICAvLyAyLiBDYW1lcmEgLyBHYW1lIENvbnRhaW5lciBTaGFrZQogICAgICBnYW1lQ29udGFpbmVyLmNsYXNzTGlzdC5hZGQoJ2V4cGxvZGVkJyk7CiAgICAgIGdhbWVDb250YWluZXIuY2xhc3NMaXN0LnJlbW92ZSgnc2hha2UtaW1wYWN0Jyk7CiAgICAgIHZvaWQgZ2FtZUNvbnRhaW5lci5vZmZzZXRXaWR0aDsgLy8gRm9yY2UgQ1NTIHJlZmxvdwogICAgICBnYW1lQ29udGFpbmVyLmNsYXNzTGlzdC5hZGQoJ3NoYWtlLWltcGFjdCcpOwoKICAgICAgLy8gMy4gUGxheSBTeW50aCBEZWVwIEV4cGxvc2lvbiBBdWRpbwogICAgICBwbGF5U291bmQoJ2V4cGxvZGUnKTsKCiAgICAgIC8vIDQuIEluaXRpYWwgTWFqb3IgRXhwbG9zaW9uIFBhcnRpY2xlcyBhdCBDbGlja2VkIENlbGwKICAgICAgY29uc3QgcmVjdCA9IGV4cGxvZGVkQ2VsbC5lbC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgY29uc3QgY2VudGVyWCA9IHJlY3QubGVmdCArIHJlY3Qud2lkdGggLyAyOwogICAgICBjb25zdCBjZW50ZXJZID0gcmVjdC50b3AgKyByZWN0LmhlaWdodCAvIDI7CiAgICAgIGNyZWF0ZUV4cGxvc2lvbihjZW50ZXJYLCBjZW50ZXJZLCAxNTAsIHRydWUpOwoKICAgICAgZXhwbG9kZWRDZWxsLmVsLmNsYXNzTGlzdC5hZGQoJ21pbmUtZXhwbG9kZWQnKTsKICAgICAgZXhwbG9kZWRDZWxsLmVsLmlubmVyVGV4dCA9ICfwn5KlJzsKCiAgICAgIC8vIDUuIEdhdGhlciBhbGwgb3RoZXIgbWluZXMgJiBzb3J0IGJ5IHJhZGlhbCBkaXN0YW5jZSBmb3IgQ2FzY2FkaW5nIENoYWluIERldG9uYXRpb24KICAgICAgY29uc3Qgb3RoZXJNaW5lcyA9IFtdOwogICAgICBmb3IgKGxldCByID0gMDsgciA8IGNvbmZpZy5yb3dzOyByKyspIHsKICAgICAgICBmb3IgKGxldCBjID0gMDsgYyA8IGNvbmZpZy5jb2xzOyBjKyspIHsKICAgICAgICAgIGNvbnN0IGNlbGwgPSBib2FyZFN0YXRlW3JdW2NdOwogICAgICAgICAgaWYgKGNlbGwuaXNNaW5lICYmIGNlbGwgIT09IGV4cGxvZGVkQ2VsbCkgewogICAgICAgICAgICBvdGhlck1pbmVzLnB1c2goY2VsbCk7CiAgICAgICAgICB9IGVsc2UgaWYgKCFjZWxsLmlzTWluZSAmJiBjZWxsLmlzRmxhZ2dlZCkgewogICAgICAgICAgICBjZWxsLmVsLmNsYXNzTGlzdC5hZGQoJ21pbmUtd3JvbmcnKTsKICAgICAgICAgICAgY2VsbC5lbC5pbm5lclRleHQgPSAn4p2MJzsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgIH0KCiAgICAgIC8vIFJhZGlhbCBzaG9ja3dhdmUgb3JkZXIKICAgICAgb3RoZXJNaW5lcy5zb3J0KChhLCBiKSA9PiB7CiAgICAgICAgY29uc3QgZGlzdEEgPSBNYXRoLmh5cG90KGEucm93IC0gZXhwbG9kZWRDZWxsLnJvdywgYS5jb2wgLSBleHBsb2RlZENlbGwuY29sKTsKICAgICAgICBjb25zdCBkaXN0QiA9IE1hdGguaHlwb3QoYi5yb3cgLSBleHBsb2RlZENlbGwucm93LCBiLmNvbCAtIGV4cGxvZGVkQ2VsbC5jb2wpOwogICAgICAgIHJldHVybiBkaXN0QSAtIGRpc3RCOwogICAgICB9KTsKCiAgICAgIC8vIENoYWluIHJlYWN0aW9uIHN0YWdnZXJlZCBleHBsb3Npb24gdGltaW5nCiAgICAgIG90aGVyTWluZXMuZm9yRWFjaCgoY2VsbCwgaWR4KSA9PiB7CiAgICAgICAgY29uc3QgZGlzdCA9IE1hdGguaHlwb3QoY2VsbC5yb3cgLSBleHBsb2RlZENlbGwucm93LCBjZWxsLmNvbCAtIGV4cGxvZGVkQ2VsbC5jb2wpOwogICAgICAgIGNvbnN0IGRlbGF5ID0gTWF0aC5taW4oMTQwMCwgTWF0aC5mbG9vcihkaXN0ICogNTUpICsgTWF0aC5yYW5kb20oKSAqIDQwKTsKCiAgICAgICAgc2V0VGltZW91dCgoKSA9PiB7CiAgICAgICAgICBpZiAoZ2FtZVN0YXRlICE9PSAnR0FNRU9WRVInKSByZXR1cm47IC8vIFJlc2V0IGd1YXJkCgogICAgICAgICAgY2VsbC5lbC5jbGFzc0xpc3QuYWRkKCdvcGVuZWQnLCAnbWluZS1jYXNjYWRlJyk7CiAgICAgICAgICBjZWxsLmVsLmlubmVyVGV4dCA9ICfwn5KjJzsKCiAgICAgICAgICBjb25zdCBjUmVjdCA9IGNlbGwuZWwuZ2V0Qm91bmRpbmdDbGllbnRSZWN0KCk7CiAgICAgICAgICBjcmVhdGVFeHBsb3Npb24oY1JlY3QubGVmdCArIGNSZWN0LndpZHRoIC8gMiwgY1JlY3QudG9wICsgY1JlY3QuaGVpZ2h0IC8gMiwgMTQsIGZhbHNlKTsKICAgICAgICAgIHBsYXlTb3VuZCgncG9wJyk7CgogICAgICAgICAgLy8gU2Vjb25kYXJ5IG1pbmkgc2hha2UgZm9yIGxhdGUgY2FzY2FkaW5nIGRldG9uYXRpb25zCiAgICAgICAgICBpZiAoaWR4ICUgNSA9PT0gMCkgewogICAgICAgICAgICBnYW1lQ29udGFpbmVyLnN0eWxlLnRyYW5zZm9ybSA9IGB0cmFuc2xhdGUoJHsoTWF0aC5yYW5kb20oKS0wLjUpKjh9cHgsICR7KE1hdGgucmFuZG9tKCktMC41KSo4fXB4KWA7CiAgICAgICAgICAgIHNldFRpbWVvdXQoKCkgPT4geyBnYW1lQ29udGFpbmVyLnN0eWxlLnRyYW5zZm9ybSA9ICdub25lJzsgfSwgNTApOwogICAgICAgICAgfQogICAgICAgIH0sIGRlbGF5KTsKICAgICAgfSk7CiAgICB9CgogICAgZnVuY3Rpb24gY2hlY2tXaW4oKSB7CiAgICAgIGNvbnN0IHRvdGFsQ2VsbHMgPSBjb25maWcucm93cyAqIGNvbmZpZy5jb2xzOwogICAgICBpZiAocmV2ZWFsZWRDb3VudCA9PT0gdG90YWxDZWxscyAtIGNvbmZpZy5taW5lcykgewogICAgICAgIGdhbWVTdGF0ZSA9ICdXT04nOwogICAgICAgIGNsZWFySW50ZXJ2YWwodGltZXJJbnRlcnZhbCk7CiAgICAgICAgYnRuUmVzZXQuaW5uZXJUZXh0ID0gJ/CfmI4nOwogICAgICAgIHBsYXlTb3VuZCgnd2luJyk7CgogICAgICAgIGZvciAobGV0IHIgPSAwOyByIDwgY29uZmlnLnJvd3M7IHIrKykgewogICAgICAgICAgZm9yIChsZXQgYyA9IDA7IGMgPCBjb25maWcuY29sczsgYysrKSB7CiAgICAgICAgICAgIGNvbnN0IGNlbGwgPSBib2FyZFN0YXRlW3JdW2NdOwogICAgICAgICAgICBpZiAoY2VsbC5pc01pbmUgJiYgIWNlbGwuaXNGbGFnZ2VkKSB7CiAgICAgICAgICAgICAgY2VsbC5pc0ZsYWdnZWQgPSB0cnVlOwogICAgICAgICAgICAgIGNlbGwuZWwuY2xhc3NMaXN0LmFkZCgnZmxhZ2dlZCcpOwogICAgICAgICAgICAgIGNlbGwuZWwuaW5uZXJUZXh0ID0gJ/CfmqknOwogICAgICAgICAgICB9CiAgICAgICAgICB9CiAgICAgICAgfQogICAgICAgIHVwZGF0ZUxDRChtaW5lQ291bnRlckVsLCAwKTsKICAgICAgICBzYXZlQmVzdFRpbWUodGltZUVsYXBzZWQpOwogICAgICB9CiAgICB9CgogICAgZnVuY3Rpb24gc2F2ZUJlc3RUaW1lKHNlY29uZHMpIHsKICAgICAgaWYgKGN1cnJlbnREaWZmID09PSAnY3VzdG9tJykgcmV0dXJuOwogICAgICBjb25zdCBrZXkgPSBgbWluZXN3ZWVwZXJfYmVzdF8ke2N1cnJlbnREaWZmfWA7CiAgICAgIGNvbnN0IGJlc3QgPSBsb2NhbFN0b3JhZ2UuZ2V0SXRlbShrZXkpOwogICAgICBpZiAoIWJlc3QgfHwgc2Vjb25kcyA8IHBhcnNlSW50KGJlc3QsIDEwKSkgewogICAgICAgIGxvY2FsU3RvcmFnZS5zZXRJdGVtKGtleSwgc2Vjb25kcyk7CiAgICAgICAgbG9hZEJlc3RUaW1lKCk7CiAgICAgIH0KICAgIH0KCiAgICBmdW5jdGlvbiBsb2FkQmVzdFRpbWUoKSB7CiAgICAgIGlmIChjdXJyZW50RGlmZiA9PT0gJ2N1c3RvbScpIHsKICAgICAgICBiZXN0VGltZURpc3BsYXkuaW5uZXJUZXh0ID0gJy0nOwogICAgICAgIHJldHVybjsKICAgICAgfQogICAgICBjb25zdCBrZXkgPSBgbWluZXN3ZWVwZXJfYmVzdF8ke2N1cnJlbnREaWZmfWA7CiAgICAgIGNvbnN0IGJlc3QgPSBsb2NhbFN0b3JhZ2UuZ2V0SXRlbShrZXkpOwogICAgICBiZXN0VGltZURpc3BsYXkuaW5uZXJUZXh0ID0gYmVzdCA/IGJlc3QgOiAnLSc7CiAgICB9CgogICAgLy8gSGFuZGxlcnMKICAgIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJy5kaWZmLWJ0bicpLmZvckVhY2goYnRuID0+IHsKICAgICAgYnRuLmFkZEV2ZW50TGlzdGVuZXIoJ2NsaWNrJywgKGUpID0+IHsKICAgICAgICBjb25zdCBkaWZmID0gZS50YXJnZXQuZGF0YXNldC5kaWZmOwogICAgICAgIGlmIChkaWZmID09PSAnY3VzdG9tJykgewogICAgICAgICAgY3VzdG9tTW9kYWwuY2xhc3NMaXN0LmFkZCgnb3BlbicpOwogICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KCiAgICAgICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgnLmRpZmYtYnRuJykuZm9yRWFjaChiID0+IGIuY2xhc3NMaXN0LnJlbW92ZSgnYWN0aXZlJykpOwogICAgICAgIGUudGFyZ2V0LmNsYXNzTGlzdC5hZGQoJ2FjdGl2ZScpOwoKICAgICAgICBjdXJyZW50RGlmZiA9IGRpZmY7CiAgICAgICAgY29uZmlnID0geyAuLi5QUkVTRVRTW2RpZmZdIH07CiAgICAgICAgaW5pdEdhbWUoKTsKICAgICAgfSk7CiAgICB9KTsKCiAgICBidG5DdXN0b21DYW5jZWwuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiB7CiAgICAgIGN1c3RvbU1vZGFsLmNsYXNzTGlzdC5yZW1vdmUoJ29wZW4nKTsKICAgIH0pOwoKICAgIGJ0bkN1c3RvbUFwcGx5LmFkZEV2ZW50TGlzdGVuZXIoJ2NsaWNrJywgKCkgPT4gewogICAgICBjb25zdCByb3dzID0gcGFyc2VJbnQoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2N1c3RvbS1yb3dzJykudmFsdWUsIDEwKTsKICAgICAgY29uc3QgY29scyA9IHBhcnNlSW50KGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjdXN0b20tY29scycpLnZhbHVlLCAxMCk7CiAgICAgIGxldCBtaW5lcyA9IHBhcnNlSW50KGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjdXN0b20tbWluZXMnKS52YWx1ZSwgMTApOwoKICAgICAgY29uc3QgbWF4TWluZXMgPSBNYXRoLmZsb29yKHJvd3MgKiBjb2xzICogMC44KTsKICAgICAgbWluZXMgPSBNYXRoLm1pbihtaW5lcywgbWF4TWluZXMpOwoKICAgICAgY29uZmlnID0geyByb3dzLCBjb2xzLCBtaW5lcyB9OwogICAgICBjdXJyZW50RGlmZiA9ICdjdXN0b20nOwoKICAgICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgnLmRpZmYtYnRuJykuZm9yRWFjaChiID0+IGIuY2xhc3NMaXN0LnJlbW92ZSgnYWN0aXZlJykpOwogICAgICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCdbZGF0YS1kaWZmPSJjdXN0b20iXScpLmNsYXNzTGlzdC5hZGQoJ2FjdGl2ZScpOwoKICAgICAgY3VzdG9tTW9kYWwuY2xhc3NMaXN0LnJlbW92ZSgnb3BlbicpOwogICAgICBpbml0R2FtZSgpOwogICAgfSk7CgogICAgYnRuUmVzZXQuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCBpbml0R2FtZSk7CgogICAgYnRuRmxhZ01vZGUuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiB7CiAgICAgIGlzTW9iaWxlRmxhZ01vZGUgPSAhaXNNb2JpbGVGbGFnTW9kZTsKICAgICAgYnRuRmxhZ01vZGUuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgaXNNb2JpbGVGbGFnTW9kZSk7CiAgICAgIGZsYWdNb2RlU3RhdHVzLmlubmVyVGV4dCA9IGlzTW9iaWxlRmxhZ01vZGUgPyAnT04nIDogJ09GRic7CiAgICB9KTsKCiAgICBidG5Tb3VuZC5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsICgpID0+IHsKICAgICAgc291bmRFbmFibGVkID0gIXNvdW5kRW5hYmxlZDsKICAgICAgc291bmRJY29uLmlubmVyVGV4dCA9IHNvdW5kRW5hYmxlZCA/ICfwn5SKJyA6ICfwn5SHJzsKICAgIH0pOwoKICAgIGJvYXJkRWwuYWRkRXZlbnRMaXN0ZW5lcignbW91c2Vkb3duJywgKGUpID0+IHsKICAgICAgaWYgKGdhbWVTdGF0ZSA9PT0gJ1BMQVlJTkcnICYmIGUuYnV0dG9uID09PSAwKSB7CiAgICAgICAgYnRuUmVzZXQuaW5uZXJUZXh0ID0gJ/CfmK4nOwogICAgICB9CiAgICB9KTsKCiAgICB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcignbW91c2V1cCcsICgpID0+IHsKICAgICAgaWYgKGdhbWVTdGF0ZSA9PT0gJ1BMQVlJTkcnKSB7CiAgICAgICAgYnRuUmVzZXQuaW5uZXJUZXh0ID0gJ/CfmIonOwogICAgICB9CiAgICB9KTsKCiAgICAvLyBTdGFydAogICAgaW5pdEdhbWUoKTsKICA8L3NjcmlwdD4KPC9ib2R5Pgo8L2h0bWw+Cg==";
     </script>
 </body>
 </html>
